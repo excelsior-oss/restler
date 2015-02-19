@@ -4,7 +4,6 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
-import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,7 +11,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Created by Pavel Salimov on 17.02.2015.
@@ -21,7 +19,7 @@ public class ControllerMethodInterceptor implements MethodInterceptor {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
-    private ControllerMethodExecutionStrategy executionStrategy;
+    private ControllerMethodExecutor controllerMethodExecutor;
     private Class<?> controllerClass;
     private RequestMapping controllerMapping;
     private ResponseBody controllerBodyAnnotation;
@@ -80,7 +78,7 @@ public class ControllerMethodInterceptor implements MethodInterceptor {
 
         Class<?> resultType =  method.getReturnType();
 
-        return executionStrategy.execute(controllerMapping,methodMapping,requestType,expectedStatus,requestBody,methodBodyAnnotation,resultType,pathVariables, requestParams);
+        return controllerMethodExecutor.execute(controllerMapping,methodMapping,requestType,expectedStatus,requestBody,methodBodyAnnotation,resultType,pathVariables, requestParams);
     }
 
 

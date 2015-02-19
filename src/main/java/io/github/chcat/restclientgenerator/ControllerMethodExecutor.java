@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * Created by pasa on 17.02.2015.
  */
-public interface ControllerMethodExecutionStrategy {
+public interface ControllerMethodExecutor {
 
     public Object execute(RequestMapping controllerMapping, RequestMapping methodMapping, RequestMethod requestType, ResponseStatus expectedStatus, Object requestBody, ResponseBody methodBodyAnnotation, Class<?> returnType, Map<String, Object> pathVariables, Map<String, Object> requestParams);
 
