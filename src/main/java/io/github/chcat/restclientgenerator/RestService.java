@@ -5,8 +5,10 @@ package io.github.chcat.restclientgenerator;
  */
 public class RestService {
 
-    private ControllerMethodExecutor controllerMethodExecutor;
+    private String baseUrl;
 
+    private ControllerMethodExecutor controllerMethodExecutor;
+    private AuthorizationStrategy authorizationStrategy;
 
 
 }

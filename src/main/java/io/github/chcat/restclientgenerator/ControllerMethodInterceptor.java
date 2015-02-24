@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * Created by Pavel Salimov on 17.02.2015.
  */
-public class ControllerMethodInterceptor implements MethodInterceptor {
+class ControllerMethodInterceptor implements MethodInterceptor {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
