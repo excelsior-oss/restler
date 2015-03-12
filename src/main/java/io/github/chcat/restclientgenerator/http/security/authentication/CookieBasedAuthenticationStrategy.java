@@ -1,6 +1,5 @@
-package io.github.chcat.restclientgenerator.http.authentication;
+package io.github.chcat.restclientgenerator.http.security.authentication;
 
-import io.github.chcat.restclientgenerator.AuthenticationStrategy;
 import org.springframework.http.RequestEntity;
 
 /**
