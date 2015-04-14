@@ -19,10 +19,14 @@ class ControllerMethodInterceptor implements MethodInterceptor {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
-    private ControllerMethodExecutor controllerMethodExecutor;
-    private Class<?> controllerClass;
+    private ControllerMethodExecutor executor;
+    private Class<?> type;
     private RequestMapping controllerMapping;
     private ResponseBody controllerBodyAnnotation;
+
+    public ControllerMethodInterceptor(ControllerMethodExecutor executor){
+        this.executor = executor;
+    }
 
     @Override
     public Object intercept(Object o, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
@@ -78,7 +82,7 @@ class ControllerMethodInterceptor implements MethodInterceptor {
 
         Class<?> resultType =  method.getReturnType();
 
-        return controllerMethodExecutor.execute(controllerMapping,methodMapping,requestType,expectedStatus,requestBody,methodBodyAnnotation,resultType,pathVariables, requestParams);
+        return executor.execute(controllerMapping,methodMapping,requestType,expectedStatus,requestBody,methodBodyAnnotation,resultType,pathVariables, requestParams);
     }
 
 

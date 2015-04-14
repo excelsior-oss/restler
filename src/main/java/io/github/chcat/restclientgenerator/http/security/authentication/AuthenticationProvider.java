@@ -5,5 +5,5 @@ package io.github.chcat.restclientgenerator.http.security.authentication;
  */
 public interface AuthenticationProvider {
 
-    public AuthenticationStrategy provide();
+    public AuthenticationStrategy provideAuthenticationStrategy();
 }
