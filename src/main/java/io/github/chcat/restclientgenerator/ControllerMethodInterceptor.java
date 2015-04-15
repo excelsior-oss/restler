@@ -4,6 +4,8 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,16 +43,11 @@ class ControllerMethodInterceptor implements MethodInterceptor {
             methodBodyAnnotation = controllerBodyAnnotation;
         }
 
-        RequestMethod requestType = RequestMethod.GET;
-        if (methodMapping.method() != null && methodMapping.method().length > 0){
-            requestType = methodMapping.method()[0];
-        }
-
         ResponseStatus expectedStatus = method.getDeclaredAnnotation(ResponseStatus.class);
 
         Object requestBody = null;
         Map<String, Object> pathVariables = new HashMap<>();
-        Map<String, Object> requestParams = new HashMap<>();
+        MultiValueMap<String, String> requestParams = new LinkedMultiValueMap<>();
 
         Annotation[][] parametersAnnotations = method.getParameterAnnotations();
         String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
@@ -72,7 +69,7 @@ class ControllerMethodInterceptor implements MethodInterceptor {
                     if (StringUtils.isEmpty(parameterVariableName)) parameterVariableName = parameterNames[pi];
                     if (StringUtils.isEmpty(parameterVariableName)) throw new RuntimeException("Name of a request parameter can't be resolved during the method " + method +" call");
 
-                    requestParams.put(parameterVariableName, args[pi]);
+                    requestParams.add(parameterVariableName, args[pi].toString());
 
                 } else if (annotation instanceof RequestBody){
                     requestBody = args[pi];
@@ -82,7 +79,7 @@ class ControllerMethodInterceptor implements MethodInterceptor {
 
         Class<?> resultType =  method.getReturnType();
 
-        return executor.execute(controllerMapping,methodMapping,requestType,expectedStatus,requestBody,methodBodyAnnotation,resultType,pathVariables, requestParams);
+        return executor.execute(controllerMapping,methodMapping,expectedStatus,requestBody,methodBodyAnnotation,resultType,pathVariables, requestParams);
     }
 
 

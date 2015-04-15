@@ -1,15 +1,18 @@
 package io.github.chcat.restclientgenerator.http;
 
-import java.util.Map;
-
-import javax.xml.ws.Response;
-
+import io.github.chcat.restclientgenerator.ControllerMethodExecutor;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.client.RestOperations;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import io.github.chcat.restclientgenerator.ControllerMethodExecutor;
+import java.net.URI;
+import java.util.Map;
 
 /**
  * Created by pasa on 19.02.2015.
@@ -18,58 +21,46 @@ public class HttpControllerMethodExecutor implements ControllerMethodExecutor {
 
 
     @Override
-    public Object execute(RequestMapping controllerMapping, RequestMapping methodMapping, RequestMethod requestType, ResponseStatus expectedStatus, Object requestBody, ResponseBody methodBodyAnnotation, Class<?> returnType, Map<String, Object> pathVariables, Map<String, Object> requestParams) {
+    public Object execute(RequestMapping controllerMapping, RequestMapping methodMapping, ResponseStatus expectedStatus, Object requestBody, ResponseBody methodBodyAnnotation, Class<?> returnType, Map<String, ?> pathVariables, MultiValueMap<String, String> requestParams) {
 
-        RequestMethod callType;
+        RequestMethod declaredMethod;
         if (methodMapping.method() == null || methodMapping.method().length == 0) {
-            callType = RequestMethod.GET;
+            declaredMethod = RequestMethod.GET;
         } else {
-            callType = methodMapping.method()[0];
+            declaredMethod = methodMapping.method()[0];
         }
 
-        if (requestBody != null && (callType == RequestMethod.POST || callType == RequestMethod.PUT)) {
-            specification = specification.body(requestBody).contentType(ContentType.JSON);
-        }
+        HttpMethod method = HttpMethod.valueOf(declaredMethod.toString());
 
-        specification = specification.header("Host", RestAssured.baseURI.substring(RestAssured.baseURI.indexOf("//") + 2));
+        String baseUrl = null;
+        String apiPath = null;
+        String controllerPathSegment = getMappedUri(controllerMapping);
+        String methodPathSegment = getMappedUri(methodMapping);
 
-        Response response;
+        URI target = UriComponentsBuilder.fromUriString(baseUrl).path(apiPath).pathSegment(controllerPathSegment,methodPathSegment).queryParams(requestParams).buildAndExpand(pathVariables).toUri();
 
-        switch (callType) {
-            case POST:
-                response = specification.post(uriTemplate);
-                break;
-            case PUT:
-                response = specification.put(uriTemplate);
-                break;
-            case GET:
-                response = specification.get(uriTemplate);
-                break;
-            case DELETE:
-                response = specification.delete(uriTemplate);
-                break;
+        RequestEntity<?> requestEntity = new RequestEntity<Object>(requestBody,method,target);
 
-            default:
-                throw new AssertionError();
+        RestOperations operations;
+        //RequestEntity<>
 
-        }
-
-        String responseString = response.getBody().asString();
-
-        ensureExceptedStatus(response, responseString, expectedStatus(method));
-
-        Class resultType = method.getReturnType();
-
-        if (String.class.equals(resultType)) {
-            return responseString;
-        } else if (Boolean.class.equals(resultType) || boolean.class.equals(resultType)) {
-            return Boolean.valueOf(responseString);
-        } else if (Void.TYPE.equals(resultType) || RedirectView.class.equals(resultType)) {
-            return null;
-        } else {
-            return JsonPath.from(responseString).getObject("", resultType);
-        }
 
         return null;
+    }
+
+    private static String getMappedUri(RequestMapping mapping) {
+        if (mapping == null) {
+            return "";
+        } else {
+            return getFirstOrEmpty(mapping.value());
+        }
+    }
+
+    private static String getFirstOrEmpty(String[] strings) {
+        if (strings == null || strings.length == 0) {
+            return "";
+        } else {
+            return strings[0];
+        }
     }
 }
