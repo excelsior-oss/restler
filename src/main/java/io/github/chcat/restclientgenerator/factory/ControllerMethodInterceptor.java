@@ -1,4 +1,4 @@
-package io.github.chcat.restclientgenerator;
+package io.github.chcat.restclientgenerator.factory;
 
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
