@@ -16,11 +16,11 @@ public class CachingClientFactory implements ClientFactory {
     }
 
     @Override
-    public <C> C client(Class<C> type) {
+    public <C> C produce(Class<C> type) {
         if (clients.containsKey(type)){
             return (C) clients.get(type);
         } else {
-            C client = factory.client(type);
+            C client = factory.produce(type);
             clients.put(type, client);
             return client;
         }

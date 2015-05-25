@@ -16,7 +16,7 @@ public class CGLibClientFactory implements ClientFactory {
     }
 
     @Override
-    public <C> C client(Class<C> type) {
+    public <C> C produce(Class<C> type) {
 
         if (type.getDeclaredAnnotation(Controller.class) == null) {
             throw new IllegalArgumentException("Not a controller");

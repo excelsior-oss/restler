@@ -10,8 +10,6 @@ import io.github.chcat.restclientgenerator.http.security.authentication.Authenti
 import io.github.chcat.restclientgenerator.http.security.authentication.NoAuthenticationStrategy;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.function.Function;
 
 /**
@@ -19,17 +17,13 @@ import java.util.function.Function;
  */
 public class ServiceBuilder {
 
-    private URL baseUrl;
+    private String baseUrl;
     private RequestExecutor requestExecutor = new RestOperationsRequestExecutor(new RestTemplate());
     private AuthenticationStrategy authenticationStrategy = new NoAuthenticationStrategy();
     private Function<ServiceConfig,ClientFactory> factoryProducer = (c -> new CachingClientFactory(new CGLibClientFactory(new HttpControllerMethodExecutor(c))));
 
     public ServiceBuilder(String baseUrl) {
-        try {
-            this.baseUrl = new URL(baseUrl);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+            this.baseUrl = baseUrl;
     }
 
     public ServiceBuilder useRequestExecutor(RequestExecutor requestExecutor){

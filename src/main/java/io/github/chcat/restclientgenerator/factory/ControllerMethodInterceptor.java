@@ -4,10 +4,13 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -22,9 +25,6 @@ class ControllerMethodInterceptor implements MethodInterceptor {
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
     private ControllerMethodExecutor executor;
-    private Class<?> type;
-    private RequestMapping controllerMapping;
-    private ResponseBody controllerBodyAnnotation;
 
     public ControllerMethodInterceptor(ControllerMethodExecutor executor){
         this.executor = executor;
@@ -33,17 +33,7 @@ class ControllerMethodInterceptor implements MethodInterceptor {
     @Override
     public Object intercept(Object o, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
 
-        RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
-        if (methodMapping == null){
-            throw new RuntimeException("The method " + method + " is not mapped");
-        }
-
-        ResponseBody methodBodyAnnotation = method.getDeclaredAnnotation(ResponseBody.class);
-        if (methodBodyAnnotation == null){
-            methodBodyAnnotation = controllerBodyAnnotation;
-        }
-
-        ResponseStatus expectedStatus = method.getDeclaredAnnotation(ResponseStatus.class);
+        ControllerMethodExecutor.ControllerMethodDescription<?> description = getDescription(method);
 
         Object requestBody = null;
         Map<String, Object> pathVariables = new HashMap<>();
@@ -76,13 +66,47 @@ class ControllerMethodInterceptor implements MethodInterceptor {
                 }
             }
         }
+        
+        return executor.execute(description, requestBody, pathVariables,requestParams);
+    }
+
+    private static ControllerMethodExecutor.ControllerMethodDescription<?> getDescription(Method method){
+
+        RequestMapping controllerMapping = method.getDeclaringClass().getDeclaredAnnotation(RequestMapping.class);
+        RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
+        if (methodMapping == null){
+            throw new RuntimeException("The method " + method + " is not mapped");
+        }
+
+        ResponseBody responseBodyAnnotation = method.getDeclaredAnnotation(ResponseBody.class);
+        if (responseBodyAnnotation == null){
+            responseBodyAnnotation = method.getDeclaringClass().getDeclaredAnnotation(ResponseBody.class);
+        }
+
+        if (responseBodyAnnotation == null){
+            throw new RuntimeException("The method " + method + " does not return response body");
+        }
+
+        RequestMethod declaredMethod;
+        if (methodMapping.method() == null || methodMapping.method().length == 0) {
+            declaredMethod = RequestMethod.GET;
+        } else {
+            declaredMethod = methodMapping.method()[0];
+        }
+        HttpMethod httpMethod = HttpMethod.valueOf(declaredMethod.toString());
+
+        HttpStatus expectedStatus = HttpStatus.OK;
+        ResponseStatus statusAnnotation = method.getDeclaredAnnotation(ResponseStatus.class);
+        if (statusAnnotation != null) {
+            expectedStatus = statusAnnotation.value();
+        }
+
+        String uriTemplate = UriComponentsBuilder.fromUriString("").pathSegment(getMappedUriString(controllerMapping),getMappedUriString(methodMapping)).build().toUriString();
 
         Class<?> resultType =  method.getReturnType();
 
-        return executor.execute(controllerMapping,methodMapping,expectedStatus,requestBody,methodBodyAnnotation,resultType,pathVariables, requestParams);
+        return new ControllerMethodExecutor.ControllerMethodDescription<>(uriTemplate,resultType, httpMethod, expectedStatus);
     }
-
-
 
     private static String getMappedUriString(RequestMapping mapping){
         if (mapping == null){
