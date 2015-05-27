@@ -1,7 +1,8 @@
-package io.github.chcat.restclientgenerator.http;
+package org.restler.http;
 
-import io.github.chcat.restclientgenerator.ServiceConfig;
-import io.github.chcat.restclientgenerator.factory.ControllerMethodExecutor;
+import org.restler.ServiceConfig;
+import org.restler.factory.ControllerMethodDescription;
+import org.restler.factory.ControllerMethodExecutor;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -16,6 +17,11 @@ public class HttpControllerMethodExecutor implements ControllerMethodExecutor {
 
     public HttpControllerMethodExecutor(ServiceConfig config){
         this.serviceConfig = config;
+    }
+
+    @Override
+    public ServiceConfig getServiceConfig() {
+        return serviceConfig;
     }
 
     @Override

@@ -1,4 +1,6 @@
-package io.github.chcat.restclientgenerator.factory;
+package org.restler.factory;
+
+import org.restler.ServiceConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +15,11 @@ public class CachingClientFactory implements ClientFactory {
 
     public CachingClientFactory(ClientFactory factory) {
         this.factory = factory;
+    }
+
+    @Override
+    public ServiceConfig getServiceConfig() {
+        return factory.getServiceConfig();
     }
 
     @Override
