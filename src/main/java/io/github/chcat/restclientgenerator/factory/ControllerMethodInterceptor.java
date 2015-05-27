@@ -17,9 +17,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by Pavel Salimov on 17.02.2015.
- */
 class ControllerMethodInterceptor implements MethodInterceptor {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
@@ -48,7 +45,7 @@ class ControllerMethodInterceptor implements MethodInterceptor {
                 if (annotation instanceof PathVariable){
 
                     String pathVariableName = ((PathVariable) annotation).value();
-                    if (StringUtils.isEmpty(pathVariableName)) pathVariableName = parameterNames[pi];
+                    if (StringUtils.isEmpty(pathVariableName) && parameterNames != null) pathVariableName = parameterNames[pi];
                     if (StringUtils.isEmpty(pathVariableName)) throw new RuntimeException("Name of a path variable can't be resolved during the method " + method +" call");
 
                     pathVariables.put(pathVariableName, args[pi]);
@@ -56,7 +53,7 @@ class ControllerMethodInterceptor implements MethodInterceptor {
                 } else if (annotation instanceof RequestParam){
 
                     String parameterVariableName = ((RequestParam) annotation).value();
-                    if (StringUtils.isEmpty(parameterVariableName)) parameterVariableName = parameterNames[pi];
+                    if (StringUtils.isEmpty(parameterVariableName) && parameterNames != null) parameterVariableName = parameterNames[pi];
                     if (StringUtils.isEmpty(parameterVariableName)) throw new RuntimeException("Name of a request parameter can't be resolved during the method " + method +" call");
 
                     requestParams.add(parameterVariableName, args[pi].toString());
@@ -101,7 +98,7 @@ class ControllerMethodInterceptor implements MethodInterceptor {
             expectedStatus = statusAnnotation.value();
         }
 
-        String uriTemplate = UriComponentsBuilder.fromUriString("").pathSegment(getMappedUriString(controllerMapping),getMappedUriString(methodMapping)).build().toUriString();
+        String uriTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(getMappedUriString(controllerMapping), getMappedUriString(methodMapping)).build().toUriString();
 
         Class<?> resultType =  method.getReturnType();
 
