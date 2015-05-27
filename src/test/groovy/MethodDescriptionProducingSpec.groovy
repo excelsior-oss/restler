@@ -14,9 +14,9 @@ class MethodDescriptionProducingSpec extends Specification{
     def "interceptor calls executor"(){
 
         when:
-            interceptor.intercept(null,method,["Medved"].toArray(),null);
+            interceptor.intercept(null,method,["French","Medved"].toArray(),null);
         then:
-            1 * executor.<String>execute();
+            1 * executor.<String>execute(!null,null,!null,!null);
     }
 
 }

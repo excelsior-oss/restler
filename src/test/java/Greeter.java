@@ -14,8 +14,8 @@ public interface Greeter {
 
     @ResponseBody
     @RequestMapping("greetings/{language}")
-    String getGreeting(@PathVariable String language,
-                       @RequestParam(defaultValue = "Anonimous") String name);
+    String getGreeting(@PathVariable(value="language") String language,
+                       @RequestParam(value = "name", defaultValue = "Anonimous") String name);
 
 }
 
