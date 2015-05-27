@@ -1,12 +1,9 @@
-package io.github.chcat.restclientgenerator.http.security.authentication;
+package org.restler.http.security.authentication;
 
-import io.github.chcat.restclientgenerator.http.RequestExecutor;
+import org.restler.http.RequestExecutor;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 
-/**
- * Created by pasa on 19.02.2015.
- */
 public class CookieBasedAuthenticationStrategy implements AuthenticationStrategy {
 
     private static final String COOKIE_HEADER = "Cookie";

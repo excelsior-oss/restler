@@ -1,6 +1,6 @@
-package io.github.chcat.restclientgenerator.http.security.authentication;
+package org.restler.http.security.authentication;
 
-import io.github.chcat.restclientgenerator.http.RequestExecutor;
+import org.restler.http.RequestExecutor;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 

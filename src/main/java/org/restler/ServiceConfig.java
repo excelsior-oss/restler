@@ -1,7 +1,7 @@
-package io.github.chcat.restclientgenerator;
+package org.restler;
 
-import io.github.chcat.restclientgenerator.http.RequestExecutor;
-import io.github.chcat.restclientgenerator.http.security.authentication.AuthenticationStrategy;
+import org.restler.http.RequestExecutor;
+import org.restler.http.security.authentication.AuthenticationStrategy;
 
 /**
  * Created by pasa on 19.02.2015.

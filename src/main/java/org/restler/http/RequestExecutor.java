@@ -1,4 +1,4 @@
-package io.github.chcat.restclientgenerator.http;
+package org.restler.http;
 
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
