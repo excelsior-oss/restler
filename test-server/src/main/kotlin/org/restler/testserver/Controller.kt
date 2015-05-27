@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 
 RestController
-public class Controller {
+public open class Controller {
 
     RequestMapping(value = array("get"))
-    fun publicGet() = "OK"
+    open fun publicGet() = "OK"
 
     RequestMapping(value = array("secured/get"))
-    fun securedGet() = "Secure OK"
+    open fun securedGet() = "Secure OK"
 }

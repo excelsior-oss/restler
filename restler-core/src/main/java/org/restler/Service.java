@@ -14,7 +14,11 @@ public class Service {
         this.factory = factory;
     }
 
-    public void Authorize(AuthorizationStrategy authorizationStrategy){
+    public <C> C client(Class<C> type){
+        return factory.produce(type);
+    }
+
+    public void authorize(AuthorizationStrategy authorizationStrategy){
         factory.getServiceConfig().getAuthenticationStrategy().setAuthenticationToken(authorizationStrategy.authorize());
     }
 }

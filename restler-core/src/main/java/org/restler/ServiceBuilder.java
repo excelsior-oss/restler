@@ -27,6 +27,11 @@ public class ServiceBuilder {
         return this;
     }
 
+    public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy){
+        this.authenticationStrategy = authenticationStrategy;
+        return this;
+    }
+
     public Service build(){
         ServiceConfig config = new ServiceConfig(baseUrl,requestExecutor,authenticationStrategy);
         return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpControllerMethodExecutor(config))));

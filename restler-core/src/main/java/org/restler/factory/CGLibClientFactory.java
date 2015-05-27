@@ -41,7 +41,7 @@ public class CGLibClientFactory implements ClientFactory {
     @Override
     public <C> C produce(Class<C> type) {
 
-        if (type.getDeclaredAnnotation(Controller.class) == null) {
+        if (type.getDeclaredAnnotation(Controller.class) == null && type.getDeclaredAnnotation(RestController.class) == null) {
             throw new IllegalArgumentException("Not a controller");
         }
 
@@ -105,14 +105,10 @@ public class CGLibClientFactory implements ClientFactory {
                 throw new RuntimeException("The method " + method + " is not mapped");
             }
 
-            ResponseBody responseBodyAnnotation = method.getDeclaredAnnotation(ResponseBody.class);
-            if (responseBodyAnnotation == null){
-                responseBodyAnnotation = method.getDeclaringClass().getDeclaredAnnotation(ResponseBody.class);
-            }
-
-            if (responseBodyAnnotation == null){
-                throw new RuntimeException("The method " + method + " does not return response body");
-            }
+//            ResponseBody responseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
+//            if (responseBodyAnnotation == null){
+//                throw new RuntimeException("The method " + method + " does not return response body");
+//            }
 
             RequestMethod declaredMethod;
             if (methodMapping.method() == null || methodMapping.method().length == 0) {

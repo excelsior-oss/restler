@@ -3,7 +3,6 @@ package org.restler.http;
 import org.restler.ServiceConfig;
 import org.restler.factory.ControllerMethodDescription;
 import org.restler.factory.ControllerMethodExecutor;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -29,9 +28,9 @@ public class HttpControllerMethodExecutor implements ControllerMethodExecutor {
 
         URI target = UriComponentsBuilder.fromHttpUrl(serviceConfig.getBaseUrl()).path(method.getUriTemplate()).queryParams(requestParams).buildAndExpand(pathVariables).toUri();
 
-        RequestEntity<?> requestEntity = new RequestEntity<>(requestBody,method.getHttpMethod(),target);
+        ExecutableRequest<T> request = new ExecutableRequest<>(target,method.getHttpMethod(), requestBody,serviceConfig.getRequestExecutor(),method.getReturnType());
 
-        ResponseEntity<T> response = serviceConfig.getAuthenticationStrategy().executeAuthenticatedRequest(serviceConfig.getRequestExecutor(),requestEntity,method.getReturnType());
+        ResponseEntity<T> response = serviceConfig.getAuthenticationStrategy().executeAuthenticatedRequest(request);
 
         return response.getBody();
     }

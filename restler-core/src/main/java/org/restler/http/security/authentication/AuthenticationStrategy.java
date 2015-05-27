@@ -1,7 +1,6 @@
 package org.restler.http.security.authentication;
 
-import org.restler.http.RequestExecutor;
-import org.springframework.http.RequestEntity;
+import org.restler.http.ExecutableRequest;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -11,8 +10,7 @@ public interface AuthenticationStrategy {
 
     default void setAuthenticationToken(Object token){}
 
-    default <T> ResponseEntity<T> executeAuthenticatedRequest(RequestExecutor executor, RequestEntity<?> request, Class<T> responseType) {
-        return executor.execute(request,responseType);
+    default <T> ResponseEntity<T> executeAuthenticatedRequest(ExecutableRequest<T> request) {
+        return request.execute();
     }
-
 }

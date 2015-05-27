@@ -1,3 +1,4 @@
+import org.restler.Service
 import org.restler.factory.CGLibClientFactory
 import org.restler.factory.ControllerMethodExecutor
 import spock.lang.Specification
@@ -7,8 +8,8 @@ import spock.lang.Specification
 class MethodDescriptionProducingSpec extends Specification{
 
     def executor = Mock(ControllerMethodExecutor);
-    def factory = new CGLibClientFactory(executor);
-    def client = factory.produce(Greeter.class);
+    def service = new Service(new CGLibClientFactory(executor));
+    def client = service.client(Greeter.class);
 
     def "interceptor calls executor"(){
 
