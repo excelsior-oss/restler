@@ -14,7 +14,7 @@ public class Service {
         this.factory = factory;
     }
 
-    public <C> C produce(Class<C> type){
+    public <C> C client(Class<C> type){
         return factory.produce(type);
     }
 

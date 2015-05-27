@@ -9,7 +9,7 @@ class MethodDescriptionProducingSpec extends Specification{
 
     def executor = Mock(ControllerMethodExecutor);
     def service = new Service(new CGLibClientFactory(executor));
-    def client = service.produce(Greeter.class);
+    def client = service.client(Greeter.class);
 
     def "interceptor calls executor"(){
 

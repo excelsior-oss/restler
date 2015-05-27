@@ -12,9 +12,9 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
     private static final String COOKIE_HEADER = "Set-Cookie";
 
     protected String urlString;
-    protected String loginParameterName = "login";
+    protected String loginParameterName = "j_username";
     protected String loginParameterValue;
-    protected String passwordParameterName = "password";
+    protected String passwordParameterName = "j_password";
     protected String passwordParameterValue;
     protected String cookieName = "JSESSIONID";
 
@@ -25,6 +25,12 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
         this.loginParameterValue = login;
         this.passwordParameterValue = password;
         restOperations = new RestTemplate();
+    }
+
+    public FormAuthorizationStrategy(String url, String login, String loginParameterName, String password, String passwordParameterName) {
+        this(url,login,password);
+        this.loginParameterName = loginParameterName;
+        this.passwordParameterName = passwordParameterName;
     }
 
     @Override
