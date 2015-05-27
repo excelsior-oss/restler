@@ -10,9 +10,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.Map;
 
-/**
- * Created by pasa on 19.02.2015.
- */
 public class HttpControllerMethodExecutor implements ControllerMethodExecutor {
 
     private ServiceConfig serviceConfig;
