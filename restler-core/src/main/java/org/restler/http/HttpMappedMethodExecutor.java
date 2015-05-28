@@ -1,8 +1,8 @@
 package org.restler.http;
 
 import org.restler.ServiceConfig;
-import org.restler.factory.ControllerMethodDescription;
-import org.restler.factory.ControllerMethodExecutor;
+import org.restler.client.MappedMethodDescription;
+import org.restler.client.MappedMethodExecutor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -10,11 +10,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.Map;
 
-public class HttpControllerMethodExecutor implements ControllerMethodExecutor {
+public class HttpMappedMethodExecutor implements MappedMethodExecutor {
 
     private ServiceConfig serviceConfig;
 
-    public HttpControllerMethodExecutor(ServiceConfig config){
+    public HttpMappedMethodExecutor(ServiceConfig config){
         this.serviceConfig = config;
     }
 
@@ -24,7 +24,7 @@ public class HttpControllerMethodExecutor implements ControllerMethodExecutor {
     }
 
     @Override
-    public <T> T execute(ControllerMethodDescription<T> method, Object requestBody, Map<String, ?> pathVariables, MultiValueMap<String, String> requestParams) {
+    public <T> T execute(MappedMethodDescription<T> method, Object requestBody, Map<String, ?> pathVariables, MultiValueMap<String, String> requestParams) {
 
         URI target = UriComponentsBuilder.fromHttpUrl(serviceConfig.getBaseUrl()).path(method.getUriTemplate()).queryParams(requestParams).buildAndExpand(pathVariables).toUri();
 

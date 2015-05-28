@@ -4,7 +4,7 @@ import org.restler.http.RequestExecutor;
 import org.restler.http.security.authentication.AuthenticationStrategy;
 
 /**
- * Created by pasa on 19.02.2015.
+ * Description of a service.
  */
 public class ServiceConfig {
 

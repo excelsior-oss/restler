@@ -10,7 +10,7 @@ class SimpleTest extends Specification {
 
     Service service = (new ServiceBuilder("http://localhost:8080")).useAuthenticationStrategy(new CookieBasedAuthenticationStrategy()).build();
 
-    def controller = service.client(Controller.class);
+    def controller = service.produceClient(Controller.class);
 
     def "test unsecured get" () {
         expect:
@@ -25,5 +25,5 @@ class SimpleTest extends Specification {
         then:
             "Secure OK" == controller.securedGet()
     }
-    
+
 }
