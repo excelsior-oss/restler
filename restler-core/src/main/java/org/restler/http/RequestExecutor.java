@@ -4,7 +4,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 
 /**
- * Created by pasa on 22.05.2015.
+ * Implementations execute HTTP(S) requests returning HTTP(S) responses.
  */
 public interface RequestExecutor {
 

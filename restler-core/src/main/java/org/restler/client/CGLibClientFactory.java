@@ -1,4 +1,4 @@
-package org.restler.factory;
+package org.restler.client;
 
 import org.restler.ServiceConfig;
 import org.springframework.cglib.proxy.Enhancer;
@@ -21,15 +21,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by pasa on 14.04.2015.
+ * A CGLib implementation of {@link ClientFactory} that uses {@link MappedMethodExecutor} for execution client methods.
  */
 public class CGLibClientFactory implements ClientFactory {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
-    private ControllerMethodExecutor executor;
+    private MappedMethodExecutor executor;
 
-    public CGLibClientFactory(ControllerMethodExecutor executor) {
+    public CGLibClientFactory(MappedMethodExecutor executor) {
         this.executor = executor;
     }
 
@@ -39,16 +39,16 @@ public class CGLibClientFactory implements ClientFactory {
     }
 
     @Override
-    public <C> C produce(Class<C> type) {
+    public <C> C produceClient(Class<C> controllerClass) {
 
-        if (type.getDeclaredAnnotation(Controller.class) == null && type.getDeclaredAnnotation(RestController.class) == null) {
+        if (controllerClass.getDeclaredAnnotation(Controller.class) == null && controllerClass.getDeclaredAnnotation(RestController.class) == null) {
             throw new IllegalArgumentException("Not a controller");
         }
 
         MethodInterceptor interceptor = new ControllerMethodInterceptor();
 
         Enhancer enhancer = new Enhancer();
-        enhancer.setSuperclass(type);
+        enhancer.setSuperclass(controllerClass);
         enhancer.setCallback(interceptor);
         C client = (C) enhancer.create();
 
@@ -60,7 +60,7 @@ public class CGLibClientFactory implements ClientFactory {
         @Override
         public Object intercept(Object o, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
 
-            ControllerMethodDescription<?> description = getDescription(method);
+            MappedMethodDescription<?> description = getDescription(method);
 
             Object requestBody = null;
             Map<String, Object> pathVariables = new HashMap<>();
@@ -97,7 +97,7 @@ public class CGLibClientFactory implements ClientFactory {
             return executor.execute(description, requestBody, pathVariables,requestParams);
         }
 
-        private ControllerMethodDescription<?> getDescription(Method method){
+        private MappedMethodDescription<?> getDescription(Method method){
 
             RequestMapping controllerMapping = method.getDeclaringClass().getDeclaredAnnotation(RequestMapping.class);
             RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
@@ -128,7 +128,7 @@ public class CGLibClientFactory implements ClientFactory {
 
             Class<?> resultType =  method.getReturnType();
 
-            return new ControllerMethodDescription<>(uriTemplate,resultType, httpMethod, expectedStatus);
+            return new MappedMethodDescription<>(uriTemplate,resultType, httpMethod, expectedStatus);
         }
 
         private String getMappedUriString(RequestMapping mapping){
