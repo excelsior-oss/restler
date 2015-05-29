@@ -30,7 +30,7 @@ public class HttpMappedMethodExecutor implements MappedMethodExecutor {
 
         ExecutableRequest<T> request = new ExecutableRequest<>(target,method.getHttpMethod(), requestBody,serviceConfig.getRequestExecutor(),method.getReturnType());
 
-        ResponseEntity<T> response = serviceConfig.getAuthenticationStrategy().executeAuthenticatedRequest(request);
+        ResponseEntity<T> response = serviceConfig.getAuthenticationStrategy().authenticatedAndExecute(request, serviceConfig);
 
         return response.getBody();
     }
