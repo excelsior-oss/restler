@@ -2,9 +2,9 @@ package org.restler;
 
 import org.restler.client.CGLibClientFactory;
 import org.restler.client.CachingClientFactory;
-import org.restler.http.HttpMappedMethodExecutor;
-import org.restler.http.RequestExecutor;
-import org.restler.http.RestOperationsRequestExecutor;
+import org.restler.http.HttpServiceMethodExecutor;
+import org.restler.http.HttpRequestExecutor;
+import org.restler.http.RestOperationsHttpRequestExecutor;
 import org.restler.http.security.authentication.AuthenticationStrategy;
 import org.restler.http.security.authentication.NoAuthenticationStrategy;
 import org.springframework.web.client.RestTemplate;
@@ -15,14 +15,14 @@ import org.springframework.web.client.RestTemplate;
 public class ServiceBuilder {
 
     private String baseUrl;
-    private RequestExecutor requestExecutor = new RestOperationsRequestExecutor(new RestTemplate());
+    private HttpRequestExecutor requestExecutor = new RestOperationsHttpRequestExecutor(new RestTemplate());
     private AuthenticationStrategy authenticationStrategy = new NoAuthenticationStrategy();
 
     public ServiceBuilder(String baseUrl) {
             this.baseUrl = baseUrl;
     }
 
-    public ServiceBuilder useRequestExecutor(RequestExecutor requestExecutor){
+    public ServiceBuilder useRequestExecutor(HttpRequestExecutor requestExecutor){
         this.requestExecutor = requestExecutor;
         return this;
     }
@@ -34,7 +34,7 @@ public class ServiceBuilder {
 
     public Service build(){
         ServiceConfig config = new ServiceConfig(baseUrl,requestExecutor,authenticationStrategy);
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpMappedMethodExecutor(config))));
+        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodExecutor(config))));
     }
 
 }

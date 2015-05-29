@@ -16,13 +16,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-class InvocationMapper implements BiFunction<Method, Object[], MappedMethodInvocation<?>> {
+/**
+ * Maps a class method invocation to a service method invocation.
+ */
+public class MethodInvocationMapper implements BiFunction<Method, Object[], ServiceMethodInvocation<?>> {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
     @Override
-    public MappedMethodInvocation<?> apply(Method method, Object[] args) {
-        MappedMethodDescription<?> description = getDescription(method);
+    public ServiceMethodInvocation<?> apply(Method method, Object[] args) {
+        ServiceMethodDescription<?> description = getDescription(method);
 
         Object requestBody = null;
         Map<String, Object> pathVariables = new HashMap<>();
@@ -56,10 +59,10 @@ class InvocationMapper implements BiFunction<Method, Object[], MappedMethodInvoc
             }
         }
 
-        return new MappedMethodInvocation<>(description, requestBody, pathVariables,requestParams);
+        return new ServiceMethodInvocation<>(description, requestBody, pathVariables,requestParams);
     }
 
-    private MappedMethodDescription<?> getDescription(Method method){
+    private ServiceMethodDescription<?> getDescription(Method method){
 
         RequestMapping controllerMapping = method.getDeclaringClass().getDeclaredAnnotation(RequestMapping.class);
         RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
@@ -90,7 +93,7 @@ class InvocationMapper implements BiFunction<Method, Object[], MappedMethodInvoc
 
         Class<?> resultType =  method.getReturnType();
 
-        return new MappedMethodDescription<>(uriTemplate,resultType, httpMethod, expectedStatus);
+        return new ServiceMethodDescription<>(uriTemplate,resultType, httpMethod, expectedStatus);
     }
 
     private String getMappedUriString(RequestMapping mapping){

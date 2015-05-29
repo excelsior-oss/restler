@@ -22,6 +22,12 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
 
     protected RestOperations restOperations;
 
+    /**
+     * Creates a strategy that uses default parameter names.
+     * @param url url of the login service.
+     * @param login login of the user to be passed as <tt>j_username</tt>
+     * @param password password of the user to be passed as <tt>j_password</tt>
+     */
     public FormAuthorizationStrategy(String url, String login, String password) {
         this.urlString = url;
         this.loginParameterValue = login;
@@ -29,6 +35,14 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
         restOperations = new RestTemplate();
     }
 
+    /**
+     * Creates a strategy that uses custom parameter names.
+     * @param url url of the login service.
+     * @param login login of the user
+     * @param loginParameterName name of the form parameter holding the <tt>login</tt> value
+     * @param password password of the user
+     * @param passwordParameterName name of the form parameter holding the <tt>password</tt> value
+     */
     public FormAuthorizationStrategy(String url, String login, String loginParameterName, String password, String passwordParameterName) {
         this(url,login,password);
         this.loginParameterName = loginParameterName;

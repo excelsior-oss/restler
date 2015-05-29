@@ -1,6 +1,6 @@
 package org.restler;
 
-import org.restler.http.RequestExecutor;
+import org.restler.http.HttpRequestExecutor;
 import org.restler.http.security.authentication.AuthenticationContext;
 import org.restler.http.security.authentication.AuthenticationStrategy;
 
@@ -10,11 +10,11 @@ import org.restler.http.security.authentication.AuthenticationStrategy;
 public class ServiceConfig implements AuthenticationContext {
 
     private final String baseUrl;
-    private final RequestExecutor requestExecutor;
+    private final HttpRequestExecutor requestExecutor;
     private final AuthenticationStrategy authenticationStrategy;
     private Object authenticationToken;
 
-    public ServiceConfig(String baseUrl, RequestExecutor requestExecutor, AuthenticationStrategy authenticationStrategy) {
+    public ServiceConfig(String baseUrl, HttpRequestExecutor requestExecutor, AuthenticationStrategy authenticationStrategy) {
         this.baseUrl = baseUrl;
         this.requestExecutor = requestExecutor;
         this.authenticationStrategy = authenticationStrategy;
@@ -24,7 +24,7 @@ public class ServiceConfig implements AuthenticationContext {
         return baseUrl;
     }
 
-    public RequestExecutor getRequestExecutor() {
+    public HttpRequestExecutor getRequestExecutor() {
         return requestExecutor;
     }
 

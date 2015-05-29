@@ -5,13 +5,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestOperations;
 
 /**
- * Created by pasa on 22.05.2015.
+ * Implementation delegating request execution to a {@link RestOperations} instance.
  */
-public class RestOperationsRequestExecutor implements RequestExecutor {
+public class RestOperationsHttpRequestExecutor implements HttpRequestExecutor {
 
     private final RestOperations restOperations;
 
-    public RestOperationsRequestExecutor(RestOperations restOperations){
+    /**
+     * Creates instance delegating execution to the given instance.
+     * @param restOperations an instance responsible for execution requests.
+     */
+    public RestOperationsHttpRequestExecutor(RestOperations restOperations){
         this.restOperations = restOperations;
     }
 

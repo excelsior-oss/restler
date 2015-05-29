@@ -4,7 +4,7 @@ import org.restler.http.ExecutableRequest;
 import org.springframework.http.ResponseEntity;
 
 /**
- * AuthenticationStrategy implementations makes {@link ExecutableRequest} execution authorized by authenticating the request. Together with {@link org.restler.http.security.authorization.AuthorizationStrategy}, it is used to maintain a secured session.
+ * AuthenticationStrategy implementations make {@link ExecutableRequest} execution authorized by authenticating the request. Together with {@link org.restler.http.security.authorization.AuthorizationStrategy}, it is used to maintain a secured session.
  */
 public interface AuthenticationStrategy {
 

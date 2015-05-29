@@ -10,14 +10,14 @@ import java.lang.reflect.Method;
 import java.util.function.BiFunction;
 
 /**
- * A CGLib implementation of {@link ClientFactory} that uses {@link MappedMethodExecutor} for execution client methods.
+ * A CGLib implementation of {@link ClientFactory} that uses {@link ServiceMethodExecutor} for execution client methods.
  */
 public class CGLibClientFactory implements ClientFactory {
 
-    private MappedMethodExecutor executor;
-    private BiFunction<Method, Object[], MappedMethodInvocation<?>> invocationMapper = new InvocationMapper();
+    private ServiceMethodExecutor executor;
+    private BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper = new MethodInvocationMapper();
 
-    public CGLibClientFactory(MappedMethodExecutor executor) {
+    public CGLibClientFactory(ServiceMethodExecutor executor) {
         this.executor = executor;
     }
 
@@ -48,9 +48,9 @@ public class CGLibClientFactory implements ClientFactory {
         @Override
         public Object invoke(Object o, Method method, Object[] args) throws Throwable {
 
-            MappedMethodInvocation<?> invocation = invocationMapper.apply(method, args);
+            ServiceMethodInvocation<?> invocation = invocationMapper.apply(method, args);
 
-            return executor.execute(invocation.getMethod(), invocation.getRequestBody(), invocation.getPathVariables(), invocation.getRequestParams());
+            return executor.execute(invocation);
         }
 
     }
