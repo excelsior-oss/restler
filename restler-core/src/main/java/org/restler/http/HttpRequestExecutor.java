@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 /**
  * Implementations execute HTTP(S) requests returning HTTP(S) responses.
  */
-public interface RequestExecutor {
+public interface HttpRequestExecutor {
 
     <T> ResponseEntity<T> execute(RequestEntity<?> request, Class<T> responseType);
 

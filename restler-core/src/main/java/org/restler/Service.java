@@ -25,6 +25,6 @@ public class Service implements ClientFactory {
     }
 
     public void authorize(AuthorizationStrategy authorizationStrategy){
-        factory.getServiceConfig().getAuthenticationStrategy().setAuthenticationToken(authorizationStrategy.authorize());
+        factory.getServiceConfig().setAuthenticationToken(authorizationStrategy.authorize());
     }
 }

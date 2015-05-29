@@ -13,7 +13,6 @@ public class CookieBasedAuthenticationStrategy implements AuthenticationStrategy
     protected static final String JSESSIONID = "JSESSIONID";
 
     protected String cookieName;
-    protected String cookieValue;
 
     /**
      * Creates the strategy that uses JSESSIONID cookie.
@@ -29,11 +28,9 @@ public class CookieBasedAuthenticationStrategy implements AuthenticationStrategy
         this.cookieName = cookieName;
     }
 
-    public void setAuthenticationToken(Object token){
-        cookieValue = token == null ? null : token.toString();
-    }
-
-    public <T> ResponseEntity<T> executeAuthenticatedRequest(ExecutableRequest<T> request) {
+    public <T> ResponseEntity<T> authenticatedAndExecute(ExecutableRequest<T> request, AuthenticationContext context) {
+        Object token = context.getAuthenticationToken();
+        String cookieValue = token == null ? null : token.toString();
         if (!StringUtils.isEmpty(cookieValue)) {
             request.addHeader(HttpHeaders.COOKIE, cookieName + "=" + cookieValue +";");
         }
