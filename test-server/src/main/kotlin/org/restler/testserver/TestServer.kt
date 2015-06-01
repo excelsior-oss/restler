@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import
 
 EnableAutoConfiguration
 Configuration
-Import(javaClass<SecurityConfig>())
+Import(SecurityConfig::class)
 open class TestServer {
 
     Bean open fun controller() = Controller()
