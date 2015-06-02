@@ -12,7 +12,7 @@ public class SimpleHttpRequestExecutor implements HttpRequestExecutor {
         this.restOperations = restOperations;
     }
 
-    public <T> ResponseEntity<T> execute(ExecutableRequest<T> executableRequest){
+    public <T> ResponseEntity<T> execute(ExecutableRequest<T> executableRequest) {
         RequestEntity<?> requestEntity = executableRequest.toRequestEntity();
 
         return restOperations.exchange(requestEntity, executableRequest.getReturnType());

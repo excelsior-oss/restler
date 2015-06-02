@@ -6,12 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 
-public class ReauthorizingReqExecutor implements HttpRequestExecutor {
+public class ReauthorizingRequestExecutor implements HttpRequestExecutor {
 
     private final HttpRequestExecutor delegate;
     private final AuthorizationContext context;
 
-    public ReauthorizingReqExecutor(HttpRequestExecutor delegate, AuthorizationContext context) {
+    public ReauthorizingRequestExecutor(HttpRequestExecutor delegate, AuthorizationContext context) {
         this.delegate = delegate;
         this.context = context;
     }

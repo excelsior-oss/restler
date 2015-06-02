@@ -39,7 +39,7 @@ public class ExecutableRequest<T> {
         return returnType;
     }
 
-    public ExecutableRequest<T> setHeader(String name, String value){
+    public ExecutableRequest<T> setHeader(String name, String value) {
         MultiValueMap<String, String> newHeaders = new LinkedMultiValueMap<>(headers);
         newHeaders.set(name, value);
         return new ExecutableRequest<>(url, httpMethod, newHeaders, body, returnType);

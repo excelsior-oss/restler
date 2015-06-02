@@ -7,6 +7,7 @@ public interface AuthorizationStrategy {
 
     /**
      * Provides an authentication token.
+     *
      * @return a token object.
      */
     Object authorize();

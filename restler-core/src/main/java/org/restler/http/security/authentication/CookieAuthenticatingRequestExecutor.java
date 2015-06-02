@@ -19,16 +19,18 @@ public class CookieAuthenticatingRequestExecutor implements HttpRequestExecutor 
 
     /**
      * Creates the strategy that uses JSESSIONID cookie.
-     * @param context
+     *
      * @param executor
+     * @param context
      */
-    public CookieAuthenticatingRequestExecutor(AuthenticationContext context, HttpRequestExecutor executor) {
+    public CookieAuthenticatingRequestExecutor(HttpRequestExecutor executor, AuthenticationContext context) {
         this(JSESSIONID, context, executor);
     }
 
     /**
      * Creates the strategy that uses a custom cookie.
-     *  @param cookieName the name of the cookie.
+     *
+     * @param cookieName the name of the cookie.
      * @param context
      * @param executor
      */

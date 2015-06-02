@@ -3,10 +3,12 @@ package org.restler;
 import org.restler.client.CGLibClientFactory;
 import org.restler.client.CachingClientFactory;
 import org.restler.client.MethodInvocationMapper;
-import org.restler.http.*;
+import org.restler.http.HttpRequestExecutor;
+import org.restler.http.HttpServiceMethodExecutor;
+import org.restler.http.SimpleHttpRequestExecutor;
 import org.restler.http.security.authentication.CookieAuthenticatingRequestExecutor;
 import org.restler.http.security.authorization.AuthorizationStrategy;
-import org.restler.http.security.authorization.ReauthorizingReqExecutor;
+import org.restler.http.security.authorization.ReauthorizingRequestExecutor;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Objects;
@@ -36,14 +38,16 @@ public class ServiceBuilder {
         this.authorizationStrategy = authorizationStrategy;
         return this;
     }
+
     public ServiceBuilder useCookieBasedAuthentication() {
-        authenticationExecutor = ((delegate, config) -> new CookieAuthenticatingRequestExecutor(config, delegate));
+        Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
+        authenticationExecutor = CookieAuthenticatingRequestExecutor::new;
         return this;
     }
 
     public ServiceBuilder reauthorizeRequestsOnForbidden() {
         Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
-        reauthorizingExecutor = ((delegate, config) -> new ReauthorizingReqExecutor(delegate, config));
+        reauthorizingExecutor = ReauthorizingRequestExecutor::new;
         return this;
     }
 

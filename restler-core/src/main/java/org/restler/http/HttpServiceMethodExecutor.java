@@ -12,7 +12,7 @@ public class HttpServiceMethodExecutor implements ServiceMethodExecutor {
 
     private final HttpRequestExecutor requestExecutor;
 
-    public HttpServiceMethodExecutor(HttpRequestExecutor requestExecutor){
+    public HttpServiceMethodExecutor(HttpRequestExecutor requestExecutor) {
         this.requestExecutor = requestExecutor;
     }
 

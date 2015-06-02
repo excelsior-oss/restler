@@ -16,11 +16,11 @@ public class Service {
         this.authorizationContext = authorizationContext;
     }
 
-    public <C> C produceClient(Class<C> controllerClass){
+    public <C> C produceClient(Class<C> controllerClass) {
         return factory.produceClient(controllerClass);
     }
 
-    public void authorize(){
+    public void authorize() {
         authorizationContext.retrieveAuthenticationToken();
     }
 }

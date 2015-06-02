@@ -33,9 +33,8 @@ public class CGLibClientFactory implements ClientFactory {
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(controllerClass);
         enhancer.setCallback(handler);
-        C client = (C) enhancer.create();
 
-        return client;
+        return (C) enhancer.create();
     }
 
     private class ControllerMethodInvocationHandler implements InvocationHandler {
