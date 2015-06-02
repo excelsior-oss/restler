@@ -23,6 +23,12 @@ public class MethodInvocationMapper implements BiFunction<Method, Object[], Serv
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
+    private final String baseUrl;
+
+    public MethodInvocationMapper(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
     @Override
     public ServiceMethodInvocation<?> apply(Method method, Object[] args) {
         ServiceMethodDescription<?> description = getDescription(method);
@@ -59,7 +65,7 @@ public class MethodInvocationMapper implements BiFunction<Method, Object[], Serv
             }
         }
 
-        return new ServiceMethodInvocation<>(description, requestBody, pathVariables,requestParams);
+        return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables,requestParams);
     }
 
     private ServiceMethodDescription<?> getDescription(Method method){

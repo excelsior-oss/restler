@@ -1,30 +1,26 @@
 package org.restler;
 
 import org.restler.client.ClientFactory;
-import org.restler.http.security.authorization.AuthorizationStrategy;
+import org.restler.http.security.authorization.AuthorizationContext;
 
 /**
  * Enriches functionality of {@link ClientFactory} with authorization management helper methods.
  */
-public class Service implements ClientFactory {
+public class Service {
 
     private final ClientFactory factory;
+    private final AuthorizationContext serviceConfig;
 
-    public Service(ClientFactory factory) {
+    public Service(ClientFactory factory, AuthorizationContext serviceConfig) {
         this.factory = factory;
+        this.serviceConfig = serviceConfig;
     }
 
-    @Override
     public <C> C produceClient(Class<C> controllerClass){
         return factory.produceClient(controllerClass);
     }
 
-    @Override
-    public ServiceConfig getServiceConfig() {
-        return factory.getServiceConfig();
-    }
-
-    public void authorize(AuthorizationStrategy authorizationStrategy){
-        factory.getServiceConfig().setAuthenticationToken(authorizationStrategy.authorize());
+    public void authorize(){
+        serviceConfig.setAuthenticationToken(serviceConfig.getAuthorizationStrategy().authorize());
     }
 }

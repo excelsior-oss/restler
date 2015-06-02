@@ -6,16 +6,22 @@ import java.util.Map;
 
 public class ServiceMethodInvocation<T> {
 
-    private ServiceMethodDescription<T> method;
-    private Object requestBody;
-    private Map<String, ?> pathVariables;
-    private MultiValueMap<String, String> requestParams;
+    private final String baseUrl;
+    private final ServiceMethodDescription<T> method;
+    private final Object requestBody;
+    private final Map<String, ?> pathVariables;
+    private final MultiValueMap<String, String> requestParams;
 
-    public ServiceMethodInvocation(ServiceMethodDescription<T> method, Object requestBody, Map<String, ?> pathVariables, MultiValueMap<String, String> requestParams) {
+    public ServiceMethodInvocation(String baseUrl, ServiceMethodDescription<T> method, Object requestBody, Map<String, ?> pathVariables, MultiValueMap<String, String> requestParams) {
+        this.baseUrl = baseUrl;
         this.method = method;
         this.requestBody = requestBody;
         this.pathVariables = pathVariables;
         this.requestParams = requestParams;
+    }
+
+    public String getBaseUrl() {
+        return baseUrl;
     }
 
     public ServiceMethodDescription<T> getMethod() {
@@ -33,4 +39,5 @@ public class ServiceMethodInvocation<T> {
     public MultiValueMap<String, String> getRequestParams() {
         return requestParams;
     }
+
 }

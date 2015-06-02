@@ -1,17 +1,9 @@
 package org.restler.client;
 
-import org.restler.ServiceConfig;
-
 /**
  * ClientFactory implementations produce clients of the associated service, provided by annotated controller types.
  */
 public interface ClientFactory {
-
-    /**
-     * Provides a description of the service associated with the factory.
-     * @return a {@link ServiceConfig} object
-     */
-    ServiceConfig getServiceConfig();
 
     /**
      * Produces a client of the given controller type.

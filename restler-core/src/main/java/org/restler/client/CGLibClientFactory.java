@@ -1,6 +1,5 @@
 package org.restler.client;
 
-import org.restler.ServiceConfig;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.InvocationHandler;
 import org.springframework.stereotype.Controller;
@@ -14,16 +13,12 @@ import java.util.function.BiFunction;
  */
 public class CGLibClientFactory implements ClientFactory {
 
-    private ServiceMethodExecutor executor;
-    private BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper = new MethodInvocationMapper();
+    private final ServiceMethodExecutor executor;
+    private final BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper;
 
-    public CGLibClientFactory(ServiceMethodExecutor executor) {
+    public CGLibClientFactory(ServiceMethodExecutor executor, BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper) {
         this.executor = executor;
-    }
-
-    @Override
-    public ServiceConfig getServiceConfig() {
-        return executor.getServiceConfig();
+        this.invocationMapper = invocationMapper;
     }
 
     @Override

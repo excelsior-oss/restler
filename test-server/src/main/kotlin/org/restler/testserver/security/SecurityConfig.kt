@@ -6,6 +6,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
+import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint
 
 Configuration
 EnableWebSecurity
@@ -20,10 +21,12 @@ public open class SecurityConfig : WebSecurityConfigurerAdapter() {
 
     override fun configure(http: HttpSecurity) {
         http.
+                exceptionHandling().authenticationEntryPoint(Http403ForbiddenEntryPoint()).and().
                 csrf().disable().
                 authorizeRequests().
-                antMatchers("/secured/**").hasRole("USER")
+                antMatchers("/secured/**").hasRole("USER").and()
 
-        http.formLogin();
+        http.
+                formLogin()
     }
 }

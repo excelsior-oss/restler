@@ -59,4 +59,5 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
 
         return responseEntity.getHeaders().get(HttpHeaders.SET_COOKIE).stream().filter( s -> s.startsWith(cookieName+"=")).findAny().map( s -> s.split("[=;]")[1]).get();
     }
+
 }
