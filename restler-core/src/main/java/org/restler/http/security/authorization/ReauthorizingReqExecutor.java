@@ -10,12 +10,10 @@ public class ReauthorizingReqExecutor implements HttpRequestExecutor {
 
     private final HttpRequestExecutor delegate;
     private final AuthorizationContext context;
-    private final AuthorizationStrategy authorizationStrategy;
 
-    public ReauthorizingReqExecutor(HttpRequestExecutor delegate, AuthorizationContext context, AuthorizationStrategy authorizationStrategy) {
+    public ReauthorizingReqExecutor(HttpRequestExecutor delegate, AuthorizationContext context) {
         this.delegate = delegate;
         this.context = context;
-        this.authorizationStrategy = authorizationStrategy;
     }
 
     @Override
@@ -24,11 +22,11 @@ public class ReauthorizingReqExecutor implements HttpRequestExecutor {
         try {
             response = delegate.execute(executableRequest);
         } catch (HttpClientErrorException e) {
-            response = new ResponseEntity<T>(HttpStatus.FORBIDDEN);
+            response = new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         if (response.getStatusCode().value() == HttpStatus.FORBIDDEN.value()) {
-            context.setAuthenticationToken(authorizationStrategy.authorize());
+            context.retrieveAuthenticationToken();
             return delegate.execute(executableRequest);
         }
 

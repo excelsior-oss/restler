@@ -9,11 +9,11 @@ import org.restler.http.security.authorization.AuthorizationContext;
 public class Service {
 
     private final ClientFactory factory;
-    private final AuthorizationContext serviceConfig;
+    private final AuthorizationContext authorizationContext;
 
-    public Service(ClientFactory factory, AuthorizationContext serviceConfig) {
+    Service(ClientFactory factory, AuthorizationContext authorizationContext) {
         this.factory = factory;
-        this.serviceConfig = serviceConfig;
+        this.authorizationContext = authorizationContext;
     }
 
     public <C> C produceClient(Class<C> controllerClass){
@@ -21,6 +21,6 @@ public class Service {
     }
 
     public void authorize(){
-        serviceConfig.setAuthenticationToken(serviceConfig.getAuthorizationStrategy().authorize());
+        authorizationContext.retrieveAuthenticationToken();
     }
 }

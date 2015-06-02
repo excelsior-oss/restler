@@ -22,12 +22,8 @@ class Session implements AuthorizationContext, AuthenticationContext {
     }
 
     @Override
-    public void setAuthenticationToken(Object authenticationToken) {
-        this.authenticationToken = authenticationToken;
+    public void retrieveAuthenticationToken() {
+        this.authenticationToken = authorizationStrategy.authorize();
     }
 
-    @Override
-    public AuthorizationStrategy getAuthorizationStrategy() {
-        return authorizationStrategy;
-    }
 }

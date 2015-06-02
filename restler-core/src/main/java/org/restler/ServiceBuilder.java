@@ -43,20 +43,20 @@ public class ServiceBuilder {
 
     public ServiceBuilder reauthorizeRequestsOnForbidden() {
         Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
-        reauthorizingExecutor = ((delegate, config) -> new ReauthorizingReqExecutor(delegate, config, authorizationStrategy));
+        reauthorizingExecutor = ((delegate, config) -> new ReauthorizingReqExecutor(delegate, config));
         return this;
     }
 
     public Service build() {
         HttpRequestExecutor executor = requestExecutor;
-        Session config = new Session(authorizationStrategy);
+        Session session = new Session(authorizationStrategy);
         if (authenticationExecutor != null) {
-            executor = authenticationExecutor.apply(executor, config);
+            executor = authenticationExecutor.apply(executor, session);
         }
         if (reauthorizingExecutor != null) {
-            executor = reauthorizingExecutor.apply(executor, config);
+            executor = reauthorizingExecutor.apply(executor, session);
         }
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodExecutor(executor), new MethodInvocationMapper(baseUrl))), config);
+        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodExecutor(executor), new MethodInvocationMapper(baseUrl))), session);
     }
 
 }
