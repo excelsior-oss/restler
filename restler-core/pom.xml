@@ -11,7 +11,6 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>org.restler</groupId>
     <artifactId>restler-core</artifactId>
     <version>0.1.0</version>
     <packaging>jar</packaging>

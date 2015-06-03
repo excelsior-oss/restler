@@ -1,7 +1,5 @@
 package org.restler.client;
 
-import org.restler.ServiceConfig;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +13,7 @@ public class CachingClientFactory implements ClientFactory {
 
     /**
      * Creates a caching wrapper of a {@link ClientFactory} instance.
+     *
      * @param factory an instance used for production if there is no cached result for a given input.
      */
     public CachingClientFactory(ClientFactory factory) {
@@ -22,13 +21,8 @@ public class CachingClientFactory implements ClientFactory {
     }
 
     @Override
-    public ServiceConfig getServiceConfig() {
-        return factory.getServiceConfig();
-    }
-
-    @Override
     public <C> C produceClient(Class<C> controllerClass) {
-        if (clients.containsKey(controllerClass)){
+        if (clients.containsKey(controllerClass)) {
             return (C) clients.get(controllerClass);
         } else {
             C client = factory.produceClient(controllerClass);

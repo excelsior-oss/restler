@@ -1,29 +1,43 @@
 package org.restler.itest
+
 import org.restler.Service
 import org.restler.ServiceBuilder
-import org.restler.http.security.authentication.CookieBasedAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.testserver.Controller
 import spock.lang.Specification
 
 class SimpleTest extends Specification {
 
-    Service service = (new ServiceBuilder("http://localhost:8080")).useAuthenticationStrategy(new CookieBasedAuthenticationStrategy()).build();
+    def auth = new FormAuthorizationStrategy("http://localhost:8080/login", "user", "username", "password", "password")
+    Service service = new ServiceBuilder("http://localhost:8080").
+            useCookieBasedAuthentication().
+            useAuthorizationStrategy(auth).
+            reauthorizeRequestsOnForbidden().
+            build();
 
     def controller = service.produceClient(Controller.class);
 
-    def "test unsecured get" () {
+    def "test unsecured get"() {
         expect:
-            "OK" == controller.publicGet()
+        "OK" == controller.publicGet()
     }
 
-    def "test secured get authorized" () {
-        given:
-            def auth = new FormAuthorizationStrategy("http://localhost:8080/login","user","username", "password","password")
+    def "test secured get authorized"() {
         when:
-            service.authorize(auth);
+        service.authorize();
         then:
-            "Secure OK" == controller.securedGet()
+        "Secure OK" == controller.securedGet()
+    }
+
+    def "test reauthorization"() {
+        given:
+        service.authorize()
+        def ctrl = service.produceClient(Controller)
+        ctrl.logout()
+        when:
+        def response = ctrl.securedGet()
+        then:
+        response == "Secure OK"
     }
 
 }
