@@ -10,8 +10,8 @@ class SimpleTest extends Specification {
 
     def auth = new FormAuthorizationStrategy("http://localhost:8080/login", "user", "username", "password", "password")
     Service service = new ServiceBuilder("http://localhost:8080").
-            useCookieBasedAuthentication().
             useAuthorizationStrategy(auth).
+            useCookieBasedAuthentication().
             reauthorizeRequestsOnForbidden().
             build();
 

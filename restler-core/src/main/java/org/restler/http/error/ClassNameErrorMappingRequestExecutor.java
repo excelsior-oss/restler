@@ -1,10 +1,8 @@
 package org.restler.http.error;
 
-import org.jcp.xml.dsig.internal.dom.Utils;
 import org.restler.http.ExecutableRequest;
 import org.restler.http.HttpExecutionException;
 import org.restler.http.HttpRequestExecutor;
-import org.restler.util.Util;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpServerErrorException;
