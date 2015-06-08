@@ -8,7 +8,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>org.restler</groupId>
-        <version>0.1.0</version>
+        <version>0.1.0-SNAPSHOT</version>
     </parent>
 
     <properties>

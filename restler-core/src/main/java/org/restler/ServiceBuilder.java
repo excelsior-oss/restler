@@ -6,6 +6,7 @@ import org.restler.client.MethodInvocationMapper;
 import org.restler.http.HttpRequestExecutor;
 import org.restler.http.HttpServiceMethodExecutor;
 import org.restler.http.SimpleHttpRequestExecutor;
+import org.restler.http.error.ClassNameErrorMappingRequestExecutor;
 import org.restler.http.security.authentication.CookieAuthenticatingRequestExecutor;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.ReauthorizingRequestExecutor;
@@ -23,6 +24,7 @@ public class ServiceBuilder {
     private HttpRequestExecutor requestExecutor = new SimpleHttpRequestExecutor(new RestTemplate());
     private BiFunction<HttpRequestExecutor, Session, HttpRequestExecutor> authenticationExecutor;
     private BiFunction<HttpRequestExecutor, Session, HttpRequestExecutor> reauthorizingExecutor;
+    private BiFunction<HttpRequestExecutor, Session, HttpRequestExecutor> exceptionMappingExecutor;
     private AuthorizationStrategy authorizationStrategy;
 
     public ServiceBuilder(String baseUrl) {
@@ -51,9 +53,17 @@ public class ServiceBuilder {
         return this;
     }
 
+    public ServiceBuilder useClassNameExceptionMapper() {
+        exceptionMappingExecutor = ((delegate, config) -> new ClassNameErrorMappingRequestExecutor(delegate));
+        return this;
+    }
+
     public Service build() {
         HttpRequestExecutor executor = requestExecutor;
         Session session = new Session(authorizationStrategy);
+        if (exceptionMappingExecutor != null) {
+            executor = exceptionMappingExecutor.apply(executor, session);
+        }
         if (authenticationExecutor != null) {
             executor = authenticationExecutor.apply(executor, session);
         }
