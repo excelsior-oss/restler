@@ -8,7 +8,9 @@ import org.restler.http.HttpServiceMethodExecutor;
 import org.restler.http.SimpleHttpRequestExecutor;
 import org.restler.http.error.ClassNameErrorMappingRequestExecutor;
 import org.restler.http.security.authentication.CookieAuthenticatingRequestExecutor;
+import org.restler.http.security.authentication.HTTPBasicAuthenticationRequestExecutor;
 import org.restler.http.security.authorization.AuthorizationStrategy;
+import org.restler.http.security.authorization.BasicAuthorizationStrategy;
 import org.restler.http.security.authorization.ReauthorizingRequestExecutor;
 import org.springframework.web.client.RestTemplate;
 
@@ -19,6 +21,7 @@ import java.util.function.BiFunction;
  * Helper class for building services.
  */
 public class ServiceBuilder {
+
 
     private String baseUrl;
     private HttpRequestExecutor requestExecutor = new SimpleHttpRequestExecutor(new RestTemplate());
@@ -44,6 +47,14 @@ public class ServiceBuilder {
     public ServiceBuilder useCookieBasedAuthentication() {
         Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
         authenticationExecutor = CookieAuthenticatingRequestExecutor::new;
+        return this;
+    }
+
+    public ServiceBuilder useHTTPBasicAuthentication(String login, String password) {
+        AuthorizationStrategy basicAuth = new BasicAuthorizationStrategy(login, password);
+        useAuthorizationStrategy(basicAuth);
+
+        authenticationExecutor = HTTPBasicAuthenticationRequestExecutor::new;
         return this;
     }
 
