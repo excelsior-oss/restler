@@ -1,14 +1,15 @@
 package org.restler.testserver
 
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.*
-import java.io.PrintStream
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.context.request.async.DeferredResult
 import java.io.PrintWriter
 import java.io.StringWriter
 import javax.servlet.http.HttpServletRequest
-import kotlin.reflect.KClass
+import kotlin.concurrent.thread
 
 RestController
 public open class Controller {
@@ -23,6 +24,18 @@ public open class Controller {
     open fun logout(): String {
         SecurityContextHolder.getContext().getAuthentication().setAuthenticated(false)
         return "OK"
+    }
+
+    RequestMapping("getDeferred")
+    open fun deferredGet(): DeferredResult<String> {
+        var deferredResult = DeferredResult<String>();
+
+        thread {
+            Thread.sleep(1000)
+            deferredResult.setResult("Deferred OK");
+        }
+
+        return deferredResult;
     }
 
     RequestMapping("throwException")
