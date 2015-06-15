@@ -20,7 +20,7 @@ class SimpleTest extends Specification {
             build();
 
     Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
-            useHTTPBasicAuthentication(login, password).
+            useHttpBasicAuthentication(login, password).
             build();
 
     def controller = serviceWithFormAuth.produceClient(Controller.class);

@@ -8,7 +8,7 @@ import org.restler.http.HttpServiceMethodExecutor;
 import org.restler.http.SimpleHttpRequestExecutor;
 import org.restler.http.error.ClassNameErrorMappingRequestExecutor;
 import org.restler.http.security.authentication.CookieAuthenticatingRequestExecutor;
-import org.restler.http.security.authentication.HTTPBasicAuthenticationRequestExecutor;
+import org.restler.http.security.authentication.HttpBasicAuthenticatingRequestExecutor;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
 import org.restler.http.security.authorization.ReauthorizingRequestExecutor;
@@ -21,7 +21,6 @@ import java.util.function.BiFunction;
  * Helper class for building services.
  */
 public class ServiceBuilder {
-
 
     private String baseUrl;
     private HttpRequestExecutor requestExecutor = new SimpleHttpRequestExecutor(new RestTemplate());
@@ -50,11 +49,11 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder useHTTPBasicAuthentication(String login, String password) {
+    public ServiceBuilder useHttpBasicAuthentication(String login, String password) {
         AuthorizationStrategy basicAuth = new BasicAuthorizationStrategy(login, password);
         useAuthorizationStrategy(basicAuth);
 
-        authenticationExecutor = HTTPBasicAuthenticationRequestExecutor::new;
+        authenticationExecutor = HttpBasicAuthenticatingRequestExecutor::new;
         return this;
     }
 

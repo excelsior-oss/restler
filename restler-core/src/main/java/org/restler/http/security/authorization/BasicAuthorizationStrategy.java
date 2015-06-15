@@ -2,13 +2,10 @@ package org.restler.http.security.authorization;
 
 import java.util.Base64;
 
-/**
- * Created by oleg on 15.06.2015.
- */
 public class BasicAuthorizationStrategy implements AuthorizationStrategy {
 
-    protected String loginValue;
-    protected String passwordValue;
+    private String loginValue;
+    private String passwordValue;
 
     public BasicAuthorizationStrategy(String login, String password) {
         loginValue = login;
@@ -18,8 +15,7 @@ public class BasicAuthorizationStrategy implements AuthorizationStrategy {
     @Override
     public Object authorize() {
         String loginPassword = loginValue + ":" + passwordValue;
-        String loginPasswordBase64 = Base64.getMimeEncoder().encodeToString(loginPassword.getBytes());
 
-        return loginPasswordBase64;
+        return Base64.getMimeEncoder().encodeToString(loginPassword.getBytes());
     }
 }

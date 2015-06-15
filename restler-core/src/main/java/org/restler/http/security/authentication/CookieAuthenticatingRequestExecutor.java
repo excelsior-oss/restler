@@ -7,7 +7,7 @@ import org.springframework.util.StringUtils;
 /**
  * The implementation that authenticates a request adding a cookie.
  */
-public class CookieAuthenticatingRequestExecutor extends HeaderAuthenticationRequestExecutor {
+public class CookieAuthenticatingRequestExecutor extends HeaderAuthenticatingRequestExecutor {
 
     protected static final String JSESSIONID = "JSESSIONID";
 
@@ -20,8 +20,7 @@ public class CookieAuthenticatingRequestExecutor extends HeaderAuthenticationReq
      * @param context
      */
     public CookieAuthenticatingRequestExecutor(HttpRequestExecutor executor, AuthenticationContext context) {
-        super(executor, context);
-        cookieName = JSESSIONID;
+        this(JSESSIONID, context, executor);
     }
 
     /**

@@ -3,12 +3,9 @@ package org.restler.http.security.authentication;
 import org.restler.http.HttpRequestExecutor;
 import org.springframework.http.HttpHeaders;
 
-/**
- * Created by oleg on 15.06.2015.
- */
-public class HTTPBasicAuthenticationRequestExecutor extends HeaderAuthenticationRequestExecutor {
+public class HttpBasicAuthenticatingRequestExecutor extends HeaderAuthenticatingRequestExecutor {
 
-    public HTTPBasicAuthenticationRequestExecutor(HttpRequestExecutor executor, AuthenticationContext context) {
+    public HttpBasicAuthenticatingRequestExecutor(HttpRequestExecutor executor, AuthenticationContext context) {
         super(executor, context);
     }
 
