@@ -4,6 +4,7 @@ import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.InvocationHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import java.lang.reflect.Method;
 import java.util.function.BiFunction;
@@ -44,8 +45,17 @@ public class CGLibClientFactory implements ClientFactory {
 
             ServiceMethodInvocation<?> invocation = invocationMapper.apply(method, args);
 
-            return executor.execute(invocation);
-        }
+            Class resultType = method.getReturnType();
 
+            Object result = executor.execute(invocation);
+
+            if (resultType == DeferredResult.class) {
+                DeferredResult deferredResult = new DeferredResult();
+                deferredResult.setResult(result);
+                return deferredResult;
+            }
+
+            return result;
+        }
     }
 }

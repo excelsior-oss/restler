@@ -36,6 +36,11 @@ class SimpleTest extends Specification {
         "OK" == controller.publicGet()
     }
 
+    def "test deferred get"() {
+        expect:
+        "Deferred OK" == controller.deferredGet().getResult()
+    }
+
     def "test secured get authorized with form auth"() {
         expect:
         "Secure OK" == controller.securedGet()

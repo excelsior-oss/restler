@@ -32,6 +32,6 @@ public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocat
                 queryParams(invocation.getRequestParams()).
                 buildAndExpand(invocation.getPathVariables()).toUri();
 
-        return new Request<>(target, method.getHttpMethod(), invocation.getRequestBody(), method.getReturnType());
+        return new Request<T>(target, method.getHttpMethod(), invocation.getRequestBody(), method.getReturnType(), invocation.getMethod().getReturnTypeGenericType());
     }
 }

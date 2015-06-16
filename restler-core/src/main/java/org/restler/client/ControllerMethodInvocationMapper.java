@@ -8,13 +8,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Maps a properly annotated Java method invocation to invocation of a service method.
@@ -72,6 +76,24 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables, requestParams);
     }
 
+    private Class getGenericSubClass(Type type) {
+        String typeName = type.getTypeName();
+
+        Pattern classNamePattern = Pattern.compile("([.\\w]*<([.\\w]*)>)");
+
+
+        Matcher matcher = classNamePattern.matcher(typeName);
+        if (matcher.find()) {
+            String className = matcher.group(2);
+            try {
+                return Class.forName(className);
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+    
     private ServiceMethod<?> getDescription(Method method) {
 
         RequestMapping controllerMapping = method.getDeclaringClass().getDeclaredAnnotation(RequestMapping.class);
@@ -102,8 +124,14 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         String uriTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(getMappedUriString(controllerMapping), getMappedUriString(methodMapping)).build().toUriString();
 
         Class<?> resultType = method.getReturnType();
+        Class returnTypeGenericType = resultType;
 
-        return new ServiceMethod<>(uriTemplate, resultType, httpMethod, expectedStatus);
+        if (resultType == DeferredResult.class) {
+            Class genericSubClass = getGenericSubClass(method.getGenericReturnType());
+            returnTypeGenericType = genericSubClass == null ? resultType : genericSubClass;
+        }
+
+        return new ServiceMethod<>(uriTemplate, resultType, returnTypeGenericType, httpMethod, expectedStatus);
     }
 
     private String getMappedUriString(RequestMapping mapping) {
