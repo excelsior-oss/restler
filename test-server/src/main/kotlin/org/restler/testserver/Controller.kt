@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.context.request.async.DeferredResult
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.util.concurrent.Callable
 import javax.servlet.http.HttpServletRequest
 import kotlin.concurrent.thread
 
@@ -36,6 +37,16 @@ public open class Controller {
         }
 
         return deferredResult;
+    }
+
+    RequestMapping("getCallable")
+    open fun callableGet(): Callable<String> {
+        return Callable (
+                fun call(): String {
+                    Thread.sleep(1000)
+                    return "Callable OK"
+                }
+        );
     }
 
     RequestMapping("throwException")

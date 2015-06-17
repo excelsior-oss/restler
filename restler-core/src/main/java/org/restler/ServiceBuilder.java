@@ -17,6 +17,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.restler.http.Executor;
+import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 /**
  * Helper class for building services.
@@ -25,6 +28,7 @@ public class ServiceBuilder {
 
     private String baseUrl;
 
+    private Supplier<java.util.concurrent.Executor> executorSupplier = Executors::newCachedThreadPool;
     private Executor executor = new RestOperationsExecutor(new RestTemplate());
     private ExecutionAdvice errorMapper = null;
 
@@ -40,6 +44,11 @@ public class ServiceBuilder {
 
     public ServiceBuilder useExecutor(Executor executor) {
         this.executor = Objects.requireNonNull(executor,"Provide an executor");
+        return this;
+    }
+
+    public ServiceBuilder useThreadExecutorSupplier(Supplier<java.util.concurrent.Executor> threadExecutorSupplier) {
+        this.executorSupplier = threadExecutorSupplier;
         return this;
     }
 
@@ -100,7 +109,7 @@ public class ServiceBuilder {
 
         ExecutionChain chain = new ExecutionChain(executor, advices);
 
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl))), session);
+        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl), executorSupplier)), session);
     }
 
 }

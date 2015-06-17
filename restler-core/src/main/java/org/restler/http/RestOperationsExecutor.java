@@ -8,13 +8,11 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class RestOperationsExecutor implements Executor {
 
@@ -31,25 +29,10 @@ public class RestOperationsExecutor implements Executor {
         AsyncRestTemplate asyncRestTemplate = new AsyncRestTemplate();
         asyncRestTemplate.getMessageConverters().add(new BodySavingMessageConverter());
 
-        Class returnType = executableRequest.getReturnType();
-
-        if (returnType == DeferredResult.class) {
-            returnType = executableRequest.getReturnTypeGenericType();
-        }
-
         ListenableFuture<ResponseEntity<T>> future = asyncRestTemplate.exchange(executableRequest.toRequestEntity().getUrl(), executableRequest.toRequestEntity().getMethod(),
-                requestEntity, returnType);
+                requestEntity, executableRequest.getReturnType());
 
-        try {
-            return future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-        //return restTemplate.exchange(requestEntity, executableRequest.getReturnType());
+        return restTemplate.exchange(requestEntity, executableRequest.getReturnType());
     }
 
     private class BodySavingMessageConverter implements GenericHttpMessageConverter<Object> {

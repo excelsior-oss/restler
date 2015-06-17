@@ -16,19 +16,17 @@ public class Request<T> {
     private URI url;
     private Object body;
     private Class<T> returnType;
-    private Class returnTypeGenericType;
     private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 
-    public Request(URI url, HttpMethod httpMethod, Object body, Class<T> returnType, Class returnTypeGenericType) {
+    public Request(URI url, HttpMethod httpMethod, Object body, Class<T> returnType) {
         this.url = url;
         this.httpMethod = httpMethod;
         this.body = body;
         this.returnType = returnType;
-        this.returnTypeGenericType = returnTypeGenericType;
     }
 
-    public Request(URI url, HttpMethod httpMethod, MultiValueMap<String, String> headers, Object body, Class<T> returnType, Class returnTypeGenericType) {
-        this(url, httpMethod, body, returnType, returnTypeGenericType);
+    public Request(URI url, HttpMethod httpMethod, MultiValueMap<String, String> headers, Object body, Class<T> returnType) {
+        this(url, httpMethod, body, returnType);
         this.headers = headers;
     }
 
@@ -41,13 +39,9 @@ public class Request<T> {
         return returnType;
     }
 
-    public Class getReturnTypeGenericType() {
-        return returnTypeGenericType;
-    }
-
     public Request<T> setHeader(String name, String value) {
         MultiValueMap<String, String> newHeaders = new LinkedMultiValueMap<>(headers);
         newHeaders.set(name, value);
-        return new Request<>(url, httpMethod, newHeaders, body, returnType, returnTypeGenericType);
+        return new Request<>(url, httpMethod, newHeaders, body, returnType);
     }
 }

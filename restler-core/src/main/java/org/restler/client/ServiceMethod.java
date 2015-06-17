@@ -11,14 +11,12 @@ import org.springframework.http.HttpStatus;
 public class ServiceMethod<T> {
     private String uriTemplate;
     private Class<T> returnType;
-    private Class returnTypeGenericType;
     private HttpMethod httpMethod;
     private HttpStatus expectedHttpResponseStatus;
 
-    public ServiceMethod(String uriTemplate, Class<T> returnType, Class returnTypeGenericType, HttpMethod httpMethod, HttpStatus expectedHttpResponseStatus) {
+    public ServiceMethod(String uriTemplate, Class<T> returnType, HttpMethod httpMethod, HttpStatus expectedHttpResponseStatus) {
         this.uriTemplate = uriTemplate;
         this.returnType = returnType;
-        this.returnTypeGenericType = returnTypeGenericType;
         this.httpMethod = httpMethod;
         this.expectedHttpResponseStatus = expectedHttpResponseStatus;
     }
@@ -39,10 +37,6 @@ public class ServiceMethod<T> {
      */
     public Class<T> getReturnType() {
         return returnType;
-    }
-
-    public Class getReturnTypeGenericType() {
-        return returnTypeGenericType;
     }
 
     /**
