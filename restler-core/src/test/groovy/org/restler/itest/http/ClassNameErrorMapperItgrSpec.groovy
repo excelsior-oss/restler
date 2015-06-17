@@ -8,6 +8,7 @@ import spock.lang.Specification
 class ClassNameErrorMapperItgrSpec extends Specification {
 
     Service service = new ServiceBuilder("http://localhost:8080").
+            reauthorizeRequestsOnForbidden(false).
             useClassNameExceptionMapper().
             build();
 

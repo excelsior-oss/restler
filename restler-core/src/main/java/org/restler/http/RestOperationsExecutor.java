@@ -12,18 +12,18 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimpleHttpRequestExecutor implements HttpRequestExecutor {
+public class RestOperationsExecutor implements Executor {
 
     private final RestTemplate restTemplate;
 
-    public SimpleHttpRequestExecutor(RestTemplate restTemplate) {
+    public RestOperationsExecutor(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
         restTemplate.getMessageConverters().add(new BodySavingMessageConverter());
     }
 
-    public <T> ResponseEntity<T> execute(ExecutableRequest<T> executableRequest) {
-        RequestEntity<?> requestEntity = executableRequest.toRequestEntity();
-        return restTemplate.exchange(requestEntity, executableRequest.getReturnType());
+    public <T> ResponseEntity<T> execute(Request<T> request) {
+        RequestEntity<?> requestEntity = request.toRequestEntity();
+        return restTemplate.exchange(requestEntity, request.getReturnType());
     }
 
     private class BodySavingMessageConverter implements GenericHttpMessageConverter<Object> {

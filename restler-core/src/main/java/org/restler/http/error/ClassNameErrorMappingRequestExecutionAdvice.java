@@ -1,8 +1,9 @@
 package org.restler.http.error;
 
-import org.restler.http.ExecutableRequest;
+import org.restler.http.ExecutionAdvice;
+import org.restler.http.Executor;
 import org.restler.http.HttpExecutionException;
-import org.restler.http.HttpRequestExecutor;
+import org.restler.http.Request;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpServerErrorException;
@@ -10,20 +11,15 @@ import org.springframework.web.client.HttpServerErrorException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ClassNameErrorMappingRequestExecutor implements HttpRequestExecutor {
+public class ClassNameErrorMappingRequestExecutionAdvice implements ExecutionAdvice {
 
     private final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
     private final Pattern exceptionClassNamePattern = Pattern.compile("(([_\\w]+\\.)+[_\\w]+Exception)");
-    private final HttpRequestExecutor delegate;
-
-    public ClassNameErrorMappingRequestExecutor(HttpRequestExecutor delegate) {
-        this.delegate = delegate;
-    }
 
     @Override
-    public <T> ResponseEntity<T> execute(ExecutableRequest<T> executableRequest) {
+    public <T> ResponseEntity<T> advice(Request<T> request, Executor executor) {
         try {
-            return delegate.execute(executableRequest);
+            return executor.execute(request);
         } catch (HttpExecutionException e) {
             Throwable className = findExceptionClassName(e.getResponseBody());
             return doThrow(e, className);
@@ -35,7 +31,7 @@ public class ClassNameErrorMappingRequestExecutor implements HttpRequestExecutor
 
     private <T> ResponseEntity<T> doThrow(RuntimeException e, Throwable ex) {
         if (ex != null) {
-            ClassNameErrorMappingRequestExecutor.<RuntimeException>doThrow(ex);
+            ClassNameErrorMappingRequestExecutionAdvice.<RuntimeException>doThrow(ex);
         }
         throw e;
     }

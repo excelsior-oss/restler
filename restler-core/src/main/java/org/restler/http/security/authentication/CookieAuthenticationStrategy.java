@@ -1,13 +1,12 @@
 package org.restler.http.security.authentication;
 
-import org.restler.http.HttpRequestExecutor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.StringUtils;
 
 /**
  * The implementation that authenticates a request adding a cookie.
  */
-public class CookieAuthenticatingRequestExecutor extends HeaderAuthenticatingRequestExecutor {
+public class CookieAuthenticationStrategy extends HeaderBasedAuthenticationStrategy {
 
     protected static final String JSESSIONID = "JSESSIONID";
 
@@ -15,35 +14,29 @@ public class CookieAuthenticatingRequestExecutor extends HeaderAuthenticatingReq
 
     /**
      * Creates the strategy that uses JSESSIONID cookie.
-     *
-     * @param executor
-     * @param context
      */
-    public CookieAuthenticatingRequestExecutor(HttpRequestExecutor executor, AuthenticationContext context) {
-        this(JSESSIONID, context, executor);
+    public CookieAuthenticationStrategy() {
+        this(JSESSIONID);
     }
 
     /**
      * Creates the strategy that uses a custom cookie.
      *
      * @param cookieName the name of the cookie.
-     * @param context
-     * @param executor
      */
-    public CookieAuthenticatingRequestExecutor(String cookieName, AuthenticationContext context, HttpRequestExecutor executor) {
-        super(executor, context);
+    public CookieAuthenticationStrategy(String cookieName) {
         if (StringUtils.isEmpty(cookieName))
             throw new IllegalArgumentException("Authentication cookie name must be not empty.");
         this.cookieName = cookieName;
     }
 
     @Override
-    protected String getHeaderName() {
+    protected String getHeaderName(AuthenticationContext context) {
         return HttpHeaders.COOKIE;
     }
 
     @Override
-    protected String getHeaderValue() {
+    protected String getHeaderValue(AuthenticationContext context) {
         Object token = context.getAuthenticationToken();
         String cookieValue = token == null ? null : token.toString();
         return cookieName + "=" + cookieValue + ";";

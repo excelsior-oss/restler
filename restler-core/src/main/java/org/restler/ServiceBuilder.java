@@ -2,20 +2,21 @@ package org.restler;
 
 import org.restler.client.CGLibClientFactory;
 import org.restler.client.CachingClientFactory;
-import org.restler.client.MethodInvocationMapper;
-import org.restler.http.HttpRequestExecutor;
-import org.restler.http.HttpServiceMethodExecutor;
-import org.restler.http.SimpleHttpRequestExecutor;
-import org.restler.http.error.ClassNameErrorMappingRequestExecutor;
-import org.restler.http.security.authentication.CookieAuthenticatingRequestExecutor;
-import org.restler.http.security.authentication.HttpBasicAuthenticatingRequestExecutor;
+import org.restler.client.ControllerMethodInvocationMapper;
+import org.restler.http.*;
+import org.restler.http.error.ClassNameErrorMappingRequestExecutionAdvice;
+import org.restler.http.security.AuthenticatingExecutionAdvice;
+import org.restler.http.security.ReauthorizingExecutionAdvice;
+import org.restler.http.security.SecuritySession;
+import org.restler.http.security.authentication.AuthenticationStrategy;
+import org.restler.http.security.authentication.CookieAuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
-import org.restler.http.security.authorization.ReauthorizingRequestExecutor;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 /**
  * Helper class for building services.
@@ -23,18 +24,27 @@ import java.util.function.BiFunction;
 public class ServiceBuilder {
 
     private String baseUrl;
-    private HttpRequestExecutor requestExecutor = new SimpleHttpRequestExecutor(new RestTemplate());
-    private BiFunction<HttpRequestExecutor, Session, HttpRequestExecutor> authenticationExecutor;
-    private BiFunction<HttpRequestExecutor, Session, HttpRequestExecutor> reauthorizingExecutor;
-    private BiFunction<HttpRequestExecutor, Session, HttpRequestExecutor> exceptionMappingExecutor;
+
+    private Executor executor = new RestOperationsExecutor(new RestTemplate());
+    private ExecutionAdvice errorMapper = null;
+
+    private AuthenticationStrategy authenticationStrategy;
     private AuthorizationStrategy authorizationStrategy;
+
+    private boolean reauthorize = false;
+    private boolean autoAuthorize = true;
 
     public ServiceBuilder(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
-    public ServiceBuilder useRequestExecutor(HttpRequestExecutor requestExecutor) {
-        this.requestExecutor = requestExecutor;
+    public ServiceBuilder useExecutor(Executor executor) {
+        this.executor = Objects.requireNonNull(executor,"Provide an executor");
+        return this;
+    }
+
+    public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy){
+        this.authenticationStrategy = authenticationStrategy;
         return this;
     }
 
@@ -44,43 +54,53 @@ public class ServiceBuilder {
     }
 
     public ServiceBuilder useCookieBasedAuthentication() {
-        Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
-        authenticationExecutor = CookieAuthenticatingRequestExecutor::new;
-        return this;
+        return useAuthenticationStrategy(new CookieAuthenticationStrategy());
     }
 
     public ServiceBuilder useHttpBasicAuthentication(String login, String password) {
-        AuthorizationStrategy basicAuth = new BasicAuthorizationStrategy(login, password);
-        useAuthorizationStrategy(basicAuth);
+        return useAuthorizationStrategy(new BasicAuthorizationStrategy(login, password));
+    }
 
-        authenticationExecutor = HttpBasicAuthenticatingRequestExecutor::new;
+    public ServiceBuilder reauthorizeRequestsOnForbidden(boolean reauthorize) {
+        this.reauthorize = reauthorize;
         return this;
     }
 
-    public ServiceBuilder reauthorizeRequestsOnForbidden() {
-        Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
-        reauthorizingExecutor = ReauthorizingRequestExecutor::new;
+    public ServiceBuilder autoAuthorize(boolean autoAuthorize){
+        this.autoAuthorize = autoAuthorize;
+        return this;
+    }
+
+    public ServiceBuilder useErrorMapper(ExecutionAdvice errorMapper){
+        this.errorMapper = errorMapper;
         return this;
     }
 
     public ServiceBuilder useClassNameExceptionMapper() {
-        exceptionMappingExecutor = ((delegate, config) -> new ClassNameErrorMappingRequestExecutor(delegate));
-        return this;
+        return useErrorMapper(new ClassNameErrorMappingRequestExecutionAdvice());
     }
 
     public Service build() {
-        HttpRequestExecutor executor = requestExecutor;
-        Session session = new Session(authorizationStrategy);
-        if (exceptionMappingExecutor != null) {
-            executor = exceptionMappingExecutor.apply(executor, session);
+
+        SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
+        List<ExecutionAdvice> advices = new ArrayList<>();
+
+        if (reauthorize){
+            Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
+            advices.add(new ReauthorizingExecutionAdvice(session));
         }
-        if (authenticationExecutor != null) {
-            executor = authenticationExecutor.apply(executor, session);
+
+        if (authenticationStrategy != null) {
+            advices.add(new AuthenticatingExecutionAdvice(session));
         }
-        if (reauthorizingExecutor != null) {
-            executor = reauthorizingExecutor.apply(executor, session);
+
+        if (errorMapper != null) {
+            advices.add(errorMapper);
         }
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodExecutor(executor), new MethodInvocationMapper(baseUrl))), session);
+
+        ExecutionChain chain = new ExecutionChain(executor, advices);
+
+        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl))), session);
     }
 
 }
