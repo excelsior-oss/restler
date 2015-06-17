@@ -27,6 +27,7 @@ public open class SecurityConfig : WebSecurityConfigurerAdapter() {
                 antMatchers("/secured/**").hasRole("USER").and()
 
         http.
+                httpBasic().and().
                 formLogin()
     }
 }

@@ -8,31 +8,47 @@ import spock.lang.Specification
 
 class SimpleTest extends Specification {
 
-    def auth = new FormAuthorizationStrategy("http://localhost:8080/login", "user", "username", "password", "password")
-    Service service = new ServiceBuilder("http://localhost:8080").
-            useAuthorizationStrategy(auth).
+    def login = "user";
+    def password = "password";
+
+    def formAuth = new FormAuthorizationStrategy("http://localhost:8080/login", login, "username", password, "password");
+
+    Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
+            useAuthorizationStrategy(formAuth).
             useCookieBasedAuthentication().
             reauthorizeRequestsOnForbidden().
             build();
 
-    def controller = service.produceClient(Controller.class);
+    Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
+            useHttpBasicAuthentication(login, password).
+            build();
+
+    def controller = serviceWithFormAuth.produceClient(Controller.class);
+    def controllerWithBasicAuth = serviceWithBasicAuth.produceClient(Controller.class);
 
     def "test unsecured get"() {
         expect:
         "OK" == controller.publicGet()
     }
 
-    def "test secured get authorized"() {
+    def "test secured get authorized with form auth"() {
         when:
-        service.authorize();
+        serviceWithFormAuth.authorize();
         then:
         "Secure OK" == controller.securedGet()
     }
 
+    def "test secured get authorized with basic auth"() {
+        when:
+        serviceWithBasicAuth.authorize();
+        then:
+        "Secure OK" == controllerWithBasicAuth.securedGet()
+    }
+
     def "test reauthorization"() {
         given:
-        service.authorize()
-        def ctrl = service.produceClient(Controller)
+        serviceWithFormAuth.authorize()
+        def ctrl = serviceWithFormAuth.produceClient(Controller)
         ctrl.logout()
         when:
         def response = ctrl.securedGet()

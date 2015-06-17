@@ -8,7 +8,9 @@ import org.restler.http.HttpServiceMethodExecutor;
 import org.restler.http.SimpleHttpRequestExecutor;
 import org.restler.http.error.ClassNameErrorMappingRequestExecutor;
 import org.restler.http.security.authentication.CookieAuthenticatingRequestExecutor;
+import org.restler.http.security.authentication.HttpBasicAuthenticatingRequestExecutor;
 import org.restler.http.security.authorization.AuthorizationStrategy;
+import org.restler.http.security.authorization.BasicAuthorizationStrategy;
 import org.restler.http.security.authorization.ReauthorizingRequestExecutor;
 import org.springframework.web.client.RestTemplate;
 
@@ -44,6 +46,14 @@ public class ServiceBuilder {
     public ServiceBuilder useCookieBasedAuthentication() {
         Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
         authenticationExecutor = CookieAuthenticatingRequestExecutor::new;
+        return this;
+    }
+
+    public ServiceBuilder useHttpBasicAuthentication(String login, String password) {
+        AuthorizationStrategy basicAuth = new BasicAuthorizationStrategy(login, password);
+        useAuthorizationStrategy(basicAuth);
+
+        authenticationExecutor = HttpBasicAuthenticatingRequestExecutor::new;
         return this;
     }
 
