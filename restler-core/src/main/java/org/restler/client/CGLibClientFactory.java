@@ -8,6 +8,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -69,13 +70,13 @@ public class CGLibClientFactory implements ClientFactory {
 
                 return deferredResult;
             } else if (resultType == Callable.class) {
-                DeferredResult deferredResult = new DeferredResult();
+                CompletableFuture completableFuture = new CompletableFuture();
 
                 Callable callableResult = () -> {
-                    while (!deferredResult.hasResult()) ;
-                    return deferredResult.getResult();
+                    while (!completableFuture.isDone()) ;
+                    return completableFuture.get();
                 };
-                getThreadExecutor().execute(() -> deferredResult.setResult(executor.execute(invocation)));
+                getThreadExecutor().execute(() -> completableFuture.complete(executor.execute(invocation)));
 
                 return callableResult;
             }

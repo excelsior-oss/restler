@@ -2,8 +2,14 @@ package org.restler.itest
 
 import org.restler.Service
 import org.restler.ServiceBuilder
+import org.restler.client.CGLibClientFactory
+import org.restler.http.HttpExecutionException
+import org.restler.http.SimpleHttpRequestExecutor
+import org.restler.http.security.authentication.CookieAuthenticatingRequestExecutor
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.testserver.Controller
+import org.restler.util.Util
+import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 
@@ -25,6 +31,8 @@ class SimpleTest extends Specification {
             useCookieBasedAuthentication().
             reauthorizeRequestsOnForbidden().
             useThreadExecutorSupplier(mockThreadExecutor).
+            useClassNameExceptionMapper().
+            useRequestExecutor(new SimpleHttpRequestExecutor(new RestTemplate())).
             build();
 
     Service serviceWithFormReAuth = new ServiceBuilder("http://localhost:8080").
@@ -92,6 +100,11 @@ class SimpleTest extends Specification {
         asyncCondition.await(5)
     }
 
+    def "test get with variable"() {
+        expect:
+        "Variable OK" == controller.getWithVariable("test", "Variable OK")
+    }
+
     def "test secured get authorized with form auth"() {
         expect:
         "Secure OK" == controller.securedGet()
@@ -111,5 +124,77 @@ class SimpleTest extends Specification {
         then:
         response == "Secure OK"
     }
+
+    def "test utils toString"() {
+        expect:
+        String testString = "Util toString OK"
+        InputStream inputStream = new ByteArrayInputStream(testString.getBytes("UTF-8"))
+        Util.toString(inputStream) == testString
+    }
+
+    def "test exception CGLibClient when class not controller"() {
+        expect:
+        CGLibClientFactory clientFactory = new CGLibClientFactory(null, null, null)
+        try {
+            clientFactory.produceClient(CGLibClientFactory.class)
+        } catch (IllegalArgumentException e) {
+            assert e.getMessage() == "Not a controller"
+        }
+    }
+
+    def "test exception CookieAuthenticationRequestExecutor when cookie name is empty"() {
+        expect:
+        try {
+            new CookieAuthenticatingRequestExecutor("", null, null);
+        } catch (IllegalArgumentException e) {
+            assert e.getMessage() == "Authentication cookie name must be not empty."
+        }
+    }
+
+    def "test HttpExecutionException"() {
+        expect:
+        try {
+            throw new HttpExecutionException()
+        } catch (HttpExecutionException e) {
+            assert e.getResponseBody() == ""
+        }
+
+        try {
+            throw new HttpExecutionException("Body HttpExecutionException OK")
+        } catch (HttpExecutionException e) {
+            assert e.getResponseBody() == "Body HttpExecutionException OK"
+        }
+
+        try {
+            throw new HttpExecutionException("Exception message OK", "Body HttpExecutionException OK")
+        } catch (HttpExecutionException e) {
+            assert (e.getResponseBody() == "Body HttpExecutionException OK" &&
+                    e.getMessage() == "Exception message OK")
+        }
+
+        try {
+            throw new HttpExecutionException("Exception message OK", new Exception("Cause exception"), "Body HttpExecutionException OK")
+        } catch (HttpExecutionException e) {
+            assert (e.getResponseBody() == "Body HttpExecutionException OK" &&
+                    e.getCause().getMessage() == "Cause exception" &&
+                    e.getMessage() == "Exception message OK")
+        }
+
+        try {
+            throw new HttpExecutionException(new Exception("Cause exception"), "Body HttpExecutionException OK")
+        } catch (HttpExecutionException e) {
+            assert (e.getCause().getMessage() == "Cause exception" &&
+                    e.getResponseBody() == "Body HttpExecutionException OK")
+        }
+
+        try {
+            throw new HttpExecutionException("Exception message OK", new Exception("Cause exception"), false, false, "Body HttpExecutionException OK")
+        } catch (HttpExecutionException e) {
+            assert (e.getResponseBody() == "Body HttpExecutionException OK" &&
+                    e.getCause().getMessage() == "Cause exception" &&
+                    e.getMessage() == "Exception message OK")
+        }
+    }
+
 
 }
