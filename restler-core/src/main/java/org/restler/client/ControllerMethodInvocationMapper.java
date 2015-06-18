@@ -114,7 +114,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             try {
                 resultType = Class.forName(genericArguments[0].getTypeName());
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                throw new RestlerException("Could not find class for method return type", e);
             }
         }
 
