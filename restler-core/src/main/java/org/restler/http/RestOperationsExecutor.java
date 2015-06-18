@@ -5,8 +5,6 @@ import org.springframework.http.*;
 import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -25,13 +23,6 @@ public class RestOperationsExecutor implements Executor {
 
     public <T> ResponseEntity<T> execute(Request<T> executableRequest) {
         RequestEntity<?> requestEntity = executableRequest.toRequestEntity();
-
-        AsyncRestTemplate asyncRestTemplate = new AsyncRestTemplate();
-        asyncRestTemplate.getMessageConverters().add(new BodySavingMessageConverter());
-
-        ListenableFuture<ResponseEntity<T>> future = asyncRestTemplate.exchange(executableRequest.toRequestEntity().getUrl(), executableRequest.toRequestEntity().getMethod(),
-                requestEntity, executableRequest.getReturnType());
-
         return restTemplate.exchange(requestEntity, executableRequest.getReturnType());
     }
 
@@ -58,7 +49,7 @@ public class RestOperationsExecutor implements Executor {
 
         @Override
         public List<MediaType> getSupportedMediaTypes() {
-           return new ArrayList<>();
+            return new ArrayList<>();
         }
 
         @Override
