@@ -14,7 +14,6 @@ import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 
 import java.util.concurrent.Executors
-import java.util.function.Supplier
 
 class SimpleTest extends Specification {
 
@@ -23,14 +22,11 @@ class SimpleTest extends Specification {
 
     def formAuth = new FormAuthorizationStrategy("http://localhost:8080/login", login, "username", password, "password");
 
-    def mockThreadExecutor = Mock(Supplier)
-    def threadExecutorSupplier = Executors.newCachedThreadPool()
-
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
             useAuthorizationStrategy(formAuth).
             useCookieBasedAuthentication().
             reauthorizeRequestsOnForbidden().
-            useThreadExecutorSupplier(mockThreadExecutor).
+            useThreadExecutor(Executors.newCachedThreadPool()).
             useClassNameExceptionMapper().
             useRequestExecutor(new RestOperationsExecutor(new RestTemplate())).
             build();
@@ -48,27 +44,9 @@ class SimpleTest extends Specification {
     def controller = serviceWithFormAuth.produceClient(Controller.class);
     def controllerWithBasicAuth = serviceWithBasicAuth.produceClient(Controller.class);
 
-    def setup() {
-        mockThreadExecutor.get() >> threadExecutorSupplier
-    }
-
     def "test unsecured get"() {
         expect:
         "OK" == controller.publicGet()
-    }
-
-    def "test count calling thread executor supplier"() {
-        when:
-        controller.publicGet()
-        then:
-        0 * mockThreadExecutor.get() >> threadExecutorSupplier
-        and:
-        when:
-        for (def i : 0..1) {
-            controller.deferredGet()
-        }
-        then:
-        1 * mockThreadExecutor.get() >> threadExecutorSupplier
     }
 
     def "test deferred get"() {
@@ -132,69 +110,17 @@ class SimpleTest extends Specification {
         Util.toString(inputStream) == testString
     }
 
-    def "test exception CGLibClient when class not controller"() {
-        expect:
-        CGLibClientFactory clientFactory = new CGLibClientFactory(null, null, null)
-        try {
-            clientFactory.produceClient(CGLibClientFactory.class)
-        } catch (IllegalArgumentException e) {
-            assert e.getMessage() == "Not a controller"
-        }
+    def "test exception CGLibClient when class not a controller"() {
+        when:
+        serviceWithFormAuth.produceClient(CGLibClientFactory.class)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def "test exception CookieAuthenticationRequestExecutor when cookie name is empty"() {
-        expect:
-        try {
-            new CookieAuthenticationStrategy("", null, null);
-        } catch (IllegalArgumentException e) {
-            assert e.getMessage() == "Authentication cookie name must be not empty."
-        }
+        when:
+        new CookieAuthenticationStrategy("", null, null);
+        then:
+        thrown(IllegalArgumentException)
     }
-
-    def "test HttpExecutionException"() {
-        expect:
-        try {
-            throw new HttpExecutionException()
-        } catch (HttpExecutionException e) {
-            assert e.getResponseBody() == ""
-        }
-
-        try {
-            throw new HttpExecutionException("Body HttpExecutionException OK")
-        } catch (HttpExecutionException e) {
-            assert e.getResponseBody() == "Body HttpExecutionException OK"
-        }
-
-        try {
-            throw new HttpExecutionException("Exception message OK", "Body HttpExecutionException OK")
-        } catch (HttpExecutionException e) {
-            assert (e.getResponseBody() == "Body HttpExecutionException OK" &&
-                    e.getMessage() == "Exception message OK")
-        }
-
-        try {
-            throw new HttpExecutionException("Exception message OK", new Exception("Cause exception"), "Body HttpExecutionException OK")
-        } catch (HttpExecutionException e) {
-            assert (e.getResponseBody() == "Body HttpExecutionException OK" &&
-                    e.getCause().getMessage() == "Cause exception" &&
-                    e.getMessage() == "Exception message OK")
-        }
-
-        try {
-            throw new HttpExecutionException(new Exception("Cause exception"), "Body HttpExecutionException OK")
-        } catch (HttpExecutionException e) {
-            assert (e.getCause().getMessage() == "Cause exception" &&
-                    e.getResponseBody() == "Body HttpExecutionException OK")
-        }
-
-        try {
-            throw new HttpExecutionException("Exception message OK", new Exception("Cause exception"), false, false, "Body HttpExecutionException OK")
-        } catch (HttpExecutionException e) {
-            assert (e.getResponseBody() == "Body HttpExecutionException OK" &&
-                    e.getCause().getMessage() == "Cause exception" &&
-                    e.getMessage() == "Exception message OK")
-        }
-    }
-
-
 }

@@ -17,8 +17,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.restler.http.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /**
@@ -47,8 +47,8 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder useThreadExecutorSupplier(java.util.concurrent.Executor threadExecutorSupplier) {
-        this.threadExecutor = threadExecutorSupplier;
+    public ServiceBuilder useThreadExecutor(java.util.concurrent.Executor threadExecutor) {
+        this.threadExecutor = threadExecutor;
         return this;
     }
 
@@ -109,7 +109,7 @@ public class ServiceBuilder {
 
         ExecutionChain chain = new ExecutionChain(executor, advices);
 
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl), threadExecutor)), session);
+        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodExecutor(executor), new ControllerMethodInvocationMapper(baseUrl), threadExecutor)), session);
     }
 
 }
