@@ -4,8 +4,8 @@ import org.restler.Service
 import org.restler.ServiceBuilder
 import org.restler.client.CGLibClientFactory
 import org.restler.http.HttpExecutionException
-import org.restler.http.SimpleHttpRequestExecutor
-import org.restler.http.security.authentication.CookieAuthenticatingRequestExecutor
+import org.restler.http.RestOperationsExecutor
+import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.testserver.Controller
 import org.restler.util.Util
@@ -32,7 +32,7 @@ class SimpleTest extends Specification {
             reauthorizeRequestsOnForbidden().
             useThreadExecutorSupplier(mockThreadExecutor).
             useClassNameExceptionMapper().
-            useRequestExecutor(new SimpleHttpRequestExecutor(new RestTemplate())).
+            useRequestExecutor(new RestOperationsExecutor(new RestTemplate())).
             build();
 
     Service serviceWithFormReAuth = new ServiceBuilder("http://localhost:8080").
@@ -145,7 +145,7 @@ class SimpleTest extends Specification {
     def "test exception CookieAuthenticationRequestExecutor when cookie name is empty"() {
         expect:
         try {
-            new CookieAuthenticatingRequestExecutor("", null, null);
+            new CookieAuthenticationStrategy("", null, null);
         } catch (IllegalArgumentException e) {
             assert e.getMessage() == "Authentication cookie name must be not empty."
         }

@@ -28,7 +28,7 @@ public class ServiceBuilder {
 
     private String baseUrl;
 
-    private Supplier<java.util.concurrent.Executor> executorSupplier = Executors::newCachedThreadPool;
+    private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
     private Executor executor = new RestOperationsExecutor(new RestTemplate());
     private ExecutionAdvice errorMapper = null;
 
@@ -47,8 +47,8 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder useThreadExecutorSupplier(Supplier<java.util.concurrent.Executor> threadExecutorSupplier) {
-        this.executorSupplier = threadExecutorSupplier;
+    public ServiceBuilder useThreadExecutorSupplier(java.util.concurrent.Executor threadExecutorSupplier) {
+        this.threadExecutor = threadExecutorSupplier;
         return this;
     }
 
@@ -109,7 +109,7 @@ public class ServiceBuilder {
 
         ExecutionChain chain = new ExecutionChain(executor, advices);
 
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl), executorSupplier)), session);
+        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl), threadExecutor)), session);
     }
 
 }
