@@ -8,7 +8,6 @@ import org.restler.http.RestOperationsExecutor
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.testserver.Controller
-import org.restler.util.Util
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
@@ -22,12 +21,15 @@ class SimpleTest extends Specification {
 
     def formAuth = new FormAuthorizationStrategy("http://localhost:8080/login", login, "username", password, "password");
 
+    def spySimpleHttpRequestExecutor = Spy(SimpleHttpRequestExecutor, constructorArgs: [new RestTemplate()])
+
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
             useAuthorizationStrategy(formAuth).
             useCookieBasedAuthentication().
             reauthorizeRequestsOnForbidden().
             useThreadExecutor(Executors.newCachedThreadPool()).
             useClassNameExceptionMapper().
+<<<<<<< HEAD
             useRequestExecutor(new RestOperationsExecutor(new RestTemplate())).
             build();
 
@@ -35,6 +37,9 @@ class SimpleTest extends Specification {
             useAuthorizationStrategy(formAuth).
             reauthorizeRequestsOnForbidden(true).
             useCookieBasedAuthentication().
+=======
+            useRequestExecutor(spySimpleHttpRequestExecutor).
+>>>>>>> Fixes tests
             build();
 
     Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
@@ -65,16 +70,19 @@ class SimpleTest extends Specification {
     }
 
     def "test callable get"() {
+        when:
         def result = controller.callableGet()
         def asyncCondition = new AsyncConditions();
-
+        then:
+        0 * spySimpleHttpRequestExecutor.execute(_)
+        and:
+        when:
         Thread.start {
             asyncCondition.evaluate {
                 assert result.call() == "Callable OK"
             }
         }
-
-        expect:
+        then:
         asyncCondition.await(5)
     }
 
@@ -101,13 +109,6 @@ class SimpleTest extends Specification {
         def response = ctrl.securedGet()
         then:
         response == "Secure OK"
-    }
-
-    def "test utils toString"() {
-        expect:
-        String testString = "Util toString OK"
-        InputStream inputStream = new ByteArrayInputStream(testString.getBytes("UTF-8"))
-        Util.toString(inputStream) == testString
     }
 
     def "test exception CGLibClient when class not a controller"() {
