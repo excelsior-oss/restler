@@ -1,13 +1,11 @@
 package org.restler.testserver
 
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.context.request.async.DeferredResult
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.util.concurrent.Callable
 import javax.servlet.http.HttpServletRequest
 import kotlin.concurrent.thread
 
@@ -36,6 +34,21 @@ public open class Controller {
         }
 
         return deferredResult;
+    }
+
+    RequestMapping("getCallable")
+    open fun callableGet(): Callable<String> {
+        return Callable (
+                fun call(): String {
+                    Thread.sleep(1000)
+                    return "Callable OK"
+                }
+        );
+    }
+
+    RequestMapping("getWithVariable/{title}")
+    open fun getWithVariable(@PathVariable(value = "title") title: String, @RequestParam(value = "name") name: String): String {
+        return name;
     }
 
     RequestMapping("throwException")

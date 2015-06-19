@@ -8,12 +8,16 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 
 /**
@@ -102,6 +106,17 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         String uriTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(getMappedUriString(controllerMapping), getMappedUriString(methodMapping)).build().toUriString();
 
         Class<?> resultType = method.getReturnType();
+        Type returnType = method.getGenericReturnType();
+
+        if (resultType == DeferredResult.class || resultType == Callable.class) {
+            ParameterizedType parameterizedType = (ParameterizedType) returnType;
+            Type[] genericArguments = parameterizedType.getActualTypeArguments();
+            try {
+                resultType = Class.forName(genericArguments[0].getTypeName());
+            } catch (ClassNotFoundException e) {
+                throw new RestlerException("Could not find class for method return type", e);
+            }
+        }
 
         return new ServiceMethod<>(uriTemplate, resultType, httpMethod, expectedStatus);
     }

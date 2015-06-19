@@ -21,9 +21,9 @@ public class RestOperationsExecutor implements Executor {
         restTemplate.getMessageConverters().add(new BodySavingMessageConverter());
     }
 
-    public <T> ResponseEntity<T> execute(Request<T> request) {
-        RequestEntity<?> requestEntity = request.toRequestEntity();
-        return restTemplate.exchange(requestEntity, request.getReturnType());
+    public <T> ResponseEntity<T> execute(Request<T> executableRequest) {
+        RequestEntity<?> requestEntity = executableRequest.toRequestEntity();
+        return restTemplate.exchange(requestEntity, executableRequest.getReturnType());
     }
 
     private class BodySavingMessageConverter implements GenericHttpMessageConverter<Object> {
@@ -49,7 +49,7 @@ public class RestOperationsExecutor implements Executor {
 
         @Override
         public List<MediaType> getSupportedMediaTypes() {
-           return new ArrayList<>();
+            return new ArrayList<>();
         }
 
         @Override

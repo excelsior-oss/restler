@@ -10,6 +10,7 @@ import org.restler.http.security.ReauthorizingExecutionAdvice;
 import org.restler.http.security.SecuritySession;
 import org.restler.http.security.authentication.AuthenticationStrategy;
 import org.restler.http.security.authentication.CookieAuthenticationStrategy;
+import org.restler.http.security.authentication.HttpBasicAuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
 import org.springframework.web.client.RestTemplate;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
 
 /**
  * Helper class for building services.
@@ -25,6 +27,7 @@ public class ServiceBuilder {
 
     private String baseUrl;
 
+    private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
     private Executor executor = new RestOperationsExecutor(new RestTemplate());
     private ExecutionAdvice errorMapper = null;
 
@@ -43,6 +46,11 @@ public class ServiceBuilder {
         return this;
     }
 
+    public ServiceBuilder useThreadExecutor(java.util.concurrent.Executor threadExecutor) {
+        this.threadExecutor = threadExecutor;
+        return this;
+    }
+
     public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy){
         this.authenticationStrategy = authenticationStrategy;
         return this;
@@ -58,7 +66,8 @@ public class ServiceBuilder {
     }
 
     public ServiceBuilder useHttpBasicAuthentication(String login, String password) {
-        return useAuthorizationStrategy(new BasicAuthorizationStrategy(login, password));
+        useAuthorizationStrategy(new BasicAuthorizationStrategy(login, password));
+        return useAuthenticationStrategy(new HttpBasicAuthenticationStrategy());
     }
 
     public ServiceBuilder reauthorizeRequestsOnForbidden(boolean reauthorize) {
@@ -100,7 +109,7 @@ public class ServiceBuilder {
 
         ExecutionChain chain = new ExecutionChain(executor, advices);
 
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl))), session);
+        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl), threadExecutor)), session);
     }
 
 }

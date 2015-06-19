@@ -8,19 +8,19 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
-public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocationExecutor {
+public class HttpServiceMethodExecutor implements ServiceMethodInvocationExecutor {
 
-    private final ExecutionChain executors;
+    private final Executor requestExecutor;
 
-    public HttpServiceMethodInvocationExecutor(ExecutionChain executors) {
-        this.executors = executors;
+    public HttpServiceMethodExecutor(Executor requestExecutor) {
+        this.requestExecutor = requestExecutor;
     }
 
     @Override
     public <T> T execute(ServiceMethodInvocation<T> invocation) {
 
-        Request<T> request = toRequest(invocation);
-        ResponseEntity<T> responseEntity = executors.execute(request);
+        Request<T> executableRequest = toRequest(invocation);
+        ResponseEntity<T> responseEntity = requestExecutor.execute(executableRequest);
         return responseEntity.getBody();
     }
 
@@ -32,6 +32,6 @@ public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocat
                 queryParams(invocation.getRequestParams()).
                 buildAndExpand(invocation.getPathVariables()).toUri();
 
-        return new Request<T>(target, method.getHttpMethod(), invocation.getRequestBody(), method.getReturnType());
+        return new Request<>(target, method.getHttpMethod(), invocation.getRequestBody(), method.getReturnType());
     }
 }
