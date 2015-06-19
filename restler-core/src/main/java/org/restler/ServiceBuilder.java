@@ -10,6 +10,7 @@ import org.restler.http.security.ReauthorizingExecutionAdvice;
 import org.restler.http.security.SecuritySession;
 import org.restler.http.security.authentication.AuthenticationStrategy;
 import org.restler.http.security.authentication.CookieAuthenticationStrategy;
+import org.restler.http.security.authentication.HttpBasicAuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
 import org.springframework.web.client.RestTemplate;
@@ -18,8 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 /**
  * Helper class for building services.
@@ -67,7 +66,8 @@ public class ServiceBuilder {
     }
 
     public ServiceBuilder useHttpBasicAuthentication(String login, String password) {
-        return useAuthorizationStrategy(new BasicAuthorizationStrategy(login, password));
+        useAuthorizationStrategy(new BasicAuthorizationStrategy(login, password));
+        return useAuthenticationStrategy(new HttpBasicAuthenticationStrategy());
     }
 
     public ServiceBuilder reauthorizeRequestsOnForbidden(boolean reauthorize) {
@@ -109,7 +109,7 @@ public class ServiceBuilder {
 
         ExecutionChain chain = new ExecutionChain(executor, advices);
 
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodExecutor(executor), new ControllerMethodInvocationMapper(baseUrl), threadExecutor)), session);
+        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl), threadExecutor)), session);
     }
 
 }

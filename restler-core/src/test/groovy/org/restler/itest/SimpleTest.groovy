@@ -3,7 +3,6 @@ package org.restler.itest
 import org.restler.Service
 import org.restler.ServiceBuilder
 import org.restler.client.CGLibClientFactory
-import org.restler.http.HttpExecutionException
 import org.restler.http.RestOperationsExecutor
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
@@ -20,30 +19,28 @@ class SimpleTest extends Specification {
     def password = "password";
 
     def formAuth = new FormAuthorizationStrategy("http://localhost:8080/login", login, "username", password, "password");
+    //def basicAuth = new BasicAuthorizationStrategy(login, password)
 
-    def spySimpleHttpRequestExecutor = Spy(SimpleHttpRequestExecutor, constructorArgs: [new RestTemplate()])
+    def spySimpleHttpRequestExecutor = Spy(RestOperationsExecutor, constructorArgs: [new RestTemplate()])
 
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
             useAuthorizationStrategy(formAuth).
             useCookieBasedAuthentication().
-            reauthorizeRequestsOnForbidden().
+            autoAuthorize(true).
             useThreadExecutor(Executors.newCachedThreadPool()).
             useClassNameExceptionMapper().
-<<<<<<< HEAD
-            useRequestExecutor(new RestOperationsExecutor(new RestTemplate())).
+            useExecutor(spySimpleHttpRequestExecutor).
             build();
 
     Service serviceWithFormReAuth = new ServiceBuilder("http://localhost:8080").
             useAuthorizationStrategy(formAuth).
             reauthorizeRequestsOnForbidden(true).
             useCookieBasedAuthentication().
-=======
-            useRequestExecutor(spySimpleHttpRequestExecutor).
->>>>>>> Fixes tests
             build();
 
     Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
             useHttpBasicAuthentication(login, password).
+            autoAuthorize(true).
             build();
 
     def controller = serviceWithFormAuth.produceClient(Controller.class);
@@ -120,7 +117,7 @@ class SimpleTest extends Specification {
 
     def "test exception CookieAuthenticationRequestExecutor when cookie name is empty"() {
         when:
-        new CookieAuthenticationStrategy("", null, null);
+        new CookieAuthenticationStrategy("");
         then:
         thrown(IllegalArgumentException)
     }
