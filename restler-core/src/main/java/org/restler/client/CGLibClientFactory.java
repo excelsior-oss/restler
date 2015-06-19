@@ -21,15 +21,21 @@ public class CGLibClientFactory implements ClientFactory {
     private final ServiceMethodInvocationExecutor executor;
     private final BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper;
 
+    private Executor threadExecutor;
+
     private HashMap<Class<?>, Function<ServiceMethodInvocation<?>, ?>> invocationExecutors;
+    private Function<ServiceMethodInvocation<?>, ?> defaultInvocationExecutor;
 
     public CGLibClientFactory(ServiceMethodInvocationExecutor executor, BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper, Executor threadExecutor) {
         this.executor = executor;
         this.invocationMapper = invocationMapper;
+        this.threadExecutor = threadExecutor;
 
         invocationExecutors = new HashMap<>();
-        invocationExecutors.put(DeferredResult.class, new DeferredResultCase(threadExecutor, this.executor));
-        invocationExecutors.put(Callable.class, new CallableResultCase(this.executor));
+        invocationExecutors.put(DeferredResult.class, new DeferredResultInvocationExecutor());
+        invocationExecutors.put(Callable.class, new CallableResultInvocationExecutor());
+
+        defaultInvocationExecutor = executor::execute;
     }
 
     @Override
@@ -51,7 +57,7 @@ public class CGLibClientFactory implements ClientFactory {
     private Function<ServiceMethodInvocation<?>, ?> getInvocationExecutor(Method method) {
         Function<ServiceMethodInvocation<?>, ?> invocationExecutor = invocationExecutors.get(method.getReturnType());
         if (invocationExecutor == null) {
-            invocationExecutor = (ServiceMethodInvocation<?> invocation) -> executor.execute(invocation);
+            invocationExecutor = defaultInvocationExecutor;
         }
         return invocationExecutor;
     }
@@ -63,6 +69,24 @@ public class CGLibClientFactory implements ClientFactory {
             ServiceMethodInvocation<?> invocation = invocationMapper.apply(method, args);
 
             return getInvocationExecutor(method).apply(invocation);
+        }
+    }
+
+    private class DeferredResultInvocationExecutor implements Function<ServiceMethodInvocation<?>, DeferredResult<?>> {
+
+        @Override
+        public DeferredResult apply(ServiceMethodInvocation<?> serviceMethodInvocation) {
+            DeferredResult deferredResult = new DeferredResult();
+            threadExecutor.execute(() -> deferredResult.setResult(executor.execute(serviceMethodInvocation)));
+            return deferredResult;
+        }
+    }
+
+    private class CallableResultInvocationExecutor implements Function<ServiceMethodInvocation<?>, Callable<?>> {
+
+        @Override
+        public Callable<?> apply(ServiceMethodInvocation<?> serviceMethodInvocation) {
+            return () -> executor.execute(serviceMethodInvocation);
         }
     }
 }
