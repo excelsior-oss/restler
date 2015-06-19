@@ -1,7 +1,7 @@
 import org.junit.Ignore
 import org.restler.Service
 import org.restler.client.CGLibClientFactory
-import org.restler.client.ServiceMethodExecutor
+import org.restler.client.ServiceMethodInvocationExecutor
 import spock.lang.Specification
 
 /**
@@ -10,7 +10,7 @@ import spock.lang.Specification
 @Ignore
 class MethodDescriptionProducingSpec extends Specification {
 
-    def executor = Mock(ServiceMethodExecutor);
+    def executor = Mock(ServiceMethodInvocationExecutor);
     def service = new Service(new CGLibClientFactory(executor));
     def client = service.produceClient(Greeter.class);
 

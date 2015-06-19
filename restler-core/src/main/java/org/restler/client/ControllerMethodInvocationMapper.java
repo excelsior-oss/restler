@@ -17,21 +17,21 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 /**
- * Maps a class method invocation to a service method invocation.
+ * Maps a properly annotated Java method invocation to invocation of a service method.
  */
-public class MethodInvocationMapper implements BiFunction<Method, Object[], ServiceMethodInvocation<?>> {
+public class ControllerMethodInvocationMapper implements BiFunction<Method, Object[], ServiceMethodInvocation<?>> {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
     private final String baseUrl;
 
-    public MethodInvocationMapper(String baseUrl) {
+    public ControllerMethodInvocationMapper(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
     @Override
     public ServiceMethodInvocation<?> apply(Method method, Object[] args) {
-        ServiceMethodDescription<?> description = getDescription(method);
+        ServiceMethod<?> description = getDescription(method);
 
         Object requestBody = null;
         Map<String, Object> pathVariables = new HashMap<>();
@@ -72,7 +72,7 @@ public class MethodInvocationMapper implements BiFunction<Method, Object[], Serv
         return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables, requestParams);
     }
 
-    private ServiceMethodDescription<?> getDescription(Method method) {
+    private ServiceMethod<?> getDescription(Method method) {
 
         RequestMapping controllerMapping = method.getDeclaringClass().getDeclaredAnnotation(RequestMapping.class);
         RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
@@ -103,7 +103,7 @@ public class MethodInvocationMapper implements BiFunction<Method, Object[], Serv
 
         Class<?> resultType = method.getReturnType();
 
-        return new ServiceMethodDescription<>(uriTemplate, resultType, httpMethod, expectedStatus);
+        return new ServiceMethod<>(uriTemplate, resultType, httpMethod, expectedStatus);
     }
 
     private String getMappedUriString(RequestMapping mapping) {

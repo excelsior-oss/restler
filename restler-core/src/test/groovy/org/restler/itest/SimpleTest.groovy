@@ -16,7 +16,12 @@ class SimpleTest extends Specification {
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
             useAuthorizationStrategy(formAuth).
             useCookieBasedAuthentication().
-            reauthorizeRequestsOnForbidden().
+            build();
+
+    Service serviceWithFormReAuth = new ServiceBuilder("http://localhost:8080").
+            useAuthorizationStrategy(formAuth).
+            reauthorizeRequestsOnForbidden(true).
+            useCookieBasedAuthentication().
             build();
 
     Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
@@ -32,23 +37,18 @@ class SimpleTest extends Specification {
     }
 
     def "test secured get authorized with form auth"() {
-        when:
-        serviceWithFormAuth.authorize();
-        then:
+        expect:
         "Secure OK" == controller.securedGet()
     }
 
     def "test secured get authorized with basic auth"() {
-        when:
-        serviceWithBasicAuth.authorize();
-        then:
+        expect:
         "Secure OK" == controllerWithBasicAuth.securedGet()
     }
 
     def "test reauthorization"() {
         given:
-        serviceWithFormAuth.authorize()
-        def ctrl = serviceWithFormAuth.produceClient(Controller)
+        def ctrl = serviceWithFormReAuth.produceClient(Controller)
         ctrl.logout()
         when:
         def response = ctrl.securedGet()

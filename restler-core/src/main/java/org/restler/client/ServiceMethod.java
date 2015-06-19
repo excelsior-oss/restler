@@ -8,13 +8,13 @@ import org.springframework.http.HttpStatus;
  *
  * @param <T> the return type of the method
  */
-public class ServiceMethodDescription<T> {
+public class ServiceMethod<T> {
     private String uriTemplate;
     private Class<T> returnType;
     private HttpMethod httpMethod;
     private HttpStatus expectedHttpResponseStatus;
 
-    public ServiceMethodDescription(String uriTemplate, Class<T> returnType, HttpMethod httpMethod, HttpStatus expectedHttpResponseStatus) {
+    public ServiceMethod(String uriTemplate, Class<T> returnType, HttpMethod httpMethod, HttpStatus expectedHttpResponseStatus) {
         this.uriTemplate = uriTemplate;
         this.returnType = returnType;
         this.httpMethod = httpMethod;

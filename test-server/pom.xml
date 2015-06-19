@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>parent</artifactId>
+        <artifactId>restler</artifactId>
         <groupId>org.restler</groupId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>

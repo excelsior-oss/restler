@@ -9,14 +9,14 @@ import java.lang.reflect.Method;
 import java.util.function.BiFunction;
 
 /**
- * A CGLib implementation of {@link ClientFactory} that uses {@link ServiceMethodExecutor} for execution client methods.
+ * A CGLib implementation of {@link ClientFactory} that uses {@link ServiceMethodInvocationExecutor} for execution client methods.
  */
 public class CGLibClientFactory implements ClientFactory {
 
-    private final ServiceMethodExecutor executor;
+    private final ServiceMethodInvocationExecutor executor;
     private final BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper;
 
-    public CGLibClientFactory(ServiceMethodExecutor executor, BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper) {
+    public CGLibClientFactory(ServiceMethodInvocationExecutor executor, BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper) {
         this.executor = executor;
         this.invocationMapper = invocationMapper;
     }
