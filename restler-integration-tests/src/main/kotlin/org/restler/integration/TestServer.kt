@@ -1,6 +1,6 @@
-package org.restler.testserver
+package org.restler.integration
 
-import org.restler.testserver.security.SecurityConfig
+import org.restler.integration.security.SecurityConfig
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.context.annotation.Bean

@@ -1,4 +1,4 @@
-package org.restler.itest.util
+
 
 import org.restler.util.Util
 import spock.lang.Specification
