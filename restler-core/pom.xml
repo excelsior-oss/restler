@@ -7,119 +7,53 @@
     <parent>
         <groupId>org.restler</groupId>
         <artifactId>restler</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.1.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>restler-core</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <packaging>jar</packaging>
-
-    <name>Restler</name>
-    <description>Restler is a library that generates a client of a web service by its annotated Spring controller interface at runtime.</description>
-    <url>http://www.restler.org</url>
-
-    <properties>
-        <jdk.version>1.8</jdk.version>
-        <junit.version>4.11</junit.version>
-        <spring.version>4.1.4.RELEASE</spring.version>
-        <slf4j.version>1.7.5</slf4j.version>
-    </properties>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
-                <configuration>
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
-                </configuration>
-            </plugin>
 
-            <!-- Mandatory plugins for using Spock -->
-            <plugin>
-                <!-- The gmavenplus plugin is used to compile Groovy code. To learn more about this plugin,
-                visit https://github.com/groovy/GMavenPlus/wiki -->
-                <groupId>org.codehaus.gmavenplus</groupId>
-                <artifactId>gmavenplus-plugin</artifactId>
-                <version>1.4</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
+            <!-- Runs unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.18.1</version>
                 <configuration>
                     <failIfNoTests>true</failIfNoTests>
+                    <!-- Includes Groovy specs -->
                     <includes>
-                        <include>**/*Test*.*</include>
                         <include>**/*Spec*.*</include>
                     </includes>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 
     <dependencies>
+
         <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>test-server</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>test</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>org.codehaus.groovy.maven.runtime</groupId>
-            <artifactId>gmaven-runtime-api</artifactId>
-            <version>1.0</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.codehaus.groovy</groupId>
-                    <artifactId>groovy-all-minimal</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${spring.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>2.4.3</version>
-            <scope>test</scope>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>${spring.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.spockframework</groupId>
-            <artifactId>spock-core</artifactId>
-            <version>1.0-groovy-2.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy</artifactId>
-            <version>2.4.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>cglib</groupId>
-            <artifactId>cglib-nodep</artifactId>
-            <version>3.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.objenesis</groupId>
-            <artifactId>objenesis</artifactId>
-            <version>2.1</version>
-            <scope>test</scope>
-        </dependency>
+
     </dependencies>
 
 </project>

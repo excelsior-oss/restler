@@ -5,45 +5,103 @@
 
     <groupId>org.restler</groupId>
     <artifactId>restler</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.1</version>
     <packaging>pom</packaging>
-    <name>Restler</name>
 
-    <modules>
-        <module>restler-core</module>
-        <module>test-server</module>
-    </modules>
+    <!--
+        For clean build passing all tests use
+
+            mvn clean install
+
+        For deploying make sure that
+            1) GPG is correctly installed and configured
+            2) .m2\settings.xml contains your ossrh credentials
+        and use
+
+            mvn deploy -P release
+
+    -->
+
+    <name>restler</name>
+    <description>Restler is a library that generates a client of a web service by its annotated Spring controller interface at runtime.</description>
+    <url>http://www.restler.org</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/${github-repo-owner}/${github-repo}.git</connection>
+        <developerConnection>scm:git:https://github.com/${github-repo-owner}/${github-repo}.git</developerConnection>
+        <url>https://github.com/${github-repo-owner}/${github-repo}</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Aleksey Zhidkov</name>
+        </developer>
+        <developer>
+            <name>Pavel Salimov</name>
+        </developer>
+    </developers>
 
     <properties>
         <jdk.version>1.8</jdk.version>
         <spring.version>4.1.6.RELEASE</spring.version>
         <slf4j.version>1.7.5</slf4j.version>
+
         <github-repo-owner>excelsior-oss</github-repo-owner>
-        <github-user>aleksey-zhidkov</github-user>
         <github-repo>restler</github-repo>
-        <bintray-user>aleksey-zhidkov</bintray-user>
-        <bintray.repo>aleksey-zhidkov/maven</bintray.repo>
-        <bintray.package>Restler</bintray.package>
     </properties>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <modules>
+        <module>restler-core</module>
+        <module>restler-integration-tests</module>
+    </modules>
+
     <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
         <profile>
             <id>release</id>
             <build>
                 <plugins>
+
+                    <!-- Produces sources -->
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
                                 <goals>
-                                    <goal>jar</goal>
+                                    <goal>jar-no-fork</goal>
                                 </goals>
                             </execution>
                         </executions>
                     </plugin>
+
+                    <!-- Produces docs -->
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -52,6 +110,35 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+
+                    <!-- Signs resulting artifacts -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Deploys results -->
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.3</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -64,45 +151,81 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
             </plugin>
+
+            <!-- Defines custom JDK -->
             <plugin>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.4.1</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
                 <configuration>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>release</releaseProfiles>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
                 </configuration>
             </plugin>
-        </plugins>
 
+            <!-- Compiles Groovy tests -->
+            <plugin>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
+
     <dependencies>
+
+        <!-- Groovy and Spock are for testing -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
+            <groupId>org.codehaus.groovy.maven.runtime</groupId>
+            <artifactId>gmaven-runtime-api</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.codehaus.groovy</groupId>
+                    <artifactId>groovy-all-minimal</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>${spring.version}</version>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>2.4.3</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>${spring.version}</version>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>2.4.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
+            <version>1.0-groovy-2.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Required by Spock -->
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib-nodep</artifactId>
+            <version>3.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.objenesis</groupId>
+            <artifactId>objenesis</artifactId>
+            <version>2.1</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
-    <scm>
-        <connection>scm:git:https://github.com/${github-repo-owner}/${github-repo}.git</connection>
-        <developerConnection>scm:git:https://github.com/${github-repo-owner}/${github-repo}.git</developerConnection>
-        <url>https://github.com/${github-repo-owner}/${github-repo}</url>
-        <tag>v0.1.0</tag>
-    </scm>
-     <distributionManagement>
-        <repository>
-            <id>bintray</id>
-            <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}</url>
-        </repository>
-    </distributionManagement>
 </project>

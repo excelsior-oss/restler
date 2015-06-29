@@ -1,4 +1,4 @@
-package org.restler.testserver.security
+package org.restler.integration.security
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration

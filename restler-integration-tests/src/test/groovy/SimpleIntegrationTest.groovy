@@ -1,19 +1,17 @@
-package org.restler.itest
-
+package org.restler.integration
 import org.restler.Service
 import org.restler.ServiceBuilder
 import org.restler.client.CGLibClientFactory
 import org.restler.http.RestOperationsExecutor
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
-import org.restler.testserver.Controller
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 
 import java.util.concurrent.Executors
 
-class SimpleTest extends Specification {
+class SimpleIntegrationTest extends Specification {
 
     def login = "user";
     def password = "password";

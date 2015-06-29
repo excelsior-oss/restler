@@ -1,11 +1,11 @@
-package org.restler.itest.http
+package org.restler.integration.http
 
 import org.restler.Service
 import org.restler.ServiceBuilder
-import org.restler.testserver.Controller
+import org.restler.integration.Controller
 import spock.lang.Specification
 
-class ClassNameErrorMapperItgrSpec extends Specification {
+class ClassNameErrorMapperIntegrationTest extends Specification {
 
     Service service = new ServiceBuilder("http://localhost:8080").
             reauthorizeRequestsOnForbidden(false).
