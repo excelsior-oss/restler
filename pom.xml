@@ -185,6 +185,7 @@
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <useReleaseProfile>false</useReleaseProfile>
+                    <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                     <!--  <releaseProfiles>release</releaseProfiles> -->
                     <goals>deploy</goals>
                 </configuration>
