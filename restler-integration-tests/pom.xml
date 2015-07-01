@@ -6,7 +6,7 @@
     <parent>
         <artifactId>restler</artifactId>
         <groupId>org.restler</groupId>
-        <version>0.1.1</version>
+        <version>0.1.1-SNAPSHOT</version>
     </parent>
 
     <properties>
@@ -17,27 +17,6 @@
     </properties>
 
     <artifactId>test-server</artifactId>
-
-    <profiles>
-        <profile>
-            <id>release</id>
-
-            <build>
-                <plugins>
-                    <!-- Excludes results from deployment -->
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.3</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <build>
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>

@@ -5,20 +5,29 @@
 
     <groupId>org.restler</groupId>
     <artifactId>restler</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <!--
-        For clean build passing all tests use
+        For a clean build passing all the tests use
 
             mvn clean install
 
-        For deploying make sure that
-            1) GPG is correctly installed and configured
-            2) .m2\settings.xml contains your ossrh credentials
-        and use
+        To release use
+
+            mvn release:prepare
+            mvn release:perform
+
+        The first above will pass all tests change version/tag/commit
+        The second will pass only unit tests and deploy as below
+
+        If you need just to build and deploy what you have, use
 
             mvn deploy -P release
+
+        Before releasing/deploying make sure that
+            1) GPG is correctly installed and configured
+            2) .m2\settings.xml contains your ossrh credentials
 
     -->
 
@@ -66,20 +75,23 @@
         </snapshotRepository>
     </distributionManagement>
 
-    <modules>
-        <module>restler-core</module>
-        <module>restler-integration-tests</module>
-    </modules>
-
     <profiles>
         <profile>
             <id>default</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+            <modules>
+                <module>restler-core</module>
+                <module>restler-integration-tests</module>
+            </modules>
         </profile>
         <profile>
             <id>release</id>
+            <!-- Due to the skip-deployment bug in the Nexus Staging plugin, we have to exclude the module to not deploy it  -->
+            <modules>
+                <module>restler-core</module>
+            </modules>
             <build>
                 <plugins>
 
