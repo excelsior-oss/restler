@@ -8,13 +8,22 @@ Overview
 --------
 
 *Restler* is a library that generates a client of a web service by its annotated Spring controller interface at runtime. 
- 
+
+### Features
+ * Custom authentication, authorization and errors mapping strategies.
+ * Form-based authorization.
+ * Cookie and HTTP Basic authentication.
+ * Automatic reauthorization.
+ * Exception class name based error mapping strategy.
+ * Support of async controllers through methods returning DefferedResult or Callabe objects
+
 ### Simple usage example
 
+Assuming, you have following interface on the server
 ```java
 /** 
-*     An annotated Spring controller interface
-*/
+  * An annotated Spring controller interface
+  */
 @Controller
 @RequestMapping("greeter")
 public interface Greeter {
@@ -23,16 +32,11 @@ public interface Greeter {
 	String getGreeting(@PathVariable String language, @RequestParam(defaultValue = "Anonimous") String name); 
 
 }
+```
 
-// Consuming code 
-Service service = new Service("https://www.excelsior-usa.com/api");
-Greeter greeter = service.getController(Greeter.class);
+Then you can invoke getGreating method on implementation class using following code snippet
+```java
+Service service = new ServiceBuilder("https://www.excelsior-usa.com/api").build();
+Greeter greeter = service.produceClient(Greeter.class);
 String greeting = greeter.getGreeting("en","Boddy"); // the result of https://www.excelsior-usa.com/api/greeter/greetings/en?name=Boddy call
-
-// Session support in consuming code
-Service service = new Service("https://www.excelsior-usa.com/api");
-AuthorizationStrategy authorizationStrategy = new LoginAuthorizationStrategy(...);
-Session session = service.startSession(authorizationStrategy);
-Greeter greeter = service.getController(Greeter.class);
-String greeting = greeter.getGreeting("en","Boddy");
 ```
