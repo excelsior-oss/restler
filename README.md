@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/excelsior-oss/restler.svg?branch=master)](https://travis-ci.org/excelsior-oss/restler)
 Restler
 =======
  
