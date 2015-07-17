@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/excelsior-oss/restler.svg?branch=master)](https://travis-ci.org/excelsior-oss/restler)
+[![Maven Central](https://img.shields.io/maven-central/v/org.restler/restler-core.svg)](https://maven-badges.herokuapp.com/maven-central/org.restler/restler-core)
+
 Restler
 =======
  
