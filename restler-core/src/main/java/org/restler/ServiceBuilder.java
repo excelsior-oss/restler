@@ -46,11 +46,6 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder useThreadExecutor(java.util.concurrent.Executor threadExecutor) {
-        this.threadExecutor = threadExecutor;
-        return this;
-    }
-
     public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy){
         this.authenticationStrategy = authenticationStrategy;
         return this;
