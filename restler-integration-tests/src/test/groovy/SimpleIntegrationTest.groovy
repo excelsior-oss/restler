@@ -25,7 +25,6 @@ class SimpleIntegrationTest extends Specification {
             useAuthorizationStrategy(formAuth).
             useCookieBasedAuthentication().
             autoAuthorize(true).
-            useThreadExecutor(Executors.newCachedThreadPool()).
             useClassNameExceptionMapper().
             useExecutor(spySimpleHttpRequestExecutor).
             build();
