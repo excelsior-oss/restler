@@ -4,10 +4,10 @@
 Restler
 =======
  
-Overview
---------
+### Overview
+*Restler* is a library that generates a client of a web service by its annotated Spring controller interface at runtime.
 
-*Restler* is a library that generates a client of a web service by its annotated Spring controller interface at runtime. 
+**EPA warning: Restler currently is in early public access stage and it is neither feature complete, tested in production or backward compatible**
 
 ### Features
  * Custom authentication, authorization and errors mapping strategies.
