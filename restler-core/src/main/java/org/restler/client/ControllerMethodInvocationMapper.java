@@ -55,7 +55,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
                     if (StringUtils.isEmpty(pathVariableName))
                         throw new RuntimeException("Name of a path variable can't be resolved during the method " + method + " call");
 
-                    pathVariables.put(pathVariableName, args[pi]);
+                    pathVariables.put(pathVariableName, String.valueOf(args[pi]));
 
                 } else if (annotation instanceof RequestParam) {
 
@@ -65,7 +65,10 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
                     if (StringUtils.isEmpty(parameterVariableName))
                         throw new RuntimeException("Name of a request parameter can't be resolved during the method " + method + " call");
 
-                    requestParams.add(parameterVariableName, args[pi].toString());
+                    if (args[pi] != null) {
+                        requestParams.add(parameterVariableName, String.valueOf(args[pi]));
+                    }
+
 
                 } else if (annotation instanceof RequestBody) {
                     requestBody = args[pi];
