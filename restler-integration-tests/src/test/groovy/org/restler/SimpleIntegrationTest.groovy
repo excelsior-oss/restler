@@ -1,15 +1,14 @@
-package org.restler.integration
-import org.restler.Service
-import org.restler.ServiceBuilder
+package org.restler
+
 import org.restler.client.CGLibClientFactory
+import org.restler.client.RestlerException
 import org.restler.http.RestOperationsExecutor
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
+import org.restler.integration.Controller
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
-
-import java.util.concurrent.Executors
 
 class SimpleIntegrationTest extends Specification {
 
@@ -17,14 +16,12 @@ class SimpleIntegrationTest extends Specification {
     def password = "password";
 
     def formAuth = new FormAuthorizationStrategy("http://localhost:8080/login", login, "username", password, "password");
-    //def basicAuth = new BasicAuthorizationStrategy(login, password)
 
     def spySimpleHttpRequestExecutor = Spy(RestOperationsExecutor, constructorArgs: [new RestTemplate()])
 
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
             useAuthorizationStrategy(formAuth).
             useCookieBasedAuthentication().
-            autoAuthorize(true).
             useClassNameExceptionMapper().
             useExecutor(spySimpleHttpRequestExecutor).
             build();
@@ -37,7 +34,6 @@ class SimpleIntegrationTest extends Specification {
 
     Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
             useHttpBasicAuthentication(login, password).
-            autoAuthorize(true).
             build();
 
     def controller = serviceWithFormAuth.produceClient(Controller.class);

@@ -1,4 +1,4 @@
-package org.restler.integration.http
+package org.restler.http.error
 
 import org.restler.Service
 import org.restler.ServiceBuilder
