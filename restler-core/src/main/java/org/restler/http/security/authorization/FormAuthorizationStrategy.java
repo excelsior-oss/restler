@@ -1,5 +1,6 @@
 package org.restler.http.security.authorization;
 
+import org.restler.client.RestlerException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
@@ -7,6 +8,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.stream.Stream;
 
 /**
  * The implementation that performs an HTTP(S) post request of a login form data to obtain a session id.
@@ -59,7 +62,11 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
 
         ResponseEntity<?> responseEntity = restOperations.postForEntity(UriComponentsBuilder.fromUriString(urlString).build().toUri(), params, Object.class);
 
-        return responseEntity.getHeaders().get(HttpHeaders.SET_COOKIE).stream().filter(s -> s.startsWith(cookieName + "=")).findAny().map(s -> s.split("[=;]")[1]).get();
+        Stream<String> headers = responseEntity.getHeaders().get(HttpHeaders.SET_COOKIE).stream();
+        return headers.filter(s -> s.startsWith(cookieName + "=")).
+                findAny().
+                map(s -> s.split("[=;]")[1]).
+                orElseThrow(() -> new RestlerException("Cookie " + cookieName + " not found in response on authorization request"));
     }
 
 }
