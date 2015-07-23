@@ -1,6 +1,5 @@
+package org.restler.util
 
-
-import org.restler.util.Util
 import spock.lang.Specification
 
 class UtilSpec extends Specification {
