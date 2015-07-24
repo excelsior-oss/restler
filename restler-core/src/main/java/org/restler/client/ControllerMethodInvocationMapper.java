@@ -15,10 +15,14 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Maps a properly annotated Java method invocation to invocation of a service method.
@@ -26,6 +30,7 @@ import java.util.function.BiFunction;
 public class ControllerMethodInvocationMapper implements BiFunction<Method, Object[], ServiceMethodInvocation<?>> {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+    private static final Pattern pathVariablesPattern = Pattern.compile("\\{([-a-zA-Z0-9@:%_\\+.~#?&/=]*)\\}");
 
     private final String baseUrl;
 
@@ -76,6 +81,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             }
         }
 
+        fillUnusedPathVariables(pathVariables, unusedPathVariables(pathVariables, description.getUriTemplate()));
         return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables, requestParams);
     }
 
@@ -122,6 +128,23 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         }
 
         return new ServiceMethod<>(uriTemplate, resultType, httpMethod, expectedStatus);
+    }
+
+    private List<String> unusedPathVariables(Map<String, Object> pathVariables, String uriTemplate) {
+        List<String> res = new ArrayList<>();
+        Matcher matcher = pathVariablesPattern.matcher(uriTemplate);
+        while (matcher.find()) {
+            if (!pathVariables.containsKey(matcher.group())) {
+                res.add(matcher.group(1));
+            }
+        }
+        return res;
+    }
+
+    private void fillUnusedPathVariables(Map<String, Object> pathVariables, List<String> unusedPathVariables) {
+        unusedPathVariables.stream().filter(pathVar -> !pathVariables.containsKey(pathVar)).forEach(pathVar -> {
+            pathVariables.put(pathVar, "unspecified");
+        });
     }
 
     private String getMappedUriString(RequestMapping mapping) {
