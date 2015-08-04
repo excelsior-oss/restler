@@ -27,7 +27,7 @@ public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocat
     private <T> Request<T> toRequest(ServiceMethodInvocation<T> invocation) {
         ServiceMethod<T> method = invocation.getMethod();
 
-        URI target = UriComponentsBuilder.fromHttpUrl(invocation.getBaseUrl()).
+        URI target = UriComponentsBuilder.fromUri(invocation.getBaseUrl()).
                 path(method.getUriTemplate()).
                 queryParams(invocation.getRequestParams()).
                 buildAndExpand(invocation.getPathVariables()).toUri();

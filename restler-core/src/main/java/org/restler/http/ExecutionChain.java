@@ -11,11 +11,11 @@ public class ExecutionChain implements Executor {
     private final ExecutionAdvice[] advices;
     private final int index;
 
-    public ExecutionChain(Executor executor, List<ExecutionAdvice> advices){
+    public ExecutionChain(Executor executor, List<ExecutionAdvice> advices) {
         this(executor, advices.toArray(new ExecutionAdvice[advices.size()]), 0);
     }
 
-    private ExecutionChain(Executor executor, ExecutionAdvice[] advices, int index){
+    private ExecutionChain(Executor executor, ExecutionAdvice[] advices, int index) {
 
         if (Arrays.asList(advices).contains(null))
             throw new NullPointerException("Null advice is not allowed in the chain.");
@@ -25,16 +25,16 @@ public class ExecutionChain implements Executor {
         this.index = index;
     }
 
-    public <T> ResponseEntity<T> execute(Request<T> request){
-        if (index >= advices.length){
+    public <T> ResponseEntity<T> execute(Request<T> request) {
+        if (index >= advices.length) {
             return executor.execute(request);
         } else {
             return advices[index].advice(request, tail());
         }
     }
 
-    private ExecutionChain tail(){
-        return new ExecutionChain(executor,advices, index + 1);
+    private ExecutionChain tail() {
+        return new ExecutionChain(executor, advices, index + 1);
     }
 
 }

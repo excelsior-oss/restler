@@ -13,8 +13,10 @@ import org.restler.http.security.authentication.CookieAuthenticationStrategy;
 import org.restler.http.security.authentication.HttpBasicAuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
+import org.restler.util.UriBuilder;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -25,7 +27,7 @@ import java.util.concurrent.Executors;
  */
 public class ServiceBuilder {
 
-    private String baseUrl;
+    private final UriBuilder uriBuilder;
 
     private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
     private Executor executor = new RestOperationsExecutor(new RestTemplate());
@@ -38,15 +40,19 @@ public class ServiceBuilder {
     private boolean autoAuthorize = true;
 
     public ServiceBuilder(String baseUrl) {
-        this.baseUrl = baseUrl;
+        uriBuilder = new UriBuilder(baseUrl);
+    }
+
+    public ServiceBuilder(URI baseUrl) {
+        uriBuilder = new UriBuilder(baseUrl);
     }
 
     public ServiceBuilder useExecutor(Executor executor) {
-        this.executor = Objects.requireNonNull(executor,"Provide an executor");
+        this.executor = Objects.requireNonNull(executor, "Provide an executor");
         return this;
     }
 
-    public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy){
+    public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy) {
         this.authenticationStrategy = authenticationStrategy;
         return this;
     }
@@ -70,12 +76,12 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder autoAuthorize(boolean autoAuthorize){
+    public ServiceBuilder autoAuthorize(boolean autoAuthorize) {
         this.autoAuthorize = autoAuthorize;
         return this;
     }
 
-    public ServiceBuilder useErrorMapper(ExecutionAdvice errorMapper){
+    public ServiceBuilder useErrorMapper(ExecutionAdvice errorMapper) {
         this.errorMapper = errorMapper;
         return this;
     }
@@ -84,12 +90,29 @@ public class ServiceBuilder {
         return useErrorMapper(new ClassNameErrorMappingRequestExecutionAdvice());
     }
 
+    public void scheme(String scheme) {
+        uriBuilder.scheme(scheme);
+    }
+
+    public void host(String host) {
+        uriBuilder.host(host);
+    }
+
+    public void port(int port) {
+        uriBuilder.port(port);
+    }
+
+    public void path(String path) {
+        uriBuilder.path(path);
+    }
+
+
     public Service build() {
 
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
         List<ExecutionAdvice> advices = new ArrayList<>();
 
-        if (reauthorize){
+        if (reauthorize) {
             Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
             advices.add(new ReauthorizingExecutionAdvice(session));
         }
@@ -104,7 +127,11 @@ public class ServiceBuilder {
 
         ExecutionChain chain = new ExecutionChain(executor, advices);
 
-        return new Service(new CachingClientFactory(new CGLibClientFactory(new HttpServiceMethodInvocationExecutor(chain), new ControllerMethodInvocationMapper(baseUrl), threadExecutor)), session);
+        ControllerMethodInvocationMapper invocationMapper = new ControllerMethodInvocationMapper(uriBuilder.build());
+        HttpServiceMethodInvocationExecutor executor = new HttpServiceMethodInvocationExecutor(chain);
+        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(executor, invocationMapper, threadExecutor));
+
+        return new Service(factory, session);
     }
 
 }
