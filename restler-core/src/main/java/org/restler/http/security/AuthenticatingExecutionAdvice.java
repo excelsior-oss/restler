@@ -9,7 +9,7 @@ public class AuthenticatingExecutionAdvice implements ExecutionAdvice {
 
     private final SecuritySession session;
 
-    public AuthenticatingExecutionAdvice(SecuritySession session){
+    public AuthenticatingExecutionAdvice(SecuritySession session) {
         this.session = session;
     }
 

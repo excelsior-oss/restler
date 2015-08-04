@@ -4,7 +4,7 @@ import spock.lang.Specification
 
 class UriBuilderSpec extends Specification {
 
-    def "UriBuilder should preserve original url if not changed"(){
+    def "UriBuilder should preserve original url if not changed"() {
         given:
         def originalUrl = new URI("http://localhost:8080/api")
         def builder = new UriBuilder(originalUrl)

@@ -48,11 +48,11 @@ public class ServiceBuilder {
     }
 
     public ServiceBuilder useExecutor(Executor executor) {
-        this.executor = Objects.requireNonNull(executor,"Provide an executor");
+        this.executor = Objects.requireNonNull(executor, "Provide an executor");
         return this;
     }
 
-    public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy){
+    public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy) {
         this.authenticationStrategy = authenticationStrategy;
         return this;
     }
@@ -76,12 +76,12 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder autoAuthorize(boolean autoAuthorize){
+    public ServiceBuilder autoAuthorize(boolean autoAuthorize) {
         this.autoAuthorize = autoAuthorize;
         return this;
     }
 
-    public ServiceBuilder useErrorMapper(ExecutionAdvice errorMapper){
+    public ServiceBuilder useErrorMapper(ExecutionAdvice errorMapper) {
         this.errorMapper = errorMapper;
         return this;
     }
@@ -112,7 +112,7 @@ public class ServiceBuilder {
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
         List<ExecutionAdvice> advices = new ArrayList<>();
 
-        if (reauthorize){
+        if (reauthorize) {
             Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
             advices.add(new ReauthorizingExecutionAdvice(session));
         }
