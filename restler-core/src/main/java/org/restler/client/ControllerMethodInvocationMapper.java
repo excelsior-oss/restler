@@ -15,6 +15,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,9 +33,9 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
     private static final Pattern pathVariablesPattern = Pattern.compile("\\{([-a-zA-Z0-9@:%_\\+.~#?&/=]*)\\}");
 
-    private final String baseUrl;
+    private final URI baseUrl;
 
-    public ControllerMethodInvocationMapper(String baseUrl) {
+    public ControllerMethodInvocationMapper(URI baseUrl) {
         this.baseUrl = baseUrl;
     }
 
