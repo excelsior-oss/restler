@@ -2,15 +2,17 @@ package org.restler.http.security.authentication;
 
 import org.springframework.http.HttpHeaders;
 
+import java.util.Collections;
+import java.util.List;
+
 public class HttpBasicAuthenticationStrategy extends HeaderBasedAuthenticationStrategy {
 
     @Override
-    protected String getHeaderName(AuthenticationContext context) {
-        return HttpHeaders.AUTHORIZATION;
+    protected List<Header> headers(AuthenticationContext context) {
+        return Collections.singletonList(new Header(HttpHeaders.AUTHORIZATION, value(context)));
     }
 
-    @Override
-    protected String getHeaderValue(AuthenticationContext context) {
+    protected String value(AuthenticationContext context) {
         Object token = context.getAuthenticationToken();
         String tokenValue = token == null ? null : token.toString();
         return "Basic " + tokenValue;
