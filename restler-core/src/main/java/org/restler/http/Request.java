@@ -6,6 +6,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.net.URI;
+import java.util.Arrays;
 
 /**
  * Describes an object that contains HTTP(S) request data and can be executed to produce a response.
@@ -39,9 +40,9 @@ public class Request<T> {
         return returnType;
     }
 
-    public Request<T> setHeader(String name, String value) {
+    public Request<T> setHeader(String name, String... values) {
         MultiValueMap<String, String> newHeaders = new LinkedMultiValueMap<>(headers);
-        newHeaders.set(name, value);
+        Arrays.stream(values).forEach(value -> newHeaders.set(name, value));
         return new Request<>(url, httpMethod, newHeaders, body, returnType);
     }
 }

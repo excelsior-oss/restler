@@ -3,6 +3,9 @@ package org.restler.http.security.authentication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * The implementation that authenticates a request adding a cookie.
  */
@@ -31,12 +34,11 @@ public class CookieAuthenticationStrategy extends HeaderBasedAuthenticationStrat
     }
 
     @Override
-    protected String getHeaderName(AuthenticationContext context) {
-        return HttpHeaders.COOKIE;
+    protected List<Header> headers(AuthenticationContext context) {
+        return Collections.singletonList(new Header(HttpHeaders.COOKIE, value(context)));
     }
 
-    @Override
-    protected String getHeaderValue(AuthenticationContext context) {
+    private String value(AuthenticationContext context) {
         Object token = context.getAuthenticationToken();
         String cookieValue = token == null ? null : token.toString();
         return cookieName + "=" + cookieValue + ";";
