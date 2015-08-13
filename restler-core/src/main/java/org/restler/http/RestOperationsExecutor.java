@@ -1,6 +1,7 @@
 package org.restler.http;
 
 import org.restler.util.Util;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -21,9 +22,14 @@ public class RestOperationsExecutor implements Executor {
         restTemplate.getMessageConverters().add(new BodySavingMessageConverter());
     }
 
-    public <T> ResponseEntity<T> execute(Request<T> executableRequest) {
-        RequestEntity<?> requestEntity = executableRequest.toRequestEntity();
-        return restTemplate.exchange(requestEntity, executableRequest.getReturnType());
+    public <T> ResponseEntity<T> execute(Request<T> request) {
+        RequestEntity<?> requestEntity = request.toRequestEntity();
+        return restTemplate.exchange(requestEntity, new ParameterizedTypeReference<T>() {
+            @Override
+            public Type getType() {
+                return request.getReturnType();
+            }
+        });
     }
 
     private class BodySavingMessageConverter implements GenericHttpMessageConverter<Object> {

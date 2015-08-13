@@ -39,7 +39,7 @@ public open class Controller {
     RequestMapping("getCallable")
     open fun callableGet(): Callable<String> {
         return Callable (
-                fun call(): String {
+                fun(): String {
                     Thread.sleep(1000)
                     return "Callable OK"
                 }
@@ -58,10 +58,27 @@ public open class Controller {
     }
 
     @ExceptionHandler(Exception::class)
-    fun printStackTrace(req: HttpServletRequest, e: Exception): String {
+    open fun printStackTrace(req: HttpServletRequest, e: Exception): String {
         val stringWriter = StringWriter()
         e.printStackTrace(PrintWriter(stringWriter))
         return stringWriter.toString()
 
     }
+
+    RequestMapping("listOfStrings")
+    open fun getListOfStrings() = listOf("item1", "item2")
+
+    private val simpleDto1 = SimpleDto("1", "dto1")
+
+    private val simpleDto2 = SimpleDto("2", "dto2");
+
+    RequestMapping("listOfDtos")
+    open fun getListOfDtos() = listOf(simpleDto1, simpleDto2)
+
+    RequestMapping("setOfDtos")
+    open fun getSetOfDtos() = setOf(simpleDto1, simpleDto2)
+
+    RequestMapping("mapOfDtos")
+    open fun getMapOfDtos() = mapOf("1" to simpleDto1, "2" to simpleDto2)
+
 }

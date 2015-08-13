@@ -120,15 +120,10 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
 
         if (resultType == DeferredResult.class || resultType == Callable.class) {
             ParameterizedType parameterizedType = (ParameterizedType) returnType;
-            Type[] genericArguments = parameterizedType.getActualTypeArguments();
-            try {
-                resultType = Class.forName(genericArguments[0].getTypeName());
-            } catch (ClassNotFoundException e) {
-                throw new RestlerException("Could not find class for method return type", e);
-            }
+            returnType = parameterizedType.getActualTypeArguments()[0];
         }
 
-        return new ServiceMethod<>(uriTemplate, resultType, httpMethod, expectedStatus);
+        return new ServiceMethod<>(uriTemplate, returnType, httpMethod, expectedStatus);
     }
 
     private List<String> unusedPathVariables(Map<String, Object> pathVariables, String uriTemplate) {

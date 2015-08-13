@@ -3,6 +3,8 @@ package org.restler.client;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
+import java.lang.reflect.Type;
+
 /**
  * Describes a service method.
  *
@@ -10,11 +12,11 @@ import org.springframework.http.HttpStatus;
  */
 public class ServiceMethod<T> {
     private String uriTemplate;
-    private Class<T> returnType;
+    private Type returnType;
     private HttpMethod httpMethod;
     private HttpStatus expectedHttpResponseStatus;
 
-    public ServiceMethod(String uriTemplate, Class<T> returnType, HttpMethod httpMethod, HttpStatus expectedHttpResponseStatus) {
+    public ServiceMethod(String uriTemplate, Type returnType, HttpMethod httpMethod, HttpStatus expectedHttpResponseStatus) {
         this.uriTemplate = uriTemplate;
         this.returnType = returnType;
         this.httpMethod = httpMethod;
@@ -35,7 +37,7 @@ public class ServiceMethod<T> {
      *
      * @return a type object
      */
-    public Class<T> getReturnType() {
+    public Type getReturnType() {
         return returnType;
     }
 

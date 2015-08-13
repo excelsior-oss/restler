@@ -185,6 +185,11 @@
             <version>2.4.3</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-paranamer</artifactId>
+            <version>2.6.1</version>
+        </dependency>
     </dependencies>
 
     <!-- for spring-boot-maven-plugin -->
