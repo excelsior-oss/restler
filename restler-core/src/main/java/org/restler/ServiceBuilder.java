@@ -1,5 +1,6 @@
 package org.restler;
 
+import com.fasterxml.jackson.databind.Module;
 import org.restler.client.CGLibClientFactory;
 import org.restler.client.CachingClientFactory;
 import org.restler.client.ControllerMethodInvocationMapper;
@@ -14,6 +15,7 @@ import org.restler.http.security.authentication.HttpBasicAuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
 import org.restler.util.UriBuilder;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
@@ -30,7 +32,8 @@ public class ServiceBuilder {
     private final UriBuilder uriBuilder;
 
     private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
-    private Executor executor = new RestOperationsExecutor(new RestTemplate());
+    private final RestTemplate restTemplate = new RestTemplate();
+    private Executor executor = new RestOperationsExecutor(restTemplate);
     private ExecutionAdvice errorMapper = null;
 
     private AuthenticationStrategy authenticationStrategy;
@@ -106,6 +109,14 @@ public class ServiceBuilder {
         uriBuilder.path(path);
     }
 
+    public ServiceBuilder registerJacksonModule(Module module) {
+        restTemplate.getMessageConverters().stream().
+                filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).
+                forEach((converter) -> {
+                    ((MappingJackson2HttpMessageConverter) converter).getObjectMapper().registerModule(module);
+                });
+        return this;
+    }
 
     public Service build() {
 
@@ -134,4 +145,6 @@ public class ServiceBuilder {
         return new Service(factory, session);
     }
 
+
 }
+

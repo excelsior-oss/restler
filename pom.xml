@@ -66,6 +66,7 @@
         <jdk.version>1.8</jdk.version>
         <spring.version>4.1.6.RELEASE</spring.version>
         <slf4j.version>1.7.5</slf4j.version>
+        <jackson.version>2.6.0</jackson.version>
 
         <github-repo-owner>excelsior-oss</github-repo-owner>
         <github-repo>restler</github-repo>
