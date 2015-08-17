@@ -5,6 +5,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Arrays;
 
@@ -16,17 +17,17 @@ public class Request<T> {
     private HttpMethod httpMethod = HttpMethod.GET;
     private URI url;
     private Object body;
-    private Class<T> returnType;
+    private Type returnType;
     private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 
-    public Request(URI url, HttpMethod httpMethod, Object body, Class<T> returnType) {
+    public Request(URI url, HttpMethod httpMethod, Object body, Type returnType) {
         this.url = url;
         this.httpMethod = httpMethod;
         this.body = body;
         this.returnType = returnType;
     }
 
-    public Request(URI url, HttpMethod httpMethod, MultiValueMap<String, String> headers, Object body, Class<T> returnType) {
+    public Request(URI url, HttpMethod httpMethod, MultiValueMap<String, String> headers, Object body, Type returnType) {
         this(url, httpMethod, body, returnType);
         this.headers = headers;
     }
@@ -36,7 +37,7 @@ public class Request<T> {
         return new RequestEntity<>(body, headers, httpMethod, url);
     }
 
-    public Class<T> getReturnType() {
+    public Type getReturnType() {
         return returnType;
     }
 

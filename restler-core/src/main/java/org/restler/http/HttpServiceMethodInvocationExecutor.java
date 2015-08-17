@@ -3,9 +3,11 @@ package org.restler.http;
 import org.restler.client.ServiceMethod;
 import org.restler.client.ServiceMethodInvocationExecutor;
 import org.restler.client.ServiceMethodInvocation;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.lang.reflect.Type;
 import java.net.URI;
 
 public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocationExecutor {
@@ -32,6 +34,6 @@ public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocat
                 queryParams(invocation.getRequestParams()).
                 buildAndExpand(invocation.getPathVariables()).toUri();
 
-        return new Request<T>(target, method.getHttpMethod(), invocation.getRequestBody(), method.getReturnType());
+        return new Request<>(target, method.getHttpMethod(), invocation.getRequestBody(), method.getReturnType());
     }
 }
