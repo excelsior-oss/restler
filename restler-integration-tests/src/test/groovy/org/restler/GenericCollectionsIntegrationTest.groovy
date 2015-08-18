@@ -5,7 +5,7 @@ import org.restler.integration.Controller
 import org.restler.integration.SimpleDto
 import spock.lang.Specification
 
-class GenericCollectionsSpec extends Specification {
+class GenericCollectionsIntegrationTest extends Specification {
 
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
             useClassNameExceptionMapper().
