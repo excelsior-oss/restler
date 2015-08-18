@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.Module;
 import org.restler.client.CGLibClientFactory;
 import org.restler.client.CachingClientFactory;
 import org.restler.client.ControllerMethodInvocationMapper;
+import org.restler.client.ParameterResolver;
 import org.restler.http.*;
 import org.restler.http.error.ClassNameErrorMappingRequestExecutionAdvice;
 import org.restler.http.security.AuthenticatingExecutionAdvice;
@@ -30,6 +31,7 @@ import java.util.concurrent.Executors;
 public class ServiceBuilder {
 
     private final UriBuilder uriBuilder;
+    private ParameterResolver paramResolver = ParameterResolver.valueOfParamResolver();
 
     private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
     private final RestTemplate restTemplate = new RestTemplate();
@@ -109,6 +111,11 @@ public class ServiceBuilder {
         uriBuilder.path(path);
     }
 
+    public ServiceBuilder withParametersResolver(ParameterResolver parametersResolver) {
+        this.paramResolver = parametersResolver;
+        return this;
+    }
+
     public ServiceBuilder registerJacksonModule(Module module) {
         restTemplate.getMessageConverters().stream().
                 filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).
@@ -138,13 +145,12 @@ public class ServiceBuilder {
 
         ExecutionChain chain = new ExecutionChain(executor, advices);
 
-        ControllerMethodInvocationMapper invocationMapper = new ControllerMethodInvocationMapper(uriBuilder.build());
+        ControllerMethodInvocationMapper invocationMapper = new ControllerMethodInvocationMapper(uriBuilder.build(), paramResolver);
         HttpServiceMethodInvocationExecutor executor = new HttpServiceMethodInvocationExecutor(chain);
         CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(executor, invocationMapper, threadExecutor));
 
         return new Service(factory, session);
     }
-
 
 }
 

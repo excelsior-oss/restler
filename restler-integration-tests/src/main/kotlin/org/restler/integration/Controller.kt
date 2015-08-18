@@ -81,4 +81,6 @@ public open class Controller {
     RequestMapping("mapOfDtos")
     open fun getMapOfDtos() = mapOf("1" to simpleDto1, "2" to simpleDto2)
 
+    RequestMapping("isNull")
+    open fun isNull(@RequestParam(required = false) str: String?) = str identityEquals null
 }
