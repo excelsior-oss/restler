@@ -8,8 +8,8 @@ import java.util.Map;
  */
 public class CachingClientFactory implements ClientFactory {
 
-    private Map<Class<?>, Object> clients = new HashMap<>();
-    private ClientFactory factory;
+    private final Map<Class<?>, Object> clients = new HashMap<>();
+    private final ClientFactory factory;
 
     /**
      * Creates a caching wrapper of a {@link ClientFactory} instance.
@@ -23,6 +23,7 @@ public class CachingClientFactory implements ClientFactory {
     @Override
     public <C> C produceClient(Class<C> controllerClass) {
         if (clients.containsKey(controllerClass)) {
+            //noinspection unchecked
             return (C) clients.get(controllerClass);
         } else {
             C client = factory.produceClient(controllerClass);

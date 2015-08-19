@@ -2,10 +2,10 @@ package org.restler.http.security.authentication;
 
 import java.util.Arrays;
 
-public class Header {
+class Header {
 
-    public String name;
-    private String[] values;
+    public final String name;
+    private final String[] values;
 
     public Header(String name, String ... values) {
         this.name = name;

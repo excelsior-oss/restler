@@ -12,7 +12,7 @@ public class HttpBasicAuthenticationStrategy extends HeaderBasedAuthenticationSt
         return Collections.singletonList(new Header(HttpHeaders.AUTHORIZATION, value(context)));
     }
 
-    protected String value(AuthenticationContext context) {
+    private String value(AuthenticationContext context) {
         Object token = context.getAuthenticationToken();
         String tokenValue = token == null ? null : token.toString();
         return "Basic " + tokenValue;

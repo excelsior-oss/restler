@@ -14,21 +14,21 @@ import java.util.Arrays;
  */
 public class Request<T> {
 
-    private HttpMethod httpMethod = HttpMethod.GET;
-    private URI url;
-    private Object body;
-    private Type returnType;
-    private MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    private final HttpMethod httpMethod;
+    private final URI url;
+    private final Object body;
+    private final Type returnType;
+    private final MultiValueMap<String, String> headers;
 
     public Request(URI url, HttpMethod httpMethod, Object body, Type returnType) {
+        this(url, httpMethod, new LinkedMultiValueMap<>(), body, returnType);
+    }
+
+    public Request(URI url, HttpMethod httpMethod, MultiValueMap<String, String> headers, Object body, Type returnType) {
         this.url = url;
         this.httpMethod = httpMethod;
         this.body = body;
         this.returnType = returnType;
-    }
-
-    public Request(URI url, HttpMethod httpMethod, MultiValueMap<String, String> headers, Object body, Type returnType) {
-        this(url, httpMethod, body, returnType);
         this.headers = headers;
     }
 

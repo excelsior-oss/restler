@@ -31,10 +31,9 @@ import java.util.concurrent.Executors;
 public class ServiceBuilder {
 
     private final UriBuilder uriBuilder;
-    private ParameterResolver paramResolver = ParameterResolver.valueOfParamResolver();
-
-    private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
     private final RestTemplate restTemplate = new RestTemplate();
+    private ParameterResolver paramResolver = ParameterResolver.valueOfParamResolver();
+    private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
     private Executor executor = new RestOperationsExecutor(restTemplate);
     private ExecutionAdvice errorMapper = null;
 
@@ -119,9 +118,7 @@ public class ServiceBuilder {
     public ServiceBuilder registerJacksonModule(Module module) {
         restTemplate.getMessageConverters().stream().
                 filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).
-                forEach((converter) -> {
-                    ((MappingJackson2HttpMessageConverter) converter).getObjectMapper().registerModule(module);
-                });
+                forEach((converter) -> ((MappingJackson2HttpMessageConverter) converter).getObjectMapper().registerModule(module));
         return this;
     }
 

@@ -9,12 +9,12 @@ import org.restler.http.security.authorization.AuthorizationStrategy;
  */
 public class SecuritySession implements AuthenticationContext {
 
-    private AuthorizationStrategy authorizationStrategy;
-    private AuthenticationStrategy authenticationStrategy;
+    private final AuthorizationStrategy authorizationStrategy;
+    private final AuthenticationStrategy authenticationStrategy;
+    private final boolean autoAuthorize;
 
     private Object authenticationToken;
     private boolean authorized;
-    private boolean autoAuthorize;
 
     public SecuritySession(AuthorizationStrategy authorizationStrategy, AuthenticationStrategy authenticationStrategy, boolean autoAuthorize) {
         this.authenticationStrategy = authenticationStrategy;

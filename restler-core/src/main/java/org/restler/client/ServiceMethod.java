@@ -11,10 +11,11 @@ import java.lang.reflect.Type;
  * @param <T> the return type of the method
  */
 public class ServiceMethod<T> {
-    private String uriTemplate;
-    private Type returnType;
-    private HttpMethod httpMethod;
-    private HttpStatus expectedHttpResponseStatus;
+
+    private final String uriTemplate;
+    private final Type returnType;
+    private final HttpMethod httpMethod;
+    private final HttpStatus expectedHttpResponseStatus;
 
     public ServiceMethod(String uriTemplate, Type returnType, HttpMethod httpMethod, HttpStatus expectedHttpResponseStatus) {
         this.uriTemplate = uriTemplate;

@@ -138,9 +138,9 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
     }
 
     private void fillUnusedPathVariables(Map<String, Object> pathVariables, List<String> unusedPathVariables) {
-        unusedPathVariables.stream().filter(pathVar -> !pathVariables.containsKey(pathVar)).forEach(pathVar -> {
-            pathVariables.put(pathVar, "unspecified");
-        });
+        unusedPathVariables.stream().filter(pathVar -> !pathVariables.containsKey(pathVar)).forEach(pathVar ->
+                pathVariables.put(pathVar, "unspecified")
+        );
     }
 
     private String getMappedUriString(RequestMapping mapping) {
@@ -166,7 +166,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         private final Annotation[][] annotations;
         private final String[] paramNames;
 
-        private ParameterResolver paramResolver;
+        private final ParameterResolver paramResolver;
 
         public InvocationParamResolver(Method method, Object[] args, Annotation[][] annotations, String[] paramNames, ParameterResolver paramResolver) {
             this.paramResolver = paramResolver;

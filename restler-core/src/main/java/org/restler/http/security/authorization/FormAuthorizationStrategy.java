@@ -16,28 +16,14 @@ import java.util.stream.Stream;
  */
 public class FormAuthorizationStrategy implements AuthorizationStrategy {
 
-    protected String urlString;
-    protected String loginParameterName = "j_username";
-    protected String loginParameterValue;
-    protected String passwordParameterName = "j_password";
-    protected String passwordParameterValue;
-    protected String cookieName = "JSESSIONID";
+    protected final String urlString;
+    protected final String loginParameterName;
+    protected final String loginParameterValue;
+    protected final String passwordParameterName;
+    protected final String passwordParameterValue;
+    protected final String cookieName = "JSESSIONID";
 
-    protected RestOperations restOperations;
-
-    /**
-     * Creates a strategy that uses default parameter names.
-     *
-     * @param url      url of the login service.
-     * @param login    login of the user to be passed as <tt>j_username</tt>
-     * @param password password of the user to be passed as <tt>j_password</tt>
-     */
-    public FormAuthorizationStrategy(String url, String login, String password) {
-        this.urlString = url;
-        this.loginParameterValue = login;
-        this.passwordParameterValue = password;
-        restOperations = new RestTemplate();
-    }
+    protected final RestOperations restOperations;
 
     /**
      * Creates a strategy that uses custom parameter names.
@@ -49,7 +35,10 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
      * @param passwordParameterName name of the form parameter holding the <tt>password</tt> value
      */
     public FormAuthorizationStrategy(String url, String login, String loginParameterName, String password, String passwordParameterName) {
-        this(url, login, password);
+        this.urlString = url;
+        this.loginParameterValue = login;
+        this.passwordParameterValue = password;
+        restOperations = new RestTemplate();
         this.loginParameterName = loginParameterName;
         this.passwordParameterName = passwordParameterName;
     }
