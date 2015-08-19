@@ -1,7 +1,6 @@
 package org.restler
 
 import org.restler.client.CGLibClientFactory
-import org.restler.client.RestlerException
 import org.restler.http.RestOperationsExecutor
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
@@ -114,4 +113,5 @@ class SimpleIntegrationTest extends Specification {
         then:
         thrown(IllegalArgumentException)
     }
+
 }

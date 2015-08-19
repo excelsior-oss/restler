@@ -16,10 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -34,15 +31,15 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
     private static final Pattern pathVariablesPattern = Pattern.compile("\\{([-a-zA-Z0-9@:%_\\+.~#?&/=]*)\\}");
 
     private final URI baseUrl;
+    private final ParameterResolver paramResolver;
 
-    public ControllerMethodInvocationMapper(URI baseUrl) {
+    public ControllerMethodInvocationMapper(URI baseUrl, ParameterResolver paramResolver) {
         this.baseUrl = baseUrl;
+        this.paramResolver = paramResolver;
     }
 
     @Override
     public ServiceMethodInvocation<?> apply(Method method, Object[] args) {
-        ServiceMethod<?> description = getDescription(method);
-
         Object requestBody = null;
         Map<String, Object> pathVariables = new HashMap<>();
         MultiValueMap<String, String> requestParams = new LinkedMultiValueMap<>();
@@ -50,6 +47,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         Annotation[][] parametersAnnotations = method.getParameterAnnotations();
         String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
 
+        InvocationParamResolver resolver = new InvocationParamResolver(method, args,parametersAnnotations, parameterNames, paramResolver);
         for (int pi = 0; pi < parametersAnnotations.length; pi++) {
             for (int ai = 0; ai < parametersAnnotations[pi].length; ai++) {
                 Annotation annotation = parametersAnnotations[pi][ai];
@@ -61,20 +59,21 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
                     if (StringUtils.isEmpty(pathVariableName))
                         throw new RuntimeException("Name of a path variable can't be resolved during the method " + method + " call");
 
-                    pathVariables.put(pathVariableName, String.valueOf(args[pi]));
+                    pathVariables.put(pathVariableName, resolver.resolve(pi).orElseGet(() -> null));
 
                 } else if (annotation instanceof RequestParam) {
 
-                    String parameterVariableName = ((RequestParam) annotation).value();
-                    if (StringUtils.isEmpty(parameterVariableName) && parameterNames != null)
+                    String parameterVariableName;
+                    if (!StringUtils.isEmpty(((RequestParam) annotation).value())) {
+                        parameterVariableName = ((RequestParam) annotation).value();
+                    } else if (parameterNames != null && parameterNames[pi] != null) {
                         parameterVariableName = parameterNames[pi];
-                    if (StringUtils.isEmpty(parameterVariableName))
+                    } else {
                         throw new RuntimeException("Name of a request parameter can't be resolved during the method " + method + " call");
-
-                    if (args[pi] != null) {
-                        requestParams.add(parameterVariableName, String.valueOf(args[pi]));
                     }
 
+                    resolver.resolve(pi).
+                            ifPresent(param -> requestParams.add(parameterVariableName, param));
 
                 } else if (annotation instanceof RequestBody) {
                     requestBody = args[pi];
@@ -82,6 +81,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             }
         }
 
+        ServiceMethod<?> description = getDescription(method);
         fillUnusedPathVariables(pathVariables, unusedPathVariables(pathVariables, description.getUriTemplate()));
         return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables, requestParams);
     }
@@ -158,4 +158,27 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             return strings[0];
         }
     }
+
+    private class InvocationParamResolver {
+
+        private final Method method;
+        private final Object[] args;
+        private final Annotation[][] annotations;
+        private final String[] paramNames;
+
+        private ParameterResolver paramResolver;
+
+        public InvocationParamResolver(Method method, Object[] args, Annotation[][] annotations, String[] paramNames, ParameterResolver paramResolver) {
+            this.paramResolver = paramResolver;
+            this.paramNames = paramNames;
+            this.annotations = annotations;
+            this.args = args;
+            this.method = method;
+        }
+
+        public Optional<String> resolve(int paramIdx) {
+            return paramResolver.resolve(method, args, annotations, paramNames, paramIdx);
+        }
+    }
 }
+
