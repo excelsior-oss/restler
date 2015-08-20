@@ -23,6 +23,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
@@ -33,7 +34,7 @@ public class ServiceBuilder {
     private final UriBuilder uriBuilder;
     private final RestTemplate restTemplate = new RestTemplate();
     private ParameterResolver paramResolver = ParameterResolver.valueOfParamResolver();
-    private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
+    private Executor threadExecutor = Executors.newCachedThreadPool();
     private RequestExecutor requestExecutor = new RestOperationsRequestExecutor(restTemplate);
     private RequestExecutionAdvice errorMapper = null;
 
@@ -52,7 +53,12 @@ public class ServiceBuilder {
     }
 
     public ServiceBuilder useExecutor(RequestExecutor requestExecutor) {
-        this.requestExecutor = Objects.requireNonNull(requestExecutor, "Provide an executor");
+        this.requestExecutor = Objects.requireNonNull(requestExecutor, "Provide an request executor");
+        return this;
+    }
+
+    public ServiceBuilder withThreadExecutor(Executor threadExecutor) {
+        this.threadExecutor = Objects.requireNonNull(threadExecutor, "Provide an thread executor");
         return this;
     }
 
