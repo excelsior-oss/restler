@@ -4,8 +4,8 @@ import java.util.Base64;
 
 public class BasicAuthorizationStrategy implements AuthorizationStrategy {
 
-    private String loginValue;
-    private String passwordValue;
+    private final String loginValue;
+    private final String passwordValue;
 
     public BasicAuthorizationStrategy(String login, String password) {
         loginValue = login;

@@ -13,11 +13,11 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RestOperationsExecutor implements Executor {
+public class RestOperationsRequestExecutor implements RequestExecutor {
 
     private final RestTemplate restTemplate;
 
-    public RestOperationsExecutor(RestTemplate restTemplate) {
+    public RestOperationsRequestExecutor(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
         restTemplate.getMessageConverters().add(new BodySavingMessageConverter());
     }

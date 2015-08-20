@@ -1,20 +1,18 @@
 package org.restler.http;
 
 import org.restler.client.ServiceMethod;
-import org.restler.client.ServiceMethodInvocationExecutor;
 import org.restler.client.ServiceMethodInvocation;
-import org.springframework.core.ParameterizedTypeReference;
+import org.restler.client.ServiceMethodInvocationExecutor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.lang.reflect.Type;
 import java.net.URI;
 
 public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocationExecutor {
 
-    private final ExecutionChain executors;
+    private final RequestExecutionChain executors;
 
-    public HttpServiceMethodInvocationExecutor(ExecutionChain executors) {
+    public HttpServiceMethodInvocationExecutor(RequestExecutionChain executors) {
         this.executors = executors;
     }
 

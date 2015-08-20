@@ -16,15 +16,16 @@ import java.util.function.Function;
 /**
  * A CGLib implementation of {@link ClientFactory} that uses {@link ServiceMethodInvocationExecutor} for execution client methods.
  */
+@SuppressWarnings("unchecked")
 public class CGLibClientFactory implements ClientFactory {
 
     private final ServiceMethodInvocationExecutor executor;
     private final BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper;
 
-    private Executor threadExecutor;
+    private final Executor threadExecutor;
 
-    private HashMap<Class<?>, Function<ServiceMethodInvocation<?>, ?>> invocationExecutors;
-    private Function<ServiceMethodInvocation<?>, ?> defaultInvocationExecutor;
+    private final HashMap<Class<?>, Function<ServiceMethodInvocation<?>, ?>> invocationExecutors;
+    private final Function<ServiceMethodInvocation<?>, ?> defaultInvocationExecutor;
 
     public CGLibClientFactory(ServiceMethodInvocationExecutor executor, BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper, Executor threadExecutor) {
         this.executor = executor;

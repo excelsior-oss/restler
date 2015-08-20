@@ -1,11 +1,11 @@
 package org.restler.http.security;
 
-import org.restler.http.ExecutionAdvice;
-import org.restler.http.Executor;
 import org.restler.http.Request;
+import org.restler.http.RequestExecutionAdvice;
+import org.restler.http.RequestExecutor;
 import org.springframework.http.ResponseEntity;
 
-public class AuthenticatingExecutionAdvice implements ExecutionAdvice {
+public class AuthenticatingExecutionAdvice implements RequestExecutionAdvice {
 
     private final SecuritySession session;
 
@@ -14,8 +14,8 @@ public class AuthenticatingExecutionAdvice implements ExecutionAdvice {
     }
 
     @Override
-    public <T> ResponseEntity<T> advice(Request<T> request, Executor executor) {
+    public <T> ResponseEntity<T> advice(Request<T> request, RequestExecutor requestExecutor) {
         Request<T> authenticatedRequest = session.getAuthenticationStrategy().authenticate(request, session);
-        return executor.execute(authenticatedRequest);
+        return requestExecutor.execute(authenticatedRequest);
     }
 }

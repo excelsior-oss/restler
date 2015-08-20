@@ -1,7 +1,7 @@
 package org.restler
 
 import org.restler.client.CGLibClientFactory
-import org.restler.http.RestOperationsExecutor
+import org.restler.http.RestOperationsRequestExecutor
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.integration.Controller
@@ -16,23 +16,23 @@ class SimpleIntegrationTest extends Specification {
 
     def formAuth = new FormAuthorizationStrategy("http://localhost:8080/login", login, "username", password, "password");
 
-    def spySimpleHttpRequestExecutor = Spy(RestOperationsExecutor, constructorArgs: [new RestTemplate()])
+    def spySimpleHttpRequestExecutor = Spy(RestOperationsRequestExecutor, constructorArgs: [new RestTemplate()])
 
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
-            useAuthorizationStrategy(formAuth).
-            useCookieBasedAuthentication().
-            useClassNameExceptionMapper().
-            useExecutor(spySimpleHttpRequestExecutor).
+            authorizationStrategy(formAuth).
+            cookieBasedAuthentication().
+            classNameExceptionMapper().
+            requestExecutor(spySimpleHttpRequestExecutor).
             build();
 
     Service serviceWithFormReAuth = new ServiceBuilder("http://localhost:8080").
-            useAuthorizationStrategy(formAuth).
+            authorizationStrategy(formAuth).
             reauthorizeRequestsOnForbidden(true).
-            useCookieBasedAuthentication().
+            cookieBasedAuthentication().
             build();
 
     Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
-            useHttpBasicAuthentication(login, password).
+            httpBasicAuthentication(login, password).
             build();
 
     def controller = serviceWithFormAuth.produceClient(Controller.class);
