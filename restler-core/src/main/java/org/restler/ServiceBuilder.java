@@ -34,8 +34,8 @@ public class ServiceBuilder {
     private final RestTemplate restTemplate = new RestTemplate();
     private ParameterResolver paramResolver = ParameterResolver.valueOfParamResolver();
     private java.util.concurrent.Executor threadExecutor = Executors.newCachedThreadPool();
-    private Executor executor = new RestOperationsExecutor(restTemplate);
-    private ExecutionAdvice errorMapper = null;
+    private RequestExecutor requestExecutor = new RestOperationsRequestExecutor(restTemplate);
+    private RequestExecutionAdvice errorMapper = null;
 
     private AuthenticationStrategy authenticationStrategy;
     private AuthorizationStrategy authorizationStrategy;
@@ -51,8 +51,8 @@ public class ServiceBuilder {
         uriBuilder = new UriBuilder(baseUrl);
     }
 
-    public ServiceBuilder useExecutor(Executor executor) {
-        this.executor = Objects.requireNonNull(executor, "Provide an executor");
+    public ServiceBuilder useExecutor(RequestExecutor requestExecutor) {
+        this.requestExecutor = Objects.requireNonNull(requestExecutor, "Provide an executor");
         return this;
     }
 
@@ -85,7 +85,7 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder useErrorMapper(ExecutionAdvice errorMapper) {
+    public ServiceBuilder useErrorMapper(RequestExecutionAdvice errorMapper) {
         this.errorMapper = errorMapper;
         return this;
     }
@@ -125,7 +125,7 @@ public class ServiceBuilder {
     public Service build() {
 
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
-        List<ExecutionAdvice> advices = new ArrayList<>();
+        List<RequestExecutionAdvice> advices = new ArrayList<>();
 
         if (reauthorize) {
             Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
@@ -140,7 +140,7 @@ public class ServiceBuilder {
             advices.add(errorMapper);
         }
 
-        ExecutionChain chain = new ExecutionChain(executor, advices);
+        RequestExecutionChain chain = new RequestExecutionChain(requestExecutor, advices);
 
         ControllerMethodInvocationMapper invocationMapper = new ControllerMethodInvocationMapper(uriBuilder.build(), paramResolver);
         HttpServiceMethodInvocationExecutor executor = new HttpServiceMethodInvocationExecutor(chain);

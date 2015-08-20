@@ -10,9 +10,9 @@ import java.net.URI;
 
 public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocationExecutor {
 
-    private final ExecutionChain executors;
+    private final RequestExecutionChain executors;
 
-    public HttpServiceMethodInvocationExecutor(ExecutionChain executors) {
+    public HttpServiceMethodInvocationExecutor(RequestExecutionChain executors) {
         this.executors = executors;
     }
 

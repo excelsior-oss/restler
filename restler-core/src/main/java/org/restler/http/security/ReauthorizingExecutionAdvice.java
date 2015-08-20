@@ -1,13 +1,13 @@
 package org.restler.http.security;
 
-import org.restler.http.ExecutionAdvice;
-import org.restler.http.Executor;
 import org.restler.http.Request;
+import org.restler.http.RequestExecutionAdvice;
+import org.restler.http.RequestExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 
-public class ReauthorizingExecutionAdvice implements ExecutionAdvice {
+public class ReauthorizingExecutionAdvice implements RequestExecutionAdvice {
 
     private final SecuritySession session;
 
@@ -16,7 +16,7 @@ public class ReauthorizingExecutionAdvice implements ExecutionAdvice {
     }
 
     @Override
-    public <T> ResponseEntity<T> advice(Request<T> request, Executor executor) {
+    public <T> ResponseEntity<T> advice(Request<T> request, RequestExecutor executor) {
         ResponseEntity<T> response;
         try {
             response = executor.execute(request);
