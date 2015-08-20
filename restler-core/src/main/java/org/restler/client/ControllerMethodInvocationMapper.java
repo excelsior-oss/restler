@@ -2,6 +2,7 @@ package org.restler.client;
 
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.LinkedMultiValueMap;
@@ -47,7 +48,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         Annotation[][] parametersAnnotations = method.getParameterAnnotations();
         String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
 
-        InvocationParamResolver resolver = new InvocationParamResolver(method, args,parametersAnnotations, parameterNames, paramResolver);
+        InvocationParamResolver resolver = new InvocationParamResolver(method, args, parametersAnnotations, parameterNames, paramResolver);
         for (int pi = 0; pi < parametersAnnotations.length; pi++) {
             for (int ai = 0; ai < parametersAnnotations[pi].length; ai++) {
                 Annotation annotation = parametersAnnotations[pi][ai];
@@ -94,10 +95,11 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             throw new RuntimeException("The method " + method + " is not mapped");
         }
 
-//            ResponseBody responseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
-//            if (responseBodyAnnotation == null){
-//                throw new RuntimeException("The method " + method + " does not return response body");
-//            }
+        ResponseBody methodResponseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
+        ResponseBody classResponseBodyAnnotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), ResponseBody.class);
+        if (methodResponseBodyAnnotation == null && classResponseBodyAnnotation == null) {
+            throw new RuntimeException("The method " + method + " does not return response body");
+        }
 
         RequestMethod declaredMethod;
         if (methodMapping.method() == null || methodMapping.method().length == 0) {
@@ -139,7 +141,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
 
     private void fillUnusedPathVariables(Map<String, Object> pathVariables, List<String> unusedPathVariables) {
         unusedPathVariables.stream().filter(pathVar -> !pathVariables.containsKey(pathVar)).forEach(pathVar ->
-                pathVariables.put(pathVar, "unspecified")
+                        pathVariables.put(pathVar, "unspecified")
         );
     }
 
