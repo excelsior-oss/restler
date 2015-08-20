@@ -19,20 +19,20 @@ class SimpleIntegrationTest extends Specification {
     def spySimpleHttpRequestExecutor = Spy(RestOperationsRequestExecutor, constructorArgs: [new RestTemplate()])
 
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
-            useAuthorizationStrategy(formAuth).
-            useCookieBasedAuthentication().
-            useClassNameExceptionMapper().
-            useExecutor(spySimpleHttpRequestExecutor).
+            authorizationStrategy(formAuth).
+            cookieBasedAuthentication().
+            classNameExceptionMapper().
+            requestExecutor(spySimpleHttpRequestExecutor).
             build();
 
     Service serviceWithFormReAuth = new ServiceBuilder("http://localhost:8080").
-            useAuthorizationStrategy(formAuth).
+            authorizationStrategy(formAuth).
             reauthorizeRequestsOnForbidden(true).
-            useCookieBasedAuthentication().
+            cookieBasedAuthentication().
             build();
 
     Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
-            useHttpBasicAuthentication(login, password).
+            httpBasicAuthentication(login, password).
             build();
 
     def controller = serviceWithFormAuth.produceClient(Controller.class);

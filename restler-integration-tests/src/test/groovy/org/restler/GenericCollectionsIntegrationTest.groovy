@@ -8,8 +8,8 @@ import spock.lang.Specification
 class GenericCollectionsIntegrationTest extends Specification {
 
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
-            useClassNameExceptionMapper().
-            registerJacksonModule(new ParanamerModule()).
+            classNameExceptionMapper().
+            addJacksonModule(new ParanamerModule()).
             build();
 
     Controller controller = serviceWithFormAuth.produceClient(Controller.class)

@@ -1,10 +1,7 @@
 package org.restler;
 
 import com.fasterxml.jackson.databind.Module;
-import org.restler.client.CGLibClientFactory;
-import org.restler.client.CachingClientFactory;
-import org.restler.client.ControllerMethodInvocationMapper;
-import org.restler.client.ParameterResolver;
+import org.restler.client.*;
 import org.restler.http.*;
 import org.restler.http.error.ClassNameErrorMappingRequestExecutionAdvice;
 import org.restler.http.security.AuthenticatingExecutionAdvice;
@@ -22,20 +19,21 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Helper class for building services.
  */
 public class ServiceBuilder {
 
+    private final List<Module> jacksonModules = new ArrayList<>();
     private final UriBuilder uriBuilder;
-    private final RestTemplate restTemplate = new RestTemplate();
     private ParameterResolver paramResolver = ParameterResolver.valueOfParamResolver();
-    private Executor threadExecutor = Executors.newCachedThreadPool();
-    private RequestExecutor requestExecutor = new RestOperationsRequestExecutor(restTemplate);
+    private Optional<Executor> threadExecutor = Optional.empty();
+    private Optional<RequestExecutor> requestExecutor = Optional.empty();
     private RequestExecutionAdvice errorMapper = null;
 
     private AuthenticationStrategy authenticationStrategy;
@@ -52,33 +50,33 @@ public class ServiceBuilder {
         uriBuilder = new UriBuilder(baseUrl);
     }
 
-    public ServiceBuilder useExecutor(RequestExecutor requestExecutor) {
-        this.requestExecutor = Objects.requireNonNull(requestExecutor, "Provide an request executor");
+    public ServiceBuilder requestExecutor(RequestExecutor requestExecutor) {
+        this.requestExecutor = Optional.ofNullable(requestExecutor);
         return this;
     }
 
-    public ServiceBuilder withThreadExecutor(Executor threadExecutor) {
-        this.threadExecutor = Objects.requireNonNull(threadExecutor, "Provide an thread executor");
+    public ServiceBuilder threadExecutor(Executor threadExecutor) {
+        this.threadExecutor = Optional.of(threadExecutor);
         return this;
     }
 
-    public ServiceBuilder useAuthenticationStrategy(AuthenticationStrategy authenticationStrategy) {
+    public ServiceBuilder authenticationStrategy(AuthenticationStrategy authenticationStrategy) {
         this.authenticationStrategy = authenticationStrategy;
         return this;
     }
 
-    public ServiceBuilder useAuthorizationStrategy(AuthorizationStrategy authorizationStrategy) {
+    public ServiceBuilder authorizationStrategy(AuthorizationStrategy authorizationStrategy) {
         this.authorizationStrategy = authorizationStrategy;
         return this;
     }
 
-    public ServiceBuilder useCookieBasedAuthentication() {
-        return useAuthenticationStrategy(new CookieAuthenticationStrategy());
+    public ServiceBuilder cookieBasedAuthentication() {
+        return authenticationStrategy(new CookieAuthenticationStrategy());
     }
 
-    public ServiceBuilder useHttpBasicAuthentication(String login, String password) {
-        useAuthorizationStrategy(new BasicAuthorizationStrategy(login, password));
-        return useAuthenticationStrategy(new HttpBasicAuthenticationStrategy());
+    public ServiceBuilder httpBasicAuthentication(String login, String password) {
+        authorizationStrategy(new BasicAuthorizationStrategy(login, password));
+        return authenticationStrategy(new HttpBasicAuthenticationStrategy());
     }
 
     public ServiceBuilder reauthorizeRequestsOnForbidden(boolean reauthorize) {
@@ -91,13 +89,13 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder useErrorMapper(RequestExecutionAdvice errorMapper) {
+    public ServiceBuilder errorMapper(RequestExecutionAdvice errorMapper) {
         this.errorMapper = errorMapper;
         return this;
     }
 
-    public ServiceBuilder useClassNameExceptionMapper() {
-        return useErrorMapper(new ClassNameErrorMappingRequestExecutionAdvice());
+    public ServiceBuilder classNameExceptionMapper() {
+        return errorMapper(new ClassNameErrorMappingRequestExecutionAdvice());
     }
 
     public void scheme(String scheme) {
@@ -116,25 +114,24 @@ public class ServiceBuilder {
         uriBuilder.path(path);
     }
 
-    public ServiceBuilder withParametersResolver(ParameterResolver parametersResolver) {
+    public ServiceBuilder parametersResolver(ParameterResolver parametersResolver) {
         this.paramResolver = parametersResolver;
         return this;
     }
 
-    public ServiceBuilder registerJacksonModule(Module module) {
-        restTemplate.getMessageConverters().stream().
-                filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).
-                forEach((converter) -> ((MappingJackson2HttpMessageConverter) converter).getObjectMapper().registerModule(module));
+    public ServiceBuilder addJacksonModule(Module module) {
+        jacksonModules.add(module);
         return this;
     }
 
-    public Service build() {
+    public Service build() throws RestlerException {
+
+        validate();
 
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
         List<RequestExecutionAdvice> advices = new ArrayList<>();
 
         if (reauthorize) {
-            Objects.requireNonNull(authorizationStrategy, "Specify authorization strategy with useAuthorizationStrategy() method");
             advices.add(new ReauthorizingExecutionAdvice(session));
         }
 
@@ -146,13 +143,36 @@ public class ServiceBuilder {
             advices.add(errorMapper);
         }
 
-        RequestExecutionChain chain = new RequestExecutionChain(requestExecutor, advices);
+        RequestExecutionChain chain = new RequestExecutionChain(requestExecutor.orElseGet(this::defaultRequestExecutor), advices);
 
         ControllerMethodInvocationMapper invocationMapper = new ControllerMethodInvocationMapper(uriBuilder.build(), paramResolver);
         HttpServiceMethodInvocationExecutor executor = new HttpServiceMethodInvocationExecutor(chain);
-        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(executor, invocationMapper, threadExecutor));
+        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(executor, invocationMapper, threadExecutor.orElseGet(Executors::newCachedThreadPool)));
 
         return new Service(factory, session);
+    }
+
+    private void validate() throws RestlerException {
+        if (requestExecutor.isPresent() && jacksonModules.size() > 0) {
+            throw new RestlerException("Jackson modules are not used with custom request executor. Please specify request executor either jackson modules");
+        }
+        if (reauthorize && authorizationStrategy == null) {
+            throw new RestlerException("In order to use reauthorize feature please specify authorization strategy");
+        }
+    }
+
+    private RestOperationsRequestExecutor defaultRequestExecutor() {
+        RestTemplate restTemplate = new RestTemplate();
+
+        List<MappingJackson2HttpMessageConverter> jacksonConverters = restTemplate.getMessageConverters().stream().
+                filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).
+                map(converter -> (MappingJackson2HttpMessageConverter) converter).
+                collect(Collectors.toList());
+
+        jacksonModules.stream().forEach(module ->
+                jacksonConverters.forEach(converter ->
+                        converter.getObjectMapper().registerModule(module)));
+        return new RestOperationsRequestExecutor(restTemplate);
     }
 
 }

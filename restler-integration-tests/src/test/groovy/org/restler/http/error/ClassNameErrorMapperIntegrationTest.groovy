@@ -9,7 +9,7 @@ class ClassNameErrorMapperIntegrationTest extends Specification {
 
     Service service = new ServiceBuilder("http://localhost:8080").
             reauthorizeRequestsOnForbidden(false).
-            useClassNameExceptionMapper().
+            classNameExceptionMapper().
             build();
 
     def "RuntimeException"() {
