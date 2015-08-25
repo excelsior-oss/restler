@@ -5,11 +5,14 @@ import org.restler.http.RestOperationsRequestExecutor
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.integration.Controller
+import org.restler.integration.IntegrationPackage
+import org.restler.util.IntegrationSpec
 import org.springframework.web.client.RestTemplate
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 
-class SimpleIntegrationTest extends Specification {
+class SimpleIntegrationTest extends Specification implements IntegrationSpec {
 
     def login = "user";
     def password = "password";
@@ -37,6 +40,10 @@ class SimpleIntegrationTest extends Specification {
 
     def controller = serviceWithFormAuth.produceClient(Controller.class);
     def controllerWithBasicAuth = serviceWithBasicAuth.produceClient(Controller.class);
+
+    def @Shared
+            server = IntegrationPackage.server()
+
 
     def "test unsecured get"() {
         expect:
