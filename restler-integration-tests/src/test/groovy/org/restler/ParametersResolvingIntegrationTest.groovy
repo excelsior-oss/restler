@@ -1,9 +1,10 @@
 package org.restler
 
 import org.restler.integration.Controller
+import org.restler.util.IntegrationSpec
 import spock.lang.Specification
 
-class ParametersResolvingIntegrationTest extends Specification {
+class ParametersResolvingIntegrationTest extends Specification implements IntegrationSpec {
 
     def service = new ServiceBuilder("http://localhost:8080").build()
     def controller = service.produceClient(Controller.class)

@@ -3,9 +3,10 @@ package org.restler
 import com.fasterxml.jackson.module.paranamer.ParanamerModule
 import org.restler.integration.Controller
 import org.restler.integration.SimpleDto
+import org.restler.util.IntegrationSpec
 import spock.lang.Specification
 
-class GenericCollectionsIntegrationTest extends Specification {
+class GenericCollectionsIntegrationTest extends Specification implements IntegrationSpec {
 
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
             classNameExceptionMapper().
