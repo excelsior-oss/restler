@@ -83,7 +83,10 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         }
 
         ServiceMethod<?> description = getDescription(method);
-        fillUnusedPathVariables(pathVariables, unusedPathVariables(pathVariables, description.getUriTemplate()));
+        List<String> unboundPathVariables = unusedPathVariables(pathVariables, description.getUriTemplate());
+        if (unboundPathVariables.size() > 0) {
+            throw new RestlerException("You should introduce method parameter with @PathVariable annotation for each url template variable. Unbound variables: " + unboundPathVariables);
+        }
         return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables, requestParams);
     }
 
@@ -132,17 +135,11 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         List<String> res = new ArrayList<>();
         Matcher matcher = pathVariablesPattern.matcher(uriTemplate);
         while (matcher.find()) {
-            if (!pathVariables.containsKey(matcher.group())) {
+            if (!pathVariables.containsKey(matcher.group(1))) {
                 res.add(matcher.group(1));
             }
         }
         return res;
-    }
-
-    private void fillUnusedPathVariables(Map<String, Object> pathVariables, List<String> unusedPathVariables) {
-        unusedPathVariables.stream().filter(pathVar -> !pathVariables.containsKey(pathVar)).forEach(pathVar ->
-                        pathVariables.put(pathVar, "unspecified")
-        );
     }
 
     private String getMappedUriString(RequestMapping mapping) {

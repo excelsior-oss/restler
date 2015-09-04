@@ -15,5 +15,9 @@ public interface Greeter {
     String getGreeting(@PathVariable(value = "language") String language,
                        @RequestParam(value = "name", defaultValue = "Antonymous") String name);
 
+    @ResponseBody
+    @RequestMapping("{pathVar}")
+    String methodWithNotMappedVar(String pathVar);
+
 }
 

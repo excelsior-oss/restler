@@ -20,4 +20,22 @@ class ControllerMethodInvocationMapperTest extends Specification {
         invocation.requestParams.size() == 0
     }
 
+    def "In case of call of method with url template variable without corresponding method parameter, exception should be thrown"() {
+        given:
+
+        def mapper = new ControllerMethodInvocationMapper(anyUri, ParameterResolver.valueOfParamResolver())
+        def methodWithNotMappedVar = Greeter.class.getDeclaredMethod("methodWithNotMappedVar", [String.class] as Class[])
+
+        when:
+        try {
+            mapper.apply(methodWithNotMappedVar, null)
+        } catch (RestlerException e) {
+            e.printStackTrace()
+        }
+
+        then:
+        thrown(RestlerException)
+    }
+
+
 }
