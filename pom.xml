@@ -214,6 +214,11 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib-nodep</artifactId>
+            <version>3.1</version>
+        </dependency>
         <!-- Groovy and Spock are for testing -->
         <dependency>
             <groupId>org.codehaus.groovy.maven.runtime</groupId>
@@ -241,12 +246,6 @@
         </dependency>
 
         <!-- Required by Spock -->
-        <dependency>
-            <groupId>cglib</groupId>
-            <artifactId>cglib-nodep</artifactId>
-            <version>3.1</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.objenesis</groupId>
             <artifactId>objenesis</artifactId>

@@ -1,7 +1,6 @@
 package org.restler.client;
 
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.restler.http.HttpMethod;
 
 import java.lang.reflect.Type;
 
@@ -15,13 +14,13 @@ public class ServiceMethod<T> {
     private final String uriTemplate;
     private final Type returnType;
     private final HttpMethod httpMethod;
-    private final HttpStatus expectedHttpResponseStatus;
+    private final int okResponseStatus;
 
-    public ServiceMethod(String uriTemplate, Type returnType, HttpMethod httpMethod, HttpStatus expectedHttpResponseStatus) {
+    public ServiceMethod(String uriTemplate, Type returnType, HttpMethod httpMethod, int okResponseStatus) {
         this.uriTemplate = uriTemplate;
         this.returnType = returnType;
         this.httpMethod = httpMethod;
-        this.expectedHttpResponseStatus = expectedHttpResponseStatus;
+        this.okResponseStatus = okResponseStatus;
     }
 
     /**
@@ -51,7 +50,12 @@ public class ServiceMethod<T> {
         return httpMethod;
     }
 
-    public HttpStatus getExpectedHttpResponseStatus() {
-        return expectedHttpResponseStatus;
+    /**
+     * Provides the status, that indicates successful response
+     *
+     * @return successful response status
+     */
+    public int getOkResponseStatus() {
+        return okResponseStatus;
     }
 }

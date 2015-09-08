@@ -1,8 +1,14 @@
 package org.restler;
 
 import com.fasterxml.jackson.databind.Module;
-import org.restler.client.*;
-import org.restler.http.*;
+import org.restler.client.CGLibClientFactory;
+import org.restler.client.CachingClientFactory;
+import org.restler.client.ParameterResolver;
+import org.restler.client.RestlerException;
+import org.restler.http.HttpServiceMethodInvocationExecutor;
+import org.restler.http.RequestExecutionAdvice;
+import org.restler.http.RequestExecutionChain;
+import org.restler.http.RequestExecutor;
 import org.restler.http.security.AuthenticatingExecutionAdvice;
 import org.restler.http.security.SecuritySession;
 import org.restler.http.security.authentication.AuthenticationStrategy;
@@ -10,6 +16,9 @@ import org.restler.http.security.authentication.CookieAuthenticationStrategy;
 import org.restler.http.security.authentication.HttpBasicAuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
+import org.restler.spring.ControllerMethodInvocationMapper;
+import org.restler.spring.RestOperationsRequestExecutor;
+import org.restler.spring.SpringFormMapper;
 import org.restler.util.UriBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -126,6 +135,8 @@ public class ServiceBuilder {
         if (errorMapper != null) {
             advices.add(errorMapper);
         }
+        // TODO: temporary hack, should be added by spring module
+        advices.add(new SpringFormMapper());
 
         RequestExecutionChain chain = new RequestExecutionChain(requestExecutor.orElseGet(this::defaultRequestExecutor), advices);
 

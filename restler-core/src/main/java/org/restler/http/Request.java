@@ -19,7 +19,7 @@ public class Request<T> {
     private final ImmutableMultimap<String, String> headers;
 
     public Request(URI url, HttpMethod httpMethod, Object body, Type returnType) {
-        this(url, httpMethod, new ImmutableMultimap.Builder<String, String>().build(), body, returnType);
+        this(url, httpMethod, ImmutableMultimap.<String, String>of(), body, returnType);
     }
 
     public Request(URI url, HttpMethod httpMethod, ImmutableMultimap<String, String> headers, Object body, Type returnType) {

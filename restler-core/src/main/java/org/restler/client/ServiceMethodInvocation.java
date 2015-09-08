@@ -1,6 +1,6 @@
 package org.restler.client;
 
-import org.springframework.util.MultiValueMap;
+import com.google.common.collect.ImmutableMultimap;
 
 import java.net.URI;
 import java.util.Map;
@@ -11,9 +11,9 @@ public class ServiceMethodInvocation<T> {
     private final ServiceMethod<T> method;
     private final Object requestBody;
     private final Map<String, ?> pathVariables;
-    private final MultiValueMap<String, String> requestParams;
+    private final ImmutableMultimap<String, String> requestParams;
 
-    public ServiceMethodInvocation(URI baseUrl, ServiceMethod<T> method, Object requestBody, Map<String, ?> pathVariables, MultiValueMap<String, String> requestParams) {
+    public ServiceMethodInvocation(URI baseUrl, ServiceMethod<T> method, Object requestBody, Map<String, ?> pathVariables, ImmutableMultimap<String, String> requestParams) {
         this.baseUrl = baseUrl;
         this.method = method;
         this.requestBody = requestBody;
@@ -37,7 +37,7 @@ public class ServiceMethodInvocation<T> {
         return pathVariables;
     }
 
-    public MultiValueMap<String, String> getRequestParams() {
+    public ImmutableMultimap<String, String> getQueryParams() {
         return requestParams;
     }
 

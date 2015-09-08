@@ -1,5 +1,7 @@
 package org.restler.http;
 
+import com.google.common.collect.ImmutableMultimap;
+
 import java.util.Optional;
 
 public class FailedResponse<T> extends Response<T> {
@@ -8,7 +10,11 @@ public class FailedResponse<T> extends Response<T> {
     private final String responseBody;
 
     public FailedResponse(HttpStatus status, Throwable cause, String responseBody) {
-        super(status);
+        this(status, ImmutableMultimap.<String, String>of(), cause, responseBody);
+    }
+
+    public FailedResponse(HttpStatus status, ImmutableMultimap<String, String> headers, Throwable cause, String responseBody) {
+        super(status, headers);
         this.cause = cause;
         this.responseBody = responseBody;
     }

@@ -1,12 +1,15 @@
-package org.restler.client;
+package org.restler.spring;
 
+import com.google.common.collect.ImmutableMultimap;
+import org.restler.client.ParameterResolver;
+import org.restler.client.RestlerException;
+import org.restler.client.ServiceMethod;
+import org.restler.client.ServiceMethodInvocation;
+import org.restler.http.HttpMethod;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -43,7 +46,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
     public ServiceMethodInvocation<?> apply(Method method, Object[] args) {
         Object requestBody = null;
         Map<String, Object> pathVariables = new HashMap<>();
-        MultiValueMap<String, String> requestParams = new LinkedMultiValueMap<>();
+        ImmutableMultimap.Builder<String, String> requestParams = new ImmutableMultimap.Builder<>();
 
         Annotation[][] parametersAnnotations = method.getParameterAnnotations();
         String[] parameterNames = parameterNameDiscoverer.getParameterNames(method);
@@ -74,7 +77,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
                     }
 
                     resolver.resolve(pi).
-                            ifPresent(param -> requestParams.add(parameterVariableName, param));
+                            ifPresent(param -> requestParams.put(parameterVariableName, param));
 
                 } else if (annotation instanceof RequestBody) {
                     requestBody = args[pi];
@@ -87,7 +90,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         if (unboundPathVariables.size() > 0) {
             throw new RestlerException("You should introduce method parameter with @PathVariable annotation for each url template variable. Unbound variables: " + unboundPathVariables);
         }
-        return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables, requestParams);
+        return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables, requestParams.build());
     }
 
     private ServiceMethod<?> getDescription(Method method) {
@@ -128,7 +131,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             returnType = parameterizedType.getActualTypeArguments()[0];
         }
 
-        return new ServiceMethod<>(uriTemplate, returnType, httpMethod, expectedStatus);
+        return new ServiceMethod<>(uriTemplate, returnType, httpMethod, expectedStatus.value());
     }
 
     private List<String> unusedPathVariables(Map<String, Object> pathVariables, String uriTemplate) {

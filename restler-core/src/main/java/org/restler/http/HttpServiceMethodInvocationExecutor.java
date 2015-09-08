@@ -3,7 +3,7 @@ package org.restler.http;
 import org.restler.client.ServiceMethod;
 import org.restler.client.ServiceMethodInvocation;
 import org.restler.client.ServiceMethodInvocationExecutor;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.restler.util.UriBuilder;
 
 import java.net.URI;
 
@@ -33,10 +33,11 @@ public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocat
     private <T> Request<T> toRequest(ServiceMethodInvocation<T> invocation) {
         ServiceMethod<T> method = invocation.getMethod();
 
-        URI target = UriComponentsBuilder.fromUri(invocation.getBaseUrl()).
+
+        URI target = new UriBuilder(invocation.getBaseUrl()).
                 path(method.getUriTemplate()).
-                queryParams(invocation.getRequestParams()).
-                buildAndExpand(invocation.getPathVariables()).toUri();
+                queryParams(invocation.getQueryParams()).
+                pathVariables(invocation.getPathVariables()).build();
 
         return new Request<>(target, HttpMethod.valueOf(method.getHttpMethod().name()), invocation.getRequestBody(), method.getReturnType());
     }

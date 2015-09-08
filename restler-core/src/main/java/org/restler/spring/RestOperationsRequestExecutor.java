@@ -1,5 +1,7 @@
-package org.restler.http;
+package org.restler.spring;
 
+import com.google.common.collect.ImmutableMultimap;
+import org.restler.http.*;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -9,6 +11,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
 
 public class RestOperationsRequestExecutor implements RequestExecutor {
 
@@ -26,7 +30,13 @@ public class RestOperationsRequestExecutor implements RequestExecutor {
                 return request.getReturnType();
             }
         });
-        return new SuccessfulResponse<>(new HttpStatus(responseEntity.getStatusCode().value(), responseEntity.getStatusCode().getReasonPhrase()), responseEntity.getBody());
+
+        ImmutableMultimap.Builder<String, String> headersBuilder = new ImmutableMultimap.Builder<>();
+        for (Map.Entry<String, List<String>> header : responseEntity.getHeaders().entrySet()) {
+            headersBuilder.putAll(header.getKey(), header.getValue());
+        }
+        HttpStatus status = new HttpStatus(responseEntity.getStatusCode().value(), responseEntity.getStatusCode().getReasonPhrase());
+        return new SuccessfulResponse<>(status, headersBuilder.build(), responseEntity.getBody());
     }
 
     public RequestEntity<?> toRequestEntity(Request<?> request) {

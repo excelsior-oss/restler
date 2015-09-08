@@ -1,11 +1,17 @@
 package org.restler.http;
 
+import com.google.common.collect.ImmutableMultimap;
+
 public class SuccessfulResponse<T> extends Response<T> {
 
     private T result;
 
     public SuccessfulResponse(HttpStatus status, T result) {
-        super(status);
+        this(status, ImmutableMultimap.of(), result);
+    }
+
+    public SuccessfulResponse(HttpStatus status, ImmutableMultimap<String, String> headers, T result) {
+        super(status, headers);
         this.result = result;
     }
 

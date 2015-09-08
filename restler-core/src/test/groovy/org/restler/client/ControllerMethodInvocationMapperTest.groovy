@@ -1,5 +1,6 @@
 package org.restler.client
 
+import org.restler.spring.ControllerMethodInvocationMapper
 import org.restler.test.Greeter
 import spock.lang.Specification
 
@@ -17,7 +18,7 @@ class ControllerMethodInvocationMapperTest extends Specification {
 
         then:
         invocation.pathVariables['language'] == "null"
-        invocation.requestParams.size() == 0
+        invocation.queryParams.size() == 0
     }
 
     def "In case of call of method with url template variable without corresponding method parameter, exception should be thrown"() {
