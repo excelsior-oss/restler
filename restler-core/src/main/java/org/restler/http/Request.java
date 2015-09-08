@@ -1,9 +1,7 @@
 package org.restler.http;
 
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+
+import com.google.common.collect.ImmutableMultimap;
 
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -18,13 +16,13 @@ public class Request<T> {
     private final URI url;
     private final Object body;
     private final Type returnType;
-    private final MultiValueMap<String, String> headers;
+    private final ImmutableMultimap<String, String> headers;
 
     public Request(URI url, HttpMethod httpMethod, Object body, Type returnType) {
-        this(url, httpMethod, new LinkedMultiValueMap<>(), body, returnType);
+        this(url, httpMethod, new ImmutableMultimap.Builder<String, String>().build(), body, returnType);
     }
 
-    public Request(URI url, HttpMethod httpMethod, MultiValueMap<String, String> headers, Object body, Type returnType) {
+    public Request(URI url, HttpMethod httpMethod, ImmutableMultimap<String, String> headers, Object body, Type returnType) {
         this.url = url;
         this.httpMethod = httpMethod;
         this.body = body;
@@ -32,9 +30,20 @@ public class Request<T> {
         this.headers = headers;
     }
 
+    public HttpMethod getHttpMethod() {
+        return httpMethod;
+    }
 
-    public RequestEntity<?> toRequestEntity() {
-        return new RequestEntity<>(body, headers, httpMethod, url);
+    public URI getUrl() {
+        return url;
+    }
+
+    public Object getBody() {
+        return body;
+    }
+
+    public ImmutableMultimap<String, String> getHeaders() {
+        return headers;
     }
 
     public Type getReturnType() {
@@ -42,8 +51,8 @@ public class Request<T> {
     }
 
     public Request<T> setHeader(String name, String... values) {
-        MultiValueMap<String, String> newHeaders = new LinkedMultiValueMap<>(headers);
-        Arrays.stream(values).forEach(value -> newHeaders.set(name, value));
-        return new Request<>(url, httpMethod, newHeaders, body, returnType);
+        ImmutableMultimap.Builder<String, String> newHeaders = new ImmutableMultimap.Builder<String, String>().putAll(headers);
+        Arrays.stream(values).forEach(value -> newHeaders.put(name, value));
+        return new Request<>(url, httpMethod, newHeaders.build(), body, returnType);
     }
 }

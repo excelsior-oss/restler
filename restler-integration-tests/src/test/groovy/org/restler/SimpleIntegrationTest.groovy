@@ -5,10 +5,8 @@ import org.restler.http.RestOperationsRequestExecutor
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.integration.Controller
-import org.restler.integration.IntegrationPackage
 import org.restler.util.IntegrationSpec
 import org.springframework.web.client.RestTemplate
-import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 
@@ -24,14 +22,7 @@ class SimpleIntegrationTest extends Specification implements IntegrationSpec {
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
             authorizationStrategy(formAuth).
             cookieBasedAuthentication().
-            classNameExceptionMapper().
             requestExecutor(spySimpleHttpRequestExecutor).
-            build();
-
-    Service serviceWithFormReAuth = new ServiceBuilder("http://localhost:8080").
-            authorizationStrategy(formAuth).
-            reauthorizeRequestsOnForbidden(true).
-            cookieBasedAuthentication().
             build();
 
     Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
@@ -40,10 +31,6 @@ class SimpleIntegrationTest extends Specification implements IntegrationSpec {
 
     def controller = serviceWithFormAuth.produceClient(Controller.class);
     def controllerWithBasicAuth = serviceWithBasicAuth.produceClient(Controller.class);
-
-    def @Shared
-            server = IntegrationPackage.server()
-
 
     def "test unsecured get"() {
         expect:
@@ -95,16 +82,6 @@ class SimpleIntegrationTest extends Specification implements IntegrationSpec {
     def "test secured get authorized with basic auth"() {
         expect:
         "Secure OK" == controllerWithBasicAuth.securedGet()
-    }
-
-    def "test reauthorization"() {
-        given:
-        def ctrl = serviceWithFormReAuth.produceClient(Controller)
-        ctrl.logout()
-        when:
-        def response = ctrl.securedGet()
-        then:
-        response == "Secure OK"
     }
 
     def "test exception CGLibClient when class not a controller"() {

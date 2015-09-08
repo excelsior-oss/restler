@@ -9,7 +9,6 @@ import spock.lang.Specification
 class GenericCollectionsIntegrationTest extends Specification implements IntegrationSpec {
 
     Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
-            classNameExceptionMapper().
             addJacksonModule(new ParanamerModule()).
             build();
 

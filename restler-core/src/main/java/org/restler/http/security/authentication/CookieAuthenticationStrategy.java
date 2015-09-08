@@ -1,5 +1,6 @@
 package org.restler.http.security.authentication;
 
+import org.restler.http.Header;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.StringUtils;
 

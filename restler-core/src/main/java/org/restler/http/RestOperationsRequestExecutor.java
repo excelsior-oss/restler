@@ -1,17 +1,14 @@
 package org.restler.http;
 
-import org.restler.util.Util;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
-import org.springframework.http.converter.GenericHttpMessageConverter;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
 public class RestOperationsRequestExecutor implements RequestExecutor {
 
@@ -19,59 +16,23 @@ public class RestOperationsRequestExecutor implements RequestExecutor {
 
     public RestOperationsRequestExecutor(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        restTemplate.getMessageConverters().add(new BodySavingMessageConverter());
     }
 
-    public <T> ResponseEntity<T> execute(Request<T> request) {
-        RequestEntity<?> requestEntity = request.toRequestEntity();
-        return restTemplate.exchange(requestEntity, new ParameterizedTypeReference<T>() {
+    public <T> Response<T> execute(Request<T> request) {
+        RequestEntity<?> requestEntity = toRequestEntity(request);
+        ResponseEntity<T> responseEntity = restTemplate.exchange(requestEntity, new ParameterizedTypeReference<T>() {
             @Override
             public Type getType() {
                 return request.getReturnType();
             }
         });
+        return new SuccessfulResponse<>(new HttpStatus(responseEntity.getStatusCode().value(), responseEntity.getStatusCode().getReasonPhrase()), responseEntity.getBody());
     }
 
-    private class BodySavingMessageConverter implements GenericHttpMessageConverter<Object> {
-        @Override
-        public boolean canRead(Type type, Class<?> contextClass, MediaType mediaType) {
-            return true;
-        }
-
-        @Override
-        public Object read(Type type, Class<?> contextClass, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
-            return throwException(inputMessage);
-        }
-
-        @Override
-        public boolean canRead(Class<?> clazz, MediaType mediaType) {
-            return true;
-        }
-
-        @Override
-        public boolean canWrite(Class<?> clazz, MediaType mediaType) {
-            return true;
-        }
-
-        @Override
-        public List<MediaType> getSupportedMediaTypes() {
-            return new ArrayList<>();
-        }
-
-        @Override
-        public Object read(Class<?> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
-            return throwException(inputMessage);
-        }
-
-        private Object throwException(HttpInputMessage inputMessage) throws IOException {
-            String responseBody = Util.toString(inputMessage.getBody());
-            inputMessage.getBody().close();
-            throw new HttpExecutionException(responseBody);
-        }
-
-        @Override
-        public void write(Object o, MediaType contentType, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
-
-        }
+    public RequestEntity<?> toRequestEntity(Request<?> request) {
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        request.getHeaders().entries().stream().forEach(entry -> headers.add(entry.getKey(), entry.getValue()));
+        return new RequestEntity<>(request.getBody(), headers, HttpMethod.valueOf(request.getHttpMethod().name()), request.getUrl());
     }
+
 }

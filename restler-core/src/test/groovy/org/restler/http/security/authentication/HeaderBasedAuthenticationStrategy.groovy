@@ -1,7 +1,8 @@
 package org.restler.http.security.authentication
 
+import org.restler.http.Header
+import org.restler.http.HttpMethod
 import org.restler.http.Request
-import org.springframework.http.HttpMethod
 import spock.lang.Specification
 
 class HeaderBasedAuthenticationStrategySpec extends Specification {
@@ -15,8 +16,8 @@ class HeaderBasedAuthenticationStrategySpec extends Specification {
         def authReq = auth.authenticate(req, null)
 
         then:
-        authReq.toRequestEntity().getHeaders().getFirst("name") == "test-name"
-        authReq.toRequestEntity().getHeaders().getFirst("pass") == "test-pass"
+        authReq.getHeaders().get("name").first() == "test-name"
+        authReq.getHeaders().get("pass").first() == "test-pass"
     }
 
 }

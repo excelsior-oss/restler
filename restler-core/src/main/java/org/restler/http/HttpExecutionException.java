@@ -1,15 +1,20 @@
 package org.restler.http;
 
-public class HttpExecutionException extends RuntimeException {
+import org.restler.client.RestlerException;
+
+import java.util.Optional;
+
+public class HttpExecutionException extends RestlerException {
 
     private final String responseBody;
 
-    public HttpExecutionException(String responseBody) {
+    public HttpExecutionException(String msg, Throwable cause, String responseBody) {
+        super(msg, cause);
         this.responseBody = responseBody;
     }
 
-    public String getResponseBody() {
-        return responseBody;
+    public Optional<String> getResponseBody() {
+        return Optional.ofNullable(responseBody);
     }
 
 }

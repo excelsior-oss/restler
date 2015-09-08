@@ -1,7 +1,5 @@
 package org.restler.http;
 
-import org.springframework.http.ResponseEntity;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,7 +23,7 @@ public class RequestExecutionChain implements RequestExecutor {
         this.index = index;
     }
 
-    public <T> ResponseEntity<T> execute(Request<T> request) {
+    public <T> Response<T> execute(Request<T> request) {
         if (index >= advices.length) {
             return requestExecutor.execute(request);
         } else {

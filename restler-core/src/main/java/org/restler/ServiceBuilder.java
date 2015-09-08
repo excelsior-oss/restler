@@ -3,9 +3,7 @@ package org.restler;
 import com.fasterxml.jackson.databind.Module;
 import org.restler.client.*;
 import org.restler.http.*;
-import org.restler.http.error.ClassNameErrorMappingRequestExecutionAdvice;
 import org.restler.http.security.AuthenticatingExecutionAdvice;
-import org.restler.http.security.ReauthorizingExecutionAdvice;
 import org.restler.http.security.SecuritySession;
 import org.restler.http.security.authentication.AuthenticationStrategy;
 import org.restler.http.security.authentication.CookieAuthenticationStrategy;
@@ -39,7 +37,6 @@ public class ServiceBuilder {
     private AuthenticationStrategy authenticationStrategy;
     private AuthorizationStrategy authorizationStrategy;
 
-    private boolean reauthorize = false;
     private boolean autoAuthorize = true;
 
     public ServiceBuilder(String baseUrl) {
@@ -79,11 +76,6 @@ public class ServiceBuilder {
         return authenticationStrategy(new HttpBasicAuthenticationStrategy());
     }
 
-    public ServiceBuilder reauthorizeRequestsOnForbidden(boolean reauthorize) {
-        this.reauthorize = reauthorize;
-        return this;
-    }
-
     public ServiceBuilder autoAuthorize(boolean autoAuthorize) {
         this.autoAuthorize = autoAuthorize;
         return this;
@@ -92,10 +84,6 @@ public class ServiceBuilder {
     public ServiceBuilder errorMapper(RequestExecutionAdvice errorMapper) {
         this.errorMapper = errorMapper;
         return this;
-    }
-
-    public ServiceBuilder classNameExceptionMapper() {
-        return errorMapper(new ClassNameErrorMappingRequestExecutionAdvice());
     }
 
     public void scheme(String scheme) {
@@ -131,10 +119,6 @@ public class ServiceBuilder {
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
         List<RequestExecutionAdvice> advices = new ArrayList<>();
 
-        if (reauthorize) {
-            advices.add(new ReauthorizingExecutionAdvice(session));
-        }
-
         if (authenticationStrategy != null) {
             advices.add(new AuthenticatingExecutionAdvice(session));
         }
@@ -155,9 +139,6 @@ public class ServiceBuilder {
     private void validate() throws RestlerException {
         if (requestExecutor.isPresent() && jacksonModules.size() > 0) {
             throw new RestlerException("Jackson modules are not used with custom request executor. Please specify request executor either jackson modules");
-        }
-        if (reauthorize && authorizationStrategy == null) {
-            throw new RestlerException("In order to use reauthorize feature please specify authorization strategy");
         }
     }
 

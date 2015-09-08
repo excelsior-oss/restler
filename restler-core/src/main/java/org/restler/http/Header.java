@@ -1,8 +1,8 @@
-package org.restler.http.security.authentication;
+package org.restler.http;
 
 import java.util.Arrays;
 
-class Header {
+public class Header {
 
     public final String name;
     private final String[] values;
