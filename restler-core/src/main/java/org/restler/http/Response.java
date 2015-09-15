@@ -2,7 +2,7 @@ package org.restler.http;
 
 import com.google.common.collect.ImmutableMultimap;
 
-public abstract class Response<T> {
+public abstract class Response {
 
     private final HttpStatus status;
     private final ImmutableMultimap<String, String> headers;

@@ -1,7 +1,7 @@
 package org.restler.http.security.authentication
 
-import org.restler.client.HttpCall
 import org.restler.http.Header
+import org.restler.http.HttpCall
 import org.restler.http.HttpMethod
 import spock.lang.Specification
 

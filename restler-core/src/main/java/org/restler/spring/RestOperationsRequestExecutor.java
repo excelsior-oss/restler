@@ -1,12 +1,8 @@
 package org.restler.spring;
 
 import com.google.common.collect.ImmutableMultimap;
-import org.restler.client.HttpCall;
-import org.restler.http.HttpStatus;
-import org.restler.http.RequestExecutor;
-import org.restler.http.Response;
-import org.restler.http.SuccessfulResponse;
-import org.springframework.core.ParameterizedTypeReference;
+import org.restler.client.Call;
+import org.restler.http.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
@@ -14,9 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
+import static org.restler.spring.SpringUtils.prepareForSpringMvc;
+import static org.restler.spring.SpringUtils.toGuavaMultimap;
 
 public class RestOperationsRequestExecutor implements RequestExecutor {
 
@@ -26,21 +21,15 @@ public class RestOperationsRequestExecutor implements RequestExecutor {
         this.restTemplate = restTemplate;
     }
 
-    public <T> Response<T> execute(HttpCall<T> call) {
-        RequestEntity<?> requestEntity = toRequestEntity(call);
-        ResponseEntity<T> responseEntity = restTemplate.exchange(requestEntity, new ParameterizedTypeReference<T>() {
-            @Override
-            public Type getType() {
-                return call.getReturnType();
-            }
-        });
+    public Response execute(Call call) {
+        HttpCall springMvcCall = prepareForSpringMvc((HttpCall) call);
+        RequestEntity<?> requestEntity = toRequestEntity(springMvcCall);
+        ResponseEntity responseEntity = restTemplate.exchange(requestEntity, new HttpCallTypeReference<>(call));
 
-        ImmutableMultimap.Builder<String, String> headersBuilder = new ImmutableMultimap.Builder<>();
-        for (Map.Entry<String, List<String>> header : responseEntity.getHeaders().entrySet()) {
-            headersBuilder.putAll(header.getKey(), header.getValue());
-        }
+        ImmutableMultimap<String, String> headersBuilder = toGuavaMultimap(responseEntity.getHeaders());
         HttpStatus status = new HttpStatus(responseEntity.getStatusCode().value(), responseEntity.getStatusCode().getReasonPhrase());
-        return new SuccessfulResponse<>(status, headersBuilder.build(), responseEntity.getBody());
+
+        return new SuccessfulResponse<>(status, headersBuilder, responseEntity.getBody());
     }
 
     public RequestEntity<?> toRequestEntity(HttpCall<?> call) {

@@ -1,13 +1,8 @@
 package org.restler;
 
 import com.fasterxml.jackson.databind.Module;
-import org.restler.client.CGLibClientFactory;
-import org.restler.client.CachingClientFactory;
-import org.restler.client.ParameterResolver;
-import org.restler.client.RestlerException;
-import org.restler.http.HttpServiceMethodInvocationExecutor;
-import org.restler.http.RequestExecutionAdvice;
-import org.restler.http.RequestExecutionChain;
+import org.restler.client.*;
+import org.restler.http.HttpCallExecutor;
 import org.restler.http.RequestExecutor;
 import org.restler.http.security.AuthenticatingExecutionAdvice;
 import org.restler.http.security.SecuritySession;
@@ -18,7 +13,6 @@ import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
 import org.restler.spring.ControllerMethodInvocationMapper;
 import org.restler.spring.RestOperationsRequestExecutor;
-import org.restler.spring.SpringFormMapper;
 import org.restler.util.UriBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -41,7 +35,7 @@ public class ServiceBuilder {
     private ParameterResolver paramResolver = ParameterResolver.valueOfParamResolver();
     private Optional<Executor> threadExecutor = Optional.empty();
     private Optional<RequestExecutor> requestExecutor = Optional.empty();
-    private RequestExecutionAdvice errorMapper = null;
+    private CallExecutionAdvice errorMapper = null;
 
     private AuthenticationStrategy authenticationStrategy;
     private AuthorizationStrategy authorizationStrategy;
@@ -90,7 +84,7 @@ public class ServiceBuilder {
         return this;
     }
 
-    public ServiceBuilder errorMapper(RequestExecutionAdvice errorMapper) {
+    public ServiceBuilder errorMapper(CallExecutionAdvice errorMapper) {
         this.errorMapper = errorMapper;
         return this;
     }
@@ -126,23 +120,19 @@ public class ServiceBuilder {
         validate();
 
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
-        List<RequestExecutionAdvice> advices = new ArrayList<>();
+        ControllerMethodInvocationMapper invocationMapper = new ControllerMethodInvocationMapper(uriBuilder.build(), paramResolver);
 
+        List<CallExecutionAdvice> advices = new ArrayList<>();
         if (authenticationStrategy != null) {
             advices.add(new AuthenticatingExecutionAdvice(session));
         }
-
         if (errorMapper != null) {
             advices.add(errorMapper);
         }
-        // TODO: temporary hack, should be added by spring module
-        advices.add(new SpringFormMapper());
+        CallExecutor executor = new HttpCallExecutor(requestExecutor.orElseGet(this::defaultRequestExecutor));
+        CallExecutionChain chain = new CallExecutionChain(executor, advices);
 
-        RequestExecutionChain chain = new RequestExecutionChain(requestExecutor.orElseGet(this::defaultRequestExecutor), advices);
-
-        ControllerMethodInvocationMapper invocationMapper = new ControllerMethodInvocationMapper(uriBuilder.build(), paramResolver);
-        HttpServiceMethodInvocationExecutor executor = new HttpServiceMethodInvocationExecutor(chain);
-        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(executor, invocationMapper, threadExecutor.orElseGet(Executors::newCachedThreadPool)));
+        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(chain, invocationMapper, threadExecutor.orElseGet(Executors::newCachedThreadPool)));
 
         return new Service(factory, session);
     }

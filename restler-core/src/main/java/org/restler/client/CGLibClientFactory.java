@@ -14,29 +14,29 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * A CGLib implementation of {@link ClientFactory} that uses {@link HttpCallExecutor} for execution client methods.
+ * A CGLib implementation of {@link ClientFactory} that uses {@link CallExecutor} for execution client methods.
  */
 @SuppressWarnings("unchecked")
 public class CGLibClientFactory implements ClientFactory {
 
-    private final HttpCallExecutor executor;
-    private final BiFunction<Method, Object[], HttpCall<?>> invocationMapper;
+    private final CallExecutor callExecutor;
+    private final BiFunction<Method, Object[], Call> mapToCall;
 
     private final Executor threadExecutor;
 
-    private final HashMap<Class<?>, Function<HttpCall<?>, ?>> invocationExecutors;
-    private final Function<HttpCall<?>, ?> defaultInvocationExecutor;
+    private final HashMap<Class<?>, Function<Call, ?>> invocationExecutors;
+    private final Function<Call, ?> defaultInvocationExecutor;
 
-    public CGLibClientFactory(HttpCallExecutor executor, BiFunction<Method, Object[], HttpCall<?>> invocationMapper, Executor threadExecutor) {
-        this.executor = executor;
-        this.invocationMapper = invocationMapper;
+    public CGLibClientFactory(CallExecutor callExecutor, BiFunction<Method, Object[], Call> mapToCall, Executor threadExecutor) {
+        this.callExecutor = callExecutor;
+        this.mapToCall = mapToCall;
         this.threadExecutor = threadExecutor;
 
         invocationExecutors = new HashMap<>();
         invocationExecutors.put(DeferredResult.class, new DeferredResultInvocationExecutor());
         invocationExecutors.put(Callable.class, new CallableResultInvocationExecutor());
 
-        defaultInvocationExecutor = executor::execute;
+        defaultInvocationExecutor = callExecutor::execute;
     }
 
     @Override
@@ -55,8 +55,8 @@ public class CGLibClientFactory implements ClientFactory {
         return (C) enhancer.create();
     }
 
-    private Function<HttpCall<?>, ?> getInvocationExecutor(Method method) {
-        Function<HttpCall<?>, ?> invocationExecutor = invocationExecutors.get(method.getReturnType());
+    private Function<Call, ?> getInvocationExecutor(Method method) {
+        Function<Call, ?> invocationExecutor = invocationExecutors.get(method.getReturnType());
         if (invocationExecutor == null) {
             invocationExecutor = defaultInvocationExecutor;
         }
@@ -67,27 +67,27 @@ public class CGLibClientFactory implements ClientFactory {
 
         @Override
         public Object invoke(Object o, Method method, Object[] args) throws Throwable {
-            HttpCall<?> invocation = invocationMapper.apply(method, args);
+            Call invocation = mapToCall.apply(method, args);
 
             return getInvocationExecutor(method).apply(invocation);
         }
     }
 
-    private class DeferredResultInvocationExecutor implements Function<HttpCall<?>, DeferredResult<?>> {
+    private class DeferredResultInvocationExecutor implements Function<Call, DeferredResult<?>> {
 
         @Override
-        public DeferredResult apply(HttpCall<?> httpCall) {
+        public DeferredResult<?> apply(Call httpCall) {
             DeferredResult deferredResult = new DeferredResult();
-            threadExecutor.execute(() -> deferredResult.setResult(executor.execute(httpCall)));
+            threadExecutor.execute(() -> deferredResult.setResult(callExecutor.execute(httpCall)));
             return deferredResult;
         }
     }
 
-    private class CallableResultInvocationExecutor implements Function<HttpCall<?>, Callable<?>> {
+    private class CallableResultInvocationExecutor implements Function<Call, Callable<?>> {
 
         @Override
-        public Callable<?> apply(HttpCall<?> httpCall) {
-            return () -> executor.execute(httpCall);
+        public Callable<?> apply(Call httpCall) {
+            return () -> callExecutor.execute(httpCall);
         }
     }
 }

@@ -1,9 +1,9 @@
 package org.restler.http;
 
-import org.restler.client.HttpCall;
+import org.restler.client.Call;
 
 public interface RequestExecutor {
 
-    <T> Response<T> execute(HttpCall<T> request);
+    Response execute(Call request);
 
 }

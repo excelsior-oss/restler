@@ -1,12 +1,10 @@
 package org.restler
 
 import org.restler.client.CGLibClientFactory
-import org.restler.http.RequestExecutionChain
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.integration.Controller
 import org.restler.spring.RestOperationsRequestExecutor
-import org.restler.spring.SpringFormMapper
 import org.restler.util.IntegrationSpec
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
@@ -17,10 +15,9 @@ class SimpleIntegrationTest extends Specification implements IntegrationSpec {
     def login = "user";
     def password = "password";
 
-    // TODO: find better solution, so users would not required to instantiate
-    // TODO: execution chain manually
-    def execChain = new RequestExecutionChain(new RestOperationsRequestExecutor(new RestTemplate()), [new SpringFormMapper()])
-    def formAuth = new FormAuthorizationStrategy(execChain, new URI("http://localhost:8080/login"), login, "username", password, "password");
+    // TODO: find better solution, so users would not required to instantiate execution chain manually
+    def executor = new RestOperationsRequestExecutor(new RestTemplate())
+    def formAuth = new FormAuthorizationStrategy(executor, new URI("http://localhost:8080/login"), login, "username", password, "password");
 
     def spySimpleHttpRequestExecutor = Spy(RestOperationsRequestExecutor, constructorArgs: [new RestTemplate()])
 

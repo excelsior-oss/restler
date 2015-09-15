@@ -1,11 +1,10 @@
 package org.restler.http.security;
 
-import org.restler.client.HttpCall;
-import org.restler.http.RequestExecutionAdvice;
-import org.restler.http.RequestExecutor;
-import org.restler.http.Response;
+import org.restler.client.Call;
+import org.restler.client.CallExecutionAdvice;
+import org.restler.client.CallExecutor;
 
-public class AuthenticatingExecutionAdvice implements RequestExecutionAdvice {
+public class AuthenticatingExecutionAdvice implements CallExecutionAdvice<Object> {
 
     private final SecuritySession session;
 
@@ -14,8 +13,8 @@ public class AuthenticatingExecutionAdvice implements RequestExecutionAdvice {
     }
 
     @Override
-    public <T> Response<T> advice(HttpCall<T> call, RequestExecutor requestExecutor) {
-        HttpCall<T> authenticatedRequest = session.getAuthenticationStrategy().authenticate(call, session);
+    public Object advice(Call call, CallExecutor requestExecutor) {
+        Call authenticatedRequest = session.getAuthenticationStrategy().authenticate(call, session);
         return requestExecutor.execute(authenticatedRequest);
     }
 }

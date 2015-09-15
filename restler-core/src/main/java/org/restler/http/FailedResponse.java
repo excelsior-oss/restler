@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMultimap;
 
 import java.util.Optional;
 
-public class FailedResponse<T> extends Response<T> {
+public class FailedResponse extends Response {
 
     private final Throwable cause;
     private final String responseBody;

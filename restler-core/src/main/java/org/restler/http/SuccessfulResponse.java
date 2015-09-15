@@ -2,7 +2,7 @@ package org.restler.http;
 
 import com.google.common.collect.ImmutableMultimap;
 
-public class SuccessfulResponse<T> extends Response<T> {
+public class SuccessfulResponse<T> extends Response {
 
     private T result;
 

@@ -1,13 +1,13 @@
-package org.restler.client;
+package org.restler.http;
 
 import com.google.common.collect.ImmutableMultimap;
-import org.restler.http.HttpMethod;
+import org.restler.client.Call;
 
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Arrays;
 
-public class HttpCall<T> {
+public class HttpCall<T> implements Call {
 
     private final URI url;
     private final HttpMethod method;
@@ -44,6 +44,7 @@ public class HttpCall<T> {
         return headers;
     }
 
+    @Override
     public Type getReturnType() {
         return returnType;
     }

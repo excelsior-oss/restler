@@ -2,9 +2,10 @@ package org.restler.spring;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import org.restler.client.HttpCall;
+import org.restler.client.Call;
 import org.restler.client.ParameterResolver;
 import org.restler.client.RestlerException;
+import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.util.UriBuilder;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -29,7 +30,7 @@ import java.util.regex.Pattern;
 /**
  * Maps a properly annotated Java method invocation to invocation of a service method.
  */
-public class ControllerMethodInvocationMapper implements BiFunction<Method, Object[], HttpCall<?>> {
+public class ControllerMethodInvocationMapper implements BiFunction<Method, Object[], Call> {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
     private static final Pattern pathVariablesPattern = Pattern.compile("\\{([-a-zA-Z0-9@:%_\\+.~#?&/=]*)\\}");
@@ -43,7 +44,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
     }
 
     @Override
-    public HttpCall<?> apply(Method method, Object[] args) {
+    public Call apply(Method method, Object[] args) {
         ResponseBody methodResponseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
         ResponseBody classResponseBodyAnnotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), ResponseBody.class);
         if (methodResponseBodyAnnotation == null && classResponseBodyAnnotation == null) {
