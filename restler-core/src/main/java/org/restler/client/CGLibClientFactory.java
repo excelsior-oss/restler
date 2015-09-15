@@ -6,10 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * A CGLib implementation of {@link ClientFactory} that uses {@link CallExecutor} for execution client methods.
@@ -20,17 +17,9 @@ public class CGLibClientFactory implements ClientFactory {
     private final CallExecutor callExecutor;
     private final BiFunction<Method, Object[], Call> mapToCall;
 
-    private final HashMap<Class<?>, Function<Call, ?>> invocationExecutors;
-    private final Function<Call, ?> defaultInvocationExecutor;
-
     public CGLibClientFactory(CallExecutor callExecutor, BiFunction<Method, Object[], Call> mapToCall) {
         this.callExecutor = callExecutor;
         this.mapToCall = mapToCall;
-
-        invocationExecutors = new HashMap<>();
-        invocationExecutors.put(Callable.class, new CallableResultInvocationExecutor());
-
-        defaultInvocationExecutor = callExecutor::execute;
     }
 
     @Override
@@ -49,29 +38,13 @@ public class CGLibClientFactory implements ClientFactory {
         return (C) enhancer.create();
     }
 
-    private Function<Call, ?> getInvocationExecutor(Method method) {
-        Function<Call, ?> invocationExecutor = invocationExecutors.get(method.getReturnType());
-        if (invocationExecutor == null) {
-            invocationExecutor = defaultInvocationExecutor;
-        }
-        return invocationExecutor;
-    }
-
     private class ControllerMethodInvocationHandler implements InvocationHandler {
 
         @Override
         public Object invoke(Object o, Method method, Object[] args) throws Throwable {
-            Call invocation = mapToCall.apply(method, args);
-
-            return getInvocationExecutor(method).apply(invocation);
+            Call call = mapToCall.apply(method, args);
+            return callExecutor.execute(call);
         }
     }
 
-    private class CallableResultInvocationExecutor implements Function<Call, Callable<?>> {
-
-        @Override
-        public Callable<?> apply(Call httpCall) {
-            return () -> callExecutor.execute(httpCall);
-        }
-    }
 }

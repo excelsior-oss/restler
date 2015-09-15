@@ -125,6 +125,7 @@ public class ServiceBuilder {
 
         List<CallExecutionAdvice> advices = new ArrayList<>();
         advices.add(new DeferredResultHandler(threadExecutor.orElseGet(Executors::newCachedThreadPool)));
+        advices.add(new CallableHandler());
         if (authenticationStrategy != null) {
             advices.add(new AuthenticatingExecutionAdvice(session));
         }
