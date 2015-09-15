@@ -12,6 +12,7 @@ import org.restler.http.security.authentication.HttpBasicAuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 import org.restler.http.security.authorization.BasicAuthorizationStrategy;
 import org.restler.spring.ControllerMethodInvocationMapper;
+import org.restler.spring.DeferredResultHandler;
 import org.restler.spring.RestOperationsRequestExecutor;
 import org.restler.util.UriBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -123,6 +124,7 @@ public class ServiceBuilder {
         ControllerMethodInvocationMapper invocationMapper = new ControllerMethodInvocationMapper(uriBuilder.build(), paramResolver);
 
         List<CallExecutionAdvice> advices = new ArrayList<>();
+        advices.add(new DeferredResultHandler(threadExecutor.orElseGet(Executors::newCachedThreadPool)));
         if (authenticationStrategy != null) {
             advices.add(new AuthenticatingExecutionAdvice(session));
         }
@@ -132,7 +134,7 @@ public class ServiceBuilder {
         CallExecutor executor = new HttpCallExecutor(requestExecutor.orElseGet(this::defaultRequestExecutor));
         CallExecutionChain chain = new CallExecutionChain(executor, advices);
 
-        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(chain, invocationMapper, threadExecutor.orElseGet(Executors::newCachedThreadPool)));
+        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(chain, invocationMapper));
 
         return new Service(factory, session);
     }

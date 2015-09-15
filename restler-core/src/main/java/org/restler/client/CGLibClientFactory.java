@@ -4,12 +4,10 @@ import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -22,18 +20,14 @@ public class CGLibClientFactory implements ClientFactory {
     private final CallExecutor callExecutor;
     private final BiFunction<Method, Object[], Call> mapToCall;
 
-    private final Executor threadExecutor;
-
     private final HashMap<Class<?>, Function<Call, ?>> invocationExecutors;
     private final Function<Call, ?> defaultInvocationExecutor;
 
-    public CGLibClientFactory(CallExecutor callExecutor, BiFunction<Method, Object[], Call> mapToCall, Executor threadExecutor) {
+    public CGLibClientFactory(CallExecutor callExecutor, BiFunction<Method, Object[], Call> mapToCall) {
         this.callExecutor = callExecutor;
         this.mapToCall = mapToCall;
-        this.threadExecutor = threadExecutor;
 
         invocationExecutors = new HashMap<>();
-        invocationExecutors.put(DeferredResult.class, new DeferredResultInvocationExecutor());
         invocationExecutors.put(Callable.class, new CallableResultInvocationExecutor());
 
         defaultInvocationExecutor = callExecutor::execute;
@@ -70,16 +64,6 @@ public class CGLibClientFactory implements ClientFactory {
             Call invocation = mapToCall.apply(method, args);
 
             return getInvocationExecutor(method).apply(invocation);
-        }
-    }
-
-    private class DeferredResultInvocationExecutor implements Function<Call, DeferredResult<?>> {
-
-        @Override
-        public DeferredResult<?> apply(Call httpCall) {
-            DeferredResult deferredResult = new DeferredResult();
-            threadExecutor.execute(() -> deferredResult.setResult(callExecutor.execute(httpCall)));
-            return deferredResult;
         }
     }
 

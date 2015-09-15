@@ -13,16 +13,13 @@ import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -119,14 +116,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
     }
 
     private Type getReturnType(Method method) {
-        Class<?> resultType = method.getReturnType();
-        Type returnType = method.getGenericReturnType();
-
-        if (resultType == DeferredResult.class || resultType == Callable.class) {
-            ParameterizedType parameterizedType = (ParameterizedType) returnType;
-            returnType = parameterizedType.getActualTypeArguments()[0];
-        }
-        return returnType;
+        return method.getGenericReturnType();
     }
 
     private URI url(URI baseUrl, String pathTemplate, ImmutableMultimap<String, String> queryParams, ImmutableMap<String, Object> pathVariables) {

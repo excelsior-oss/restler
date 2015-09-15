@@ -49,6 +49,11 @@ public class HttpCall<T> implements Call {
         return returnType;
     }
 
+    @Override
+    public Call withReturnType(Type type) {
+        return new HttpCall<T>(url, method, requestBody, headers, type);
+    }
+
     public HttpCall<T> setHeader(String name, String... values) {
         ImmutableMultimap.Builder<String, String> newHeaders = new ImmutableMultimap.Builder<String, String>().putAll(headers);
         Arrays.stream(values).forEach(value -> newHeaders.put(name, value));

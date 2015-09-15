@@ -13,8 +13,8 @@ public class AuthenticatingExecutionAdvice implements CallExecutionAdvice<Object
     }
 
     @Override
-    public Object advice(Call call, CallExecutor requestExecutor) {
+    public Object advice(Call call, CallExecutor callExecutor) {
         Call authenticatedRequest = session.getAuthenticationStrategy().authenticate(call, session);
-        return requestExecutor.execute(authenticatedRequest);
+        return callExecutor.execute(authenticatedRequest);
     }
 }
