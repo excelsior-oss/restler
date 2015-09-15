@@ -1,5 +1,7 @@
 package org.restler.http;
 
+import org.restler.client.HttpCall;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,11 +25,11 @@ public class RequestExecutionChain implements RequestExecutor {
         this.index = index;
     }
 
-    public <T> Response<T> execute(Request<T> request) {
+    public <T> Response<T> execute(HttpCall<T> call) {
         if (index >= advices.length) {
-            return requestExecutor.execute(request);
+            return requestExecutor.execute(call);
         } else {
-            return advices[index].advice(request, tail());
+            return advices[index].advice(call, tail());
         }
     }
 

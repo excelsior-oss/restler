@@ -1,7 +1,11 @@
 package org.restler.spring;
 
 import com.google.common.collect.ImmutableMultimap;
-import org.restler.http.*;
+import org.restler.client.HttpCall;
+import org.restler.http.HttpStatus;
+import org.restler.http.RequestExecutor;
+import org.restler.http.Response;
+import org.restler.http.SuccessfulResponse;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -22,12 +26,12 @@ public class RestOperationsRequestExecutor implements RequestExecutor {
         this.restTemplate = restTemplate;
     }
 
-    public <T> Response<T> execute(Request<T> request) {
-        RequestEntity<?> requestEntity = toRequestEntity(request);
+    public <T> Response<T> execute(HttpCall<T> call) {
+        RequestEntity<?> requestEntity = toRequestEntity(call);
         ResponseEntity<T> responseEntity = restTemplate.exchange(requestEntity, new ParameterizedTypeReference<T>() {
             @Override
             public Type getType() {
-                return request.getReturnType();
+                return call.getReturnType();
             }
         });
 
@@ -39,10 +43,10 @@ public class RestOperationsRequestExecutor implements RequestExecutor {
         return new SuccessfulResponse<>(status, headersBuilder.build(), responseEntity.getBody());
     }
 
-    public RequestEntity<?> toRequestEntity(Request<?> request) {
+    public RequestEntity<?> toRequestEntity(HttpCall<?> call) {
         MultiValueMap<String, String> headers = new HttpHeaders();
-        request.getHeaders().entries().stream().forEach(entry -> headers.add(entry.getKey(), entry.getValue()));
-        return new RequestEntity<>(request.getBody(), headers, HttpMethod.valueOf(request.getHttpMethod().name()), request.getUrl());
+        call.getHeaders().entries().stream().forEach(entry -> headers.add(entry.getKey(), entry.getValue()));
+        return new RequestEntity<>(call.getRequestBody(), headers, HttpMethod.valueOf(call.getHttpMethod().name()), call.getUrl());
     }
 
 }

@@ -1,13 +1,9 @@
 package org.restler.http;
 
-import org.restler.client.ServiceMethod;
-import org.restler.client.ServiceMethodInvocation;
-import org.restler.client.ServiceMethodInvocationExecutor;
-import org.restler.util.UriBuilder;
+import org.restler.client.HttpCall;
+import org.restler.client.HttpCallExecutor;
 
-import java.net.URI;
-
-public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocationExecutor {
+public class HttpServiceMethodInvocationExecutor implements HttpCallExecutor {
 
     private final RequestExecutionChain executors;
 
@@ -16,10 +12,9 @@ public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocat
     }
 
     @Override
-    public <T> T execute(ServiceMethodInvocation<T> invocation) {
+    public <T> T execute(HttpCall<T> call) {
 
-        Request<T> request = toRequest(invocation);
-        Response<T> responseEntity = executors.execute(request);
+        Response<T> responseEntity = executors.execute(call);
         if (responseEntity instanceof SuccessfulResponse) {
             return ((SuccessfulResponse<T>) responseEntity).getResult();
         } else if (responseEntity instanceof FailedResponse) {
@@ -30,15 +25,4 @@ public class HttpServiceMethodInvocationExecutor implements ServiceMethodInvocat
         }
     }
 
-    private <T> Request<T> toRequest(ServiceMethodInvocation<T> invocation) {
-        ServiceMethod<T> method = invocation.getMethod();
-
-
-        URI target = new UriBuilder(invocation.getBaseUrl()).
-                path(method.getUriTemplate()).
-                queryParams(invocation.getQueryParams()).
-                pathVariables(invocation.getPathVariables()).build();
-
-        return new Request<>(target, HttpMethod.valueOf(method.getHttpMethod().name()), invocation.getRequestBody(), method.getReturnType());
-    }
 }

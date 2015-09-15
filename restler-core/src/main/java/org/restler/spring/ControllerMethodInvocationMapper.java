@@ -1,15 +1,15 @@
 package org.restler.spring;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import org.restler.client.HttpCall;
 import org.restler.client.ParameterResolver;
 import org.restler.client.RestlerException;
-import org.restler.client.ServiceMethod;
-import org.restler.client.ServiceMethodInvocation;
 import org.restler.http.HttpMethod;
+import org.restler.util.UriBuilder;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 /**
  * Maps a properly annotated Java method invocation to invocation of a service method.
  */
-public class ControllerMethodInvocationMapper implements BiFunction<Method, Object[], ServiceMethodInvocation<?>> {
+public class ControllerMethodInvocationMapper implements BiFunction<Method, Object[], HttpCall<?>> {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
     private static final Pattern pathVariablesPattern = Pattern.compile("\\{([-a-zA-Z0-9@:%_\\+.~#?&/=]*)\\}");
@@ -43,7 +43,13 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
     }
 
     @Override
-    public ServiceMethodInvocation<?> apply(Method method, Object[] args) {
+    public HttpCall<?> apply(Method method, Object[] args) {
+        ResponseBody methodResponseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
+        ResponseBody classResponseBodyAnnotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), ResponseBody.class);
+        if (methodResponseBodyAnnotation == null && classResponseBodyAnnotation == null) {
+            throw new RuntimeException("The method " + method + " does not return response body");
+        }
+
         Object requestBody = null;
         Map<String, Object> pathVariables = new HashMap<>();
         ImmutableMultimap.Builder<String, String> requestParams = new ImmutableMultimap.Builder<>();
@@ -85,44 +91,33 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             }
         }
 
-        ServiceMethod<?> description = getDescription(method);
-        List<String> unboundPathVariables = unusedPathVariables(pathVariables, description.getUriTemplate());
-        if (unboundPathVariables.size() > 0) {
-            throw new RestlerException("You should introduce method parameter with @PathVariable annotation for each url template variable. Unbound variables: " + unboundPathVariables);
-        }
-        return new ServiceMethodInvocation<>(baseUrl, description, requestBody, pathVariables, requestParams.build());
-    }
-
-    private ServiceMethod<?> getDescription(Method method) {
-
         RequestMapping controllerMapping = method.getDeclaringClass().getDeclaredAnnotation(RequestMapping.class);
         RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
         if (methodMapping == null) {
             throw new RuntimeException("The method " + method + " is not mapped");
         }
 
-        ResponseBody methodResponseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
-        ResponseBody classResponseBodyAnnotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), ResponseBody.class);
-        if (methodResponseBodyAnnotation == null && classResponseBodyAnnotation == null) {
-            throw new RuntimeException("The method " + method + " does not return response body");
+        String pathTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(getMappedUriString(controllerMapping), getMappedUriString(methodMapping)).build().toUriString();
+        List<String> unboundPathVariables = unusedPathVariables(pathVariables, pathTemplate);
+        if (unboundPathVariables.size() > 0) {
+            throw new RestlerException("You should introduce method parameter with @PathVariable annotation for each url template variable. Unbound variables: " + unboundPathVariables);
         }
 
+        URI url = url(baseUrl, pathTemplate, requestParams.build(), ImmutableMap.copyOf(pathVariables));
+        return new HttpCall<>(url, getHttpMethod(methodMapping), requestBody, ImmutableMultimap.<String, String>of(), getReturnType(method));
+    }
+
+    private HttpMethod getHttpMethod(RequestMapping methodMapping) {
         RequestMethod declaredMethod;
         if (methodMapping.method() == null || methodMapping.method().length == 0) {
             declaredMethod = RequestMethod.GET;
         } else {
             declaredMethod = methodMapping.method()[0];
         }
-        HttpMethod httpMethod = HttpMethod.valueOf(declaredMethod.toString());
+        return HttpMethod.valueOf(declaredMethod.toString());
+    }
 
-        HttpStatus expectedStatus = HttpStatus.OK;
-        ResponseStatus statusAnnotation = method.getDeclaredAnnotation(ResponseStatus.class);
-        if (statusAnnotation != null) {
-            expectedStatus = statusAnnotation.value();
-        }
-
-        String uriTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(getMappedUriString(controllerMapping), getMappedUriString(methodMapping)).build().toUriString();
-
+    private Type getReturnType(Method method) {
         Class<?> resultType = method.getReturnType();
         Type returnType = method.getGenericReturnType();
 
@@ -130,8 +125,14 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             ParameterizedType parameterizedType = (ParameterizedType) returnType;
             returnType = parameterizedType.getActualTypeArguments()[0];
         }
+        return returnType;
+    }
 
-        return new ServiceMethod<>(uriTemplate, returnType, httpMethod, expectedStatus.value());
+    private URI url(URI baseUrl, String pathTemplate, ImmutableMultimap<String, String> queryParams, ImmutableMap<String, Object> pathVariables) {
+        return new UriBuilder(baseUrl).
+                path(pathTemplate).
+                queryParams(queryParams).
+                pathVariables(pathVariables).build();
     }
 
     private List<String> unusedPathVariables(Map<String, Object> pathVariables, String uriTemplate) {

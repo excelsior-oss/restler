@@ -1,6 +1,10 @@
 package org.restler.spring;
 
-import org.restler.http.*;
+import org.restler.client.HttpCall;
+import org.restler.http.HttpForm;
+import org.restler.http.RequestExecutionAdvice;
+import org.restler.http.RequestExecutor;
+import org.restler.http.Response;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -16,10 +20,12 @@ public class SpringFormMapper implements RequestExecutionAdvice {
         return res;
     }
 
-    @Override public <T> Response<T> advice(Request<T> request, RequestExecutor requestExecutor) {
-        if (request.getBody() instanceof HttpForm) {
-            return requestExecutor.execute(new Request<>(request.getUrl(), request.getHttpMethod(), request.getHeaders(), toMultiValueMap((HttpForm) request.getBody()), request.getReturnType()));
+    @Override
+    public <T> Response<T> advice(HttpCall<T> call, RequestExecutor requestExecutor) {
+        if (call.getRequestBody() instanceof HttpForm) {
+            return requestExecutor.execute(new HttpCall<>(call.getUrl(), call.getHttpMethod(), toMultiValueMap((HttpForm) call.getRequestBody()), call.getHeaders(), call.getReturnType()));
         }
-        return requestExecutor.execute(request);
+        return requestExecutor.execute(call);
     }
+
 }

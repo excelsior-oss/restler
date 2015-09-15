@@ -1,8 +1,12 @@
 package org.restler.http.security.authorization;
 
 import com.google.common.net.HttpHeaders;
+import org.restler.client.HttpCall;
 import org.restler.client.RestlerException;
-import org.restler.http.*;
+import org.restler.http.HttpForm;
+import org.restler.http.HttpMethod;
+import org.restler.http.RequestExecutor;
+import org.restler.http.Response;
 
 import java.net.URI;
 import java.util.stream.Stream;
@@ -45,7 +49,7 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
                 add(loginParameterName, loginParameterValue).
                 add(passwordParameterName, passwordParameterValue);
 
-        Response<?> response = requestExecutor.execute(new Request<>(urlString, HttpMethod.POST, form, Object.class));
+        Response<?> response = requestExecutor.execute(new HttpCall<>(urlString, HttpMethod.POST, form));
 
         Stream<String> headers = response.getHeaders().get(HttpHeaders.SET_COOKIE).stream();
         return headers.filter(s -> s.startsWith(cookieName + "=")).

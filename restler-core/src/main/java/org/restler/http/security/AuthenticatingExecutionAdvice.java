@@ -1,6 +1,6 @@
 package org.restler.http.security;
 
-import org.restler.http.Request;
+import org.restler.client.HttpCall;
 import org.restler.http.RequestExecutionAdvice;
 import org.restler.http.RequestExecutor;
 import org.restler.http.Response;
@@ -14,8 +14,8 @@ public class AuthenticatingExecutionAdvice implements RequestExecutionAdvice {
     }
 
     @Override
-    public <T> Response<T> advice(Request<T> request, RequestExecutor requestExecutor) {
-        Request<T> authenticatedRequest = session.getAuthenticationStrategy().authenticate(request, session);
+    public <T> Response<T> advice(HttpCall<T> call, RequestExecutor requestExecutor) {
+        HttpCall<T> authenticatedRequest = session.getAuthenticationStrategy().authenticate(call, session);
         return requestExecutor.execute(authenticatedRequest);
     }
 }

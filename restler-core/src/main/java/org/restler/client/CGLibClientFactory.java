@@ -14,20 +14,20 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * A CGLib implementation of {@link ClientFactory} that uses {@link ServiceMethodInvocationExecutor} for execution client methods.
+ * A CGLib implementation of {@link ClientFactory} that uses {@link HttpCallExecutor} for execution client methods.
  */
 @SuppressWarnings("unchecked")
 public class CGLibClientFactory implements ClientFactory {
 
-    private final ServiceMethodInvocationExecutor executor;
-    private final BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper;
+    private final HttpCallExecutor executor;
+    private final BiFunction<Method, Object[], HttpCall<?>> invocationMapper;
 
     private final Executor threadExecutor;
 
-    private final HashMap<Class<?>, Function<ServiceMethodInvocation<?>, ?>> invocationExecutors;
-    private final Function<ServiceMethodInvocation<?>, ?> defaultInvocationExecutor;
+    private final HashMap<Class<?>, Function<HttpCall<?>, ?>> invocationExecutors;
+    private final Function<HttpCall<?>, ?> defaultInvocationExecutor;
 
-    public CGLibClientFactory(ServiceMethodInvocationExecutor executor, BiFunction<Method, Object[], ServiceMethodInvocation<?>> invocationMapper, Executor threadExecutor) {
+    public CGLibClientFactory(HttpCallExecutor executor, BiFunction<Method, Object[], HttpCall<?>> invocationMapper, Executor threadExecutor) {
         this.executor = executor;
         this.invocationMapper = invocationMapper;
         this.threadExecutor = threadExecutor;
@@ -55,8 +55,8 @@ public class CGLibClientFactory implements ClientFactory {
         return (C) enhancer.create();
     }
 
-    private Function<ServiceMethodInvocation<?>, ?> getInvocationExecutor(Method method) {
-        Function<ServiceMethodInvocation<?>, ?> invocationExecutor = invocationExecutors.get(method.getReturnType());
+    private Function<HttpCall<?>, ?> getInvocationExecutor(Method method) {
+        Function<HttpCall<?>, ?> invocationExecutor = invocationExecutors.get(method.getReturnType());
         if (invocationExecutor == null) {
             invocationExecutor = defaultInvocationExecutor;
         }
@@ -67,27 +67,27 @@ public class CGLibClientFactory implements ClientFactory {
 
         @Override
         public Object invoke(Object o, Method method, Object[] args) throws Throwable {
-            ServiceMethodInvocation<?> invocation = invocationMapper.apply(method, args);
+            HttpCall<?> invocation = invocationMapper.apply(method, args);
 
             return getInvocationExecutor(method).apply(invocation);
         }
     }
 
-    private class DeferredResultInvocationExecutor implements Function<ServiceMethodInvocation<?>, DeferredResult<?>> {
+    private class DeferredResultInvocationExecutor implements Function<HttpCall<?>, DeferredResult<?>> {
 
         @Override
-        public DeferredResult apply(ServiceMethodInvocation<?> serviceMethodInvocation) {
+        public DeferredResult apply(HttpCall<?> httpCall) {
             DeferredResult deferredResult = new DeferredResult();
-            threadExecutor.execute(() -> deferredResult.setResult(executor.execute(serviceMethodInvocation)));
+            threadExecutor.execute(() -> deferredResult.setResult(executor.execute(httpCall)));
             return deferredResult;
         }
     }
 
-    private class CallableResultInvocationExecutor implements Function<ServiceMethodInvocation<?>, Callable<?>> {
+    private class CallableResultInvocationExecutor implements Function<HttpCall<?>, Callable<?>> {
 
         @Override
-        public Callable<?> apply(ServiceMethodInvocation<?> serviceMethodInvocation) {
-            return () -> executor.execute(serviceMethodInvocation);
+        public Callable<?> apply(HttpCall<?> httpCall) {
+            return () -> executor.execute(httpCall);
         }
     }
 }

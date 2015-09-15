@@ -1,7 +1,7 @@
 package org.restler.http.security.authentication;
 
+import org.restler.client.HttpCall;
 import org.restler.http.Header;
-import org.restler.http.Request;
 
 import java.util.List;
 
@@ -10,8 +10,8 @@ public abstract class HeaderBasedAuthenticationStrategy implements Authenticatio
     protected abstract List<Header> headers(AuthenticationContext context);
 
     @Override
-    public <T> Request<T> authenticate(Request<T> request, AuthenticationContext context) {
-        Request<T> res = request;
+    public <T> HttpCall<T> authenticate(HttpCall<T> call, AuthenticationContext context) {
+        HttpCall<T> res = call;
         for (Header header : headers(context)) {
             res = res.setHeader(header.name, header.values());
         }

@@ -1,7 +1,9 @@
 package org.restler.http;
 
+import org.restler.client.HttpCall;
+
 public interface RequestExecutionAdvice {
 
-    <T> Response<T> advice(Request<T> request, RequestExecutor requestExecutor);
+    <T> Response<T> advice(HttpCall<T> call, RequestExecutor requestExecutor);
 
 }
