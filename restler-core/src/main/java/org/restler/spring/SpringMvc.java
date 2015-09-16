@@ -1,7 +1,6 @@
 package org.restler.spring;
 
 import net.sf.cglib.proxy.InvocationHandler;
-import org.restler.ServiceBuilder;
 import org.restler.client.*;
 import org.restler.http.HttpCallExecutor;
 import org.restler.http.RequestExecutor;
@@ -9,10 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
-
-import static java.util.Collections.singletonList;
 
 public class SpringMvc implements CoreModule {
 
@@ -23,12 +19,9 @@ public class SpringMvc implements CoreModule {
 
     public SpringMvc(RequestExecutor requestExecutor, List<CallExecutionAdvice<?>> enhancers, URI baseUri, ParameterResolver parameterResolver) {
         this.requestExecutor = requestExecutor;
+        this.enhancers = enhancers;
         this.baseUri = baseUri;
         this.parameterResolver = parameterResolver;
-
-        this.enhancers = new ArrayList<>();
-        this.enhancers.addAll(enhancers);
-        this.enhancers.addAll(singletonList(new DeferredResultHandler(ServiceBuilder.restlerExecutor)));
     }
 
     @Override

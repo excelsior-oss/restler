@@ -1,6 +1,7 @@
 package org.restler.spring;
 
 import com.fasterxml.jackson.databind.Module;
+import org.restler.ServiceBuilder;
 import org.restler.client.CallExecutionAdvice;
 import org.restler.client.CoreModule;
 import org.restler.client.CoreModuleFactory;
@@ -13,18 +14,26 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
 
 public class SpringMvcSupport implements CoreModuleFactory {
 
     private final List<Module> jacksonModules = new ArrayList<>();
 
     private ParameterResolver parameterResolver = ParameterResolver.valueOfParamResolver();
+    private Executor executor = ServiceBuilder.restlerExecutor;
     private Optional<RequestExecutor> requestExecutor = Optional.empty();
 
     @Override
     public CoreModule createModule(URI baseUri, List<CallExecutionAdvice<?>> enhancers) {
-        return new SpringMvc(requestExecutor.orElseGet(this::createExecutor), enhancers, baseUri, parameterResolver);
+        List<CallExecutionAdvice<?>> totalEnhancers = new ArrayList<>();
+        totalEnhancers.addAll(enhancers);
+        totalEnhancers.addAll(singletonList(new DeferredResultHandler(executor)));
+
+        return new SpringMvc(requestExecutor.orElseGet(this::createExecutor), totalEnhancers, baseUri, parameterResolver);
     }
 
     public SpringMvcSupport addJacksonModule(Module module) {
@@ -39,6 +48,11 @@ public class SpringMvcSupport implements CoreModuleFactory {
 
     public SpringMvcSupport parameterResolver(ParameterResolver parameterResolver) {
         this.parameterResolver = parameterResolver;
+        return this;
+    }
+
+    public SpringMvcSupport threadPool(Executor executor) {
+        this.executor = executor;
         return this;
     }
 
