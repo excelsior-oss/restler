@@ -8,6 +8,7 @@ import org.restler.client.RestlerException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -32,7 +33,7 @@ public class UriBuilder {
     private String path;
     private String scheme;
     private ImmutableMultimap<String, String> queryParams = ImmutableMultimap.of();
-    private ImmutableMap<String, ?> pathVariables = ImmutableMap.of();
+    private Map<String, ?> pathVariables = ImmutableMap.of();
 
     public UriBuilder(String baseUrl) {
         this(toUri(baseUrl));
@@ -91,7 +92,7 @@ public class UriBuilder {
     }
 
     public UriBuilder pathVariables(Map<String, ?> pathVariables) {
-        this.pathVariables = ImmutableMap.copyOf(pathVariables);
+        this.pathVariables = Collections.unmodifiableMap(pathVariables);
         return this;
     }
 
