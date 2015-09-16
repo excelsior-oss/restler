@@ -11,7 +11,7 @@ class GenericCollectionsIntegrationTest extends Specification implements Integra
 
     SpringMvcSupport spring = new SpringMvcSupport().
             addJacksonModule(new ParanamerModule())
-    Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080", spring).build();
+    Service serviceWithFormAuth = new Restler("http://localhost:8080", spring).build();
 
     Controller controller = serviceWithFormAuth.produceClient(Controller.class)
 

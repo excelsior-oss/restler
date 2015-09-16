@@ -1,7 +1,7 @@
 package org.restler.spring;
 
 import com.fasterxml.jackson.databind.Module;
-import org.restler.ServiceBuilder;
+import org.restler.Restler;
 import org.restler.client.CallExecutionAdvice;
 import org.restler.client.CoreModule;
 import org.restler.client.CoreModuleFactory;
@@ -24,7 +24,7 @@ public class SpringMvcSupport implements CoreModuleFactory {
     private final List<Module> jacksonModules = new ArrayList<>();
 
     private ParameterResolver parameterResolver = ParameterResolver.valueOfParamResolver();
-    private Executor executor = ServiceBuilder.restlerExecutor;
+    private Executor executor = Restler.restlerExecutor;
     private Optional<RequestExecutor> requestExecutor = Optional.empty();
 
     @Override

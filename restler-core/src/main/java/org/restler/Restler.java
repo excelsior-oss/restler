@@ -17,14 +17,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
- * Helper class for building services.
+ * The entry point into library
  */
-public class ServiceBuilder {
+public class Restler {
 
     public static Executor restlerExecutor = Executors.newCachedThreadPool();
 
+    private final List<CallExecutionAdvice<?>> enhancers = new ArrayList<>();
     private final UriBuilder uriBuilder;
-    private CallExecutionAdvice errorMapper = null;
 
     private AuthenticationStrategy authenticationStrategy;
     private AuthorizationStrategy authorizationStrategy;
@@ -32,42 +32,42 @@ public class ServiceBuilder {
     private boolean autoAuthorize = true;
     private CoreModuleFactory coreModuleFactory;
 
-    public ServiceBuilder(String baseUrl, CoreModuleFactory coreModule) {
+    public Restler(String baseUrl, CoreModuleFactory coreModule) {
         uriBuilder = new UriBuilder(baseUrl);
         this.coreModuleFactory = coreModule;
     }
 
-    public ServiceBuilder(URI baseUrl, CoreModuleFactory coreModule) {
+    public Restler(URI baseUrl, CoreModuleFactory coreModule) {
         uriBuilder = new UriBuilder(baseUrl);
         this.coreModuleFactory = coreModule;
     }
 
-    public ServiceBuilder authenticationStrategy(AuthenticationStrategy authenticationStrategy) {
+    public Restler authenticationStrategy(AuthenticationStrategy authenticationStrategy) {
         this.authenticationStrategy = authenticationStrategy;
         return this;
     }
 
-    public ServiceBuilder authorizationStrategy(AuthorizationStrategy authorizationStrategy) {
+    public Restler authorizationStrategy(AuthorizationStrategy authorizationStrategy) {
         this.authorizationStrategy = authorizationStrategy;
         return this;
     }
 
-    public ServiceBuilder cookieBasedAuthentication() {
+    public Restler cookieBasedAuthentication() {
         return authenticationStrategy(new CookieAuthenticationStrategy());
     }
 
-    public ServiceBuilder httpBasicAuthentication(String login, String password) {
+    public Restler httpBasicAuthentication(String login, String password) {
         authorizationStrategy(new BasicAuthorizationStrategy(login, password));
         return authenticationStrategy(new HttpBasicAuthenticationStrategy());
     }
 
-    public ServiceBuilder autoAuthorize(boolean autoAuthorize) {
+    public Restler autoAuthorize(boolean autoAuthorize) {
         this.autoAuthorize = autoAuthorize;
         return this;
     }
 
-    public ServiceBuilder errorMapper(CallExecutionAdvice errorMapper) {
-        this.errorMapper = errorMapper;
+    public Restler addEnhancer(CallExecutionAdvice<?> enhancer) {
+        enhancers.add(enhancer);
         return this;
     }
 
@@ -91,13 +91,10 @@ public class ServiceBuilder {
 
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
 
-        List<CallExecutionAdvice<?>> advices = new ArrayList<>();
+        List<CallExecutionAdvice<?>> advices = new ArrayList<>(enhancers);
         advices.add(new CallableHandler());
         if (authenticationStrategy != null) {
             advices.add(new AuthenticatingExecutionAdvice(session));
-        }
-        if (errorMapper != null) {
-            advices.add(errorMapper);
         }
 
         CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(coreModuleFactory.createModule(uriBuilder.build(), advices)));

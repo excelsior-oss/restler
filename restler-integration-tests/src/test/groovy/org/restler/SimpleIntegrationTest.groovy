@@ -27,12 +27,12 @@ class SimpleIntegrationTest extends Specification implements IntegrationSpec {
     SpringMvcSupport support = new SpringMvcSupport().
             requestExecutor(spySimpleHttpRequestExecutor)
 
-    Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080", support).
+    Service serviceWithFormAuth = new Restler("http://localhost:8080", support).
             authorizationStrategy(formAuth).
             cookieBasedAuthentication().
             build();
 
-    Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080", new SpringMvcSupport()).
+    Service serviceWithBasicAuth = new Restler("http://localhost:8080", new SpringMvcSupport()).
             httpBasicAuthentication(login, password).
             build();
 

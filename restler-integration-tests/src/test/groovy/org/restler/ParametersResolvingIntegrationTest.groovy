@@ -7,7 +7,7 @@ import spock.lang.Specification
 
 class ParametersResolvingIntegrationTest extends Specification implements IntegrationSpec {
 
-    def service = new ServiceBuilder("http://localhost:8080", new SpringMvcSupport()).build()
+    def service = new Restler("http://localhost:8080", new SpringMvcSupport()).build()
     def controller = service.produceClient(Controller.class)
 
     def "With default parameter resolver 'null' string should be passed as string"() {
