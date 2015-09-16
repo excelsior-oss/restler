@@ -1,12 +1,13 @@
 package org.restler
 
 import org.restler.integration.Controller
+import org.restler.spring.SpringMvcSupport
 import org.restler.util.IntegrationSpec
 import spock.lang.Specification
 
 class ParametersResolvingIntegrationTest extends Specification implements IntegrationSpec {
 
-    def service = new ServiceBuilder("http://localhost:8080").build()
+    def service = new ServiceBuilder("http://localhost:8080", new SpringMvcSupport()).build()
     def controller = service.produceClient(Controller.class)
 
     def "With default parameter resolver 'null' string should be passed as string"() {

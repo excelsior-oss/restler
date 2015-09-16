@@ -13,11 +13,11 @@ import org.springframework.web.client.RestTemplate;
 import static org.restler.spring.SpringUtils.prepareForSpringMvc;
 import static org.restler.spring.SpringUtils.toGuavaMultimap;
 
-public class RestOperationsRequestExecutor implements RequestExecutor {
+public class SpringMvcRequestExecutor implements RequestExecutor {
 
     private final RestTemplate restTemplate;
 
-    public RestOperationsRequestExecutor(RestTemplate restTemplate) {
+    public SpringMvcRequestExecutor(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

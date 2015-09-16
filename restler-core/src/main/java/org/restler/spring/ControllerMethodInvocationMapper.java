@@ -1,6 +1,5 @@
 package org.restler.spring;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
 import org.restler.client.ParameterResolver;
@@ -101,7 +100,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
             throw new RestlerException("You should introduce method parameter with @PathVariable annotation for each url template variable. Unbound variables: " + unboundPathVariables);
         }
 
-        URI url = url(baseUrl, pathTemplate, requestParams.build(), ImmutableMap.copyOf(pathVariables));
+        URI url = url(baseUrl, pathTemplate, requestParams.build(), pathVariables);
         return new HttpCall<>(url, getHttpMethod(methodMapping), requestBody, ImmutableMultimap.<String, String>of(), getReturnType(method));
     }
 
@@ -119,7 +118,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         return method.getGenericReturnType();
     }
 
-    private URI url(URI baseUrl, String pathTemplate, ImmutableMultimap<String, String> queryParams, ImmutableMap<String, Object> pathVariables) {
+    private URI url(URI baseUrl, String pathTemplate, ImmutableMultimap<String, String> queryParams, Map<String, Object> pathVariables) {
         return new UriBuilder(baseUrl).
                 path(pathTemplate).
                 queryParams(queryParams).

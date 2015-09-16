@@ -1,10 +1,12 @@
 package org.restler
 
 import org.restler.client.CGLibClientFactory
+import org.restler.client.RestlerException
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.integration.Controller
-import org.restler.spring.RestOperationsRequestExecutor
+import org.restler.spring.SpringMvcRequestExecutor
+import org.restler.spring.SpringMvcSupport
 import org.restler.util.IntegrationSpec
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
@@ -16,23 +18,26 @@ class SimpleIntegrationTest extends Specification implements IntegrationSpec {
     def password = "password";
 
     // TODO: find better solution, so users would not required to instantiate execution chain manually
-    def executor = new RestOperationsRequestExecutor(new RestTemplate())
+    def executor = new SpringMvcRequestExecutor(new RestTemplate())
     def formAuth = new FormAuthorizationStrategy(executor, new URI("http://localhost:8080/login"), login, "username", password, "password");
 
-    def spySimpleHttpRequestExecutor = Spy(RestOperationsRequestExecutor, constructorArgs: [new RestTemplate()])
+    def spySimpleHttpRequestExecutor = Spy(SpringMvcRequestExecutor, constructorArgs: [new RestTemplate()])
 
-    Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080").
+
+    SpringMvcSupport support = new SpringMvcSupport().
+            requestExecutor(spySimpleHttpRequestExecutor)
+
+    Service serviceWithFormAuth = new ServiceBuilder("http://localhost:8080", support).
             authorizationStrategy(formAuth).
             cookieBasedAuthentication().
-            requestExecutor(spySimpleHttpRequestExecutor).
             build();
 
-    Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080").
+    Service serviceWithBasicAuth = new ServiceBuilder("http://localhost:8080", new SpringMvcSupport()).
             httpBasicAuthentication(login, password).
             build();
 
     def controller = serviceWithFormAuth.produceClient(Controller.class);
-    def controllerWithBasicAuth = serviceWithBasicAuth.produceClient(Controller.class);
+    def controllerWithBasicAuth = serviceWithBasicAuth.produceClient(Controller.class)
 
     def "test unsecured get"() {
         expect:
@@ -90,7 +95,7 @@ class SimpleIntegrationTest extends Specification implements IntegrationSpec {
         when:
         serviceWithFormAuth.produceClient(CGLibClientFactory.class)
         then:
-        thrown(IllegalArgumentException)
+        thrown(RestlerException)
     }
 
     def "test exception CookieAuthenticationRequestExecutor when cookie name is empty"() {

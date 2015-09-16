@@ -2,11 +2,6 @@ package org.restler.client;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.InvocationHandler;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.lang.reflect.Method;
-import java.util.function.BiFunction;
 
 /**
  * A CGLib implementation of {@link ClientFactory} that uses {@link CallExecutor} for execution client methods.
@@ -14,37 +9,26 @@ import java.util.function.BiFunction;
 @SuppressWarnings("unchecked")
 public class CGLibClientFactory implements ClientFactory {
 
-    private final CallExecutor callExecutor;
-    private final BiFunction<Method, Object[], Call> mapToCall;
+    private CoreModule coreModule;
 
-    public CGLibClientFactory(CallExecutor callExecutor, BiFunction<Method, Object[], Call> mapToCall) {
-        this.callExecutor = callExecutor;
-        this.mapToCall = mapToCall;
+    public CGLibClientFactory(CoreModule coreModule) {
+        this.coreModule = coreModule;
     }
 
     @Override
-    public <C> C produceClient(Class<C> controllerClass) {
+    public <C> C produceClient(Class<C> serviceDescriptor) {
 
-        if (controllerClass.getDeclaredAnnotation(Controller.class) == null && controllerClass.getDeclaredAnnotation(RestController.class) == null) {
-            throw new IllegalArgumentException("Not a controller");
+        ClassServiceDescriptor descriptor = new ClassServiceDescriptor(serviceDescriptor);
+        if (!coreModule.canHandle(descriptor)) {
+            throw new RestlerException("Could not handle " + serviceDescriptor + " with " + coreModule);
         }
-
-        InvocationHandler handler = new ControllerMethodInvocationHandler();
+        InvocationHandler handler = coreModule.createHandler(descriptor);
 
         Enhancer enhancer = new Enhancer();
-        enhancer.setSuperclass(controllerClass);
+        enhancer.setSuperclass(serviceDescriptor);
         enhancer.setCallback(handler);
 
         return (C) enhancer.create();
-    }
-
-    private class ControllerMethodInvocationHandler implements InvocationHandler {
-
-        @Override
-        public Object invoke(Object o, Method method, Object[] args) throws Throwable {
-            Call call = mapToCall.apply(method, args);
-            return callExecutor.execute(call);
-        }
     }
 
 }

@@ -9,7 +9,7 @@ public class CallExecutionChain implements CallExecutor {
     private final CallExecutionAdvice<?>[] advices;
     private final int index;
 
-    public CallExecutionChain(CallExecutor callExecutor, List<CallExecutionAdvice> advices) {
+    public CallExecutionChain(CallExecutor callExecutor, List<CallExecutionAdvice<?>> advices) {
         this(callExecutor, advices.toArray(new CallExecutionAdvice[advices.size()]), 0);
     }
 
