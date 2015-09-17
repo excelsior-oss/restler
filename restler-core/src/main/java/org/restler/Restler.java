@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 /**
  * The entry point into library
@@ -30,16 +31,16 @@ public class Restler {
     private AuthorizationStrategy authorizationStrategy;
 
     private boolean autoAuthorize = true;
-    private CoreModuleFactory coreModuleFactory;
+    private Function<RestlerConfig, CoreModule> createCoreModule;
 
-    public Restler(String baseUrl, CoreModuleFactory coreModule) {
+    public Restler(String baseUrl, Function<RestlerConfig, CoreModule> coreModule) {
         uriBuilder = new UriBuilder(baseUrl);
-        this.coreModuleFactory = coreModule;
+        this.createCoreModule = coreModule;
     }
 
-    public Restler(URI baseUrl, CoreModuleFactory coreModule) {
+    public Restler(URI baseUrl, Function<RestlerConfig, CoreModule> coreModule) {
         uriBuilder = new UriBuilder(baseUrl);
-        this.coreModuleFactory = coreModule;
+        this.createCoreModule = coreModule;
     }
 
     public Restler authenticationStrategy(AuthenticationStrategy authenticationStrategy) {
@@ -97,7 +98,7 @@ public class Restler {
             advices.add(new AuthenticatingExecutionAdvice(session));
         }
 
-        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(coreModuleFactory.createModule(uriBuilder.build(), advices)));
+        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(createCoreModule.apply(new RestlerConfig(uriBuilder.build(), advices))));
 
         return new Service(factory, session);
     }

@@ -4,22 +4,22 @@ import com.fasterxml.jackson.databind.Module;
 import org.restler.Restler;
 import org.restler.client.CallExecutionAdvice;
 import org.restler.client.CoreModule;
-import org.restler.client.CoreModuleFactory;
 import org.restler.client.ParameterResolver;
+import org.restler.client.RestlerConfig;
 import org.restler.http.RequestExecutor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 
-public class SpringMvcSupport implements CoreModuleFactory {
+public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
 
     private final List<Module> jacksonModules = new ArrayList<>();
 
@@ -28,12 +28,12 @@ public class SpringMvcSupport implements CoreModuleFactory {
     private Optional<RequestExecutor> requestExecutor = Optional.empty();
 
     @Override
-    public CoreModule createModule(URI baseUri, List<CallExecutionAdvice<?>> enhancers) {
+    public CoreModule apply(RestlerConfig config) {
         List<CallExecutionAdvice<?>> totalEnhancers = new ArrayList<>();
-        totalEnhancers.addAll(enhancers);
+        totalEnhancers.addAll(config.getEnhancers());
         totalEnhancers.addAll(singletonList(new DeferredResultHandler(executor)));
 
-        return new SpringMvc(requestExecutor.orElseGet(this::createExecutor), totalEnhancers, baseUri, parameterResolver);
+        return new SpringMvc(requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
     }
 
     public SpringMvcSupport addJacksonModule(Module module) {
