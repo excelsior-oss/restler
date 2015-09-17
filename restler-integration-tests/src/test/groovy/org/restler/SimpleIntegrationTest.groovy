@@ -5,8 +5,8 @@ import org.restler.client.RestlerException
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.integration.Controller
-import org.restler.spring.SpringMvcRequestExecutor
-import org.restler.spring.SpringMvcSupport
+import org.restler.spring.mvc.SpringMvcRequestExecutor
+import org.restler.spring.mvc.SpringMvcSupport
 import org.restler.util.IntegrationSpec
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification

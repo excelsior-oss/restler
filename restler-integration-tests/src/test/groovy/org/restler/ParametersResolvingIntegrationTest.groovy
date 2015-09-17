@@ -1,7 +1,7 @@
 package org.restler
 
 import org.restler.integration.Controller
-import org.restler.spring.SpringMvcSupport
+import org.restler.spring.mvc.SpringMvcSupport
 import org.restler.util.IntegrationSpec
 import spock.lang.Specification
 

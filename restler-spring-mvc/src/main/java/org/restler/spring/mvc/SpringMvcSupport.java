@@ -1,10 +1,9 @@
-package org.restler.spring;
+package org.restler.spring.mvc;
 
 import com.fasterxml.jackson.databind.Module;
 import org.restler.Restler;
 import org.restler.client.CallExecutionAdvice;
 import org.restler.client.CoreModule;
-import org.restler.client.ParameterResolver;
 import org.restler.client.RestlerConfig;
 import org.restler.http.RequestExecutor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;

@@ -1,4 +1,4 @@
-package org.restler.spring;
+package org.restler.spring.mvc;
 
 import net.sf.cglib.proxy.InvocationHandler;
 import org.restler.client.*;

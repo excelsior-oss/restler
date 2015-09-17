@@ -3,7 +3,7 @@ package org.restler
 import com.fasterxml.jackson.module.paranamer.ParanamerModule
 import org.restler.integration.Controller
 import org.restler.integration.SimpleDto
-import org.restler.spring.SpringMvcSupport
+import org.restler.spring.mvc.SpringMvcSupport
 import org.restler.util.IntegrationSpec
 import spock.lang.Specification
 

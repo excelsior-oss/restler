@@ -1,4 +1,4 @@
-package org.restler.spring;
+package org.restler.spring.mvc;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
@@ -10,9 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import static org.restler.spring.SpringUtils.prepareForSpringMvc;
-import static org.restler.spring.SpringUtils.toGuavaMultimap;
-
 public class SpringMvcRequestExecutor implements RequestExecutor {
 
     private final RestTemplate restTemplate;
@@ -22,11 +19,11 @@ public class SpringMvcRequestExecutor implements RequestExecutor {
     }
 
     public Response execute(Call call) {
-        HttpCall springMvcCall = prepareForSpringMvc((HttpCall) call);
+        HttpCall springMvcCall = SpringUtils.prepareForSpringMvc((HttpCall) call);
         RequestEntity<?> requestEntity = toRequestEntity(springMvcCall);
         ResponseEntity responseEntity = restTemplate.exchange(requestEntity, new HttpCallTypeReference<>(call));
 
-        ImmutableMultimap<String, String> headersBuilder = toGuavaMultimap(responseEntity.getHeaders());
+        ImmutableMultimap<String, String> headersBuilder = SpringUtils.toGuavaMultimap(responseEntity.getHeaders());
         HttpStatus status = new HttpStatus(responseEntity.getStatusCode().value(), responseEntity.getStatusCode().getReasonPhrase());
 
         return new SuccessfulResponse<>(status, headersBuilder, responseEntity.getBody());

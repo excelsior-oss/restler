@@ -1,4 +1,4 @@
-package org.restler.spring;
+package org.restler.spring.mvc;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.http.HttpCall;

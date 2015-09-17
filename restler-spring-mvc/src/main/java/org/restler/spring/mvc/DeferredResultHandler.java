@@ -1,4 +1,4 @@
-package org.restler.spring;
+package org.restler.spring.mvc;
 
 import org.restler.client.AbstractWrapperHandler;
 import org.restler.client.Call;

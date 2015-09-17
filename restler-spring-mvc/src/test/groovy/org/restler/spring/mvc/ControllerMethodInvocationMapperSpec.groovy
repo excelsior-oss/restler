@@ -1,6 +1,5 @@
-package org.restler.spring
+package org.restler.spring.mvc
 
-import org.restler.client.ParameterResolver
 import org.restler.client.RestlerException
 import spock.lang.Specification
 

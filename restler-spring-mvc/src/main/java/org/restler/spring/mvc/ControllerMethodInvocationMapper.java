@@ -1,8 +1,7 @@
-package org.restler.spring;
+package org.restler.spring.mvc;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
-import org.restler.client.ParameterResolver;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
