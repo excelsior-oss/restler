@@ -106,14 +106,14 @@ public class Restler {
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
 
         List<CallEnhancer> enhancers = new ArrayList<>(this.enhancers);
-        RestlerConfig config = new RestlerConfig(uriBuilder.build(), enhancers, threadPool);
+        RestlerConfig config = new RestlerConfig(uriBuilder.build(), enhancers, threadPool, session);
         List<CallEnhancer> additionalEnhancers = enhancerFactories.stream().flatMap((enhancerFactory) -> enhancerFactory.apply(config).stream()).collect(Collectors.toList());
         enhancers.addAll(additionalEnhancers);
         if (authenticationStrategy != null) {
             enhancers.add(new AuthenticatingEnhancer(session));
         }
 
-        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(createCoreModule.apply(new RestlerConfig(uriBuilder.build(), enhancers, threadPool))));
+        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(createCoreModule.apply(new RestlerConfig(uriBuilder.build(), enhancers, threadPool, session))));
 
         return new Service(factory, session);
     }

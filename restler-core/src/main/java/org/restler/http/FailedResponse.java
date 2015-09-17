@@ -9,11 +9,11 @@ public class FailedResponse extends Response {
     private final Throwable cause;
     private final String responseBody;
 
-    public FailedResponse(HttpStatus status, Throwable cause, String responseBody) {
-        this(status, ImmutableMultimap.<String, String>of(), cause, responseBody);
+    public FailedResponse(HttpStatus status, String responseBody, Throwable cause) {
+        this(status, ImmutableMultimap.<String, String>of(), responseBody, cause);
     }
 
-    public FailedResponse(HttpStatus status, ImmutableMultimap<String, String> headers, Throwable cause, String responseBody) {
+    public FailedResponse(HttpStatus status, ImmutableMultimap<String, String> headers, String responseBody, Throwable cause) {
         super(status, headers);
         this.cause = cause;
         this.responseBody = responseBody;

@@ -1,4 +1,7 @@
-package org.restler.client;
+package org.restler;
+
+import org.restler.client.CallEnhancer;
+import org.restler.http.security.SecuritySession;
 
 import java.net.URI;
 import java.util.List;
@@ -9,11 +12,13 @@ public class RestlerConfig {
     private final URI baseUri;
     private final List<CallEnhancer> enhancers;
     private final Executor restlerThreadPool;
+    private final SecuritySession securitySession;
 
-    public RestlerConfig(URI baseUri, List<CallEnhancer> enhancers, Executor restlerThreadPool) {
+    public RestlerConfig(URI baseUri, List<CallEnhancer> enhancers, Executor restlerThreadPool, SecuritySession securitySession) {
         this.baseUri = baseUri;
         this.enhancers = enhancers;
         this.restlerThreadPool = restlerThreadPool;
+        this.securitySession = securitySession;
     }
 
     public URI getBaseUri() {
@@ -26,5 +31,9 @@ public class RestlerConfig {
 
     public Executor getRestlerThreadPool() {
         return restlerThreadPool;
+    }
+
+    public SecuritySession getSecuritySession() {
+        return securitySession;
     }
 }

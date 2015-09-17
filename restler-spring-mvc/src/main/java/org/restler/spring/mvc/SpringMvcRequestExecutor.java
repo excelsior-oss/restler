@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 public class SpringMvcRequestExecutor implements RequestExecutor {
@@ -21,7 +22,13 @@ public class SpringMvcRequestExecutor implements RequestExecutor {
     public Response execute(Call call) {
         HttpCall springMvcCall = SpringUtils.prepareForSpringMvc((HttpCall) call);
         RequestEntity<?> requestEntity = toRequestEntity(springMvcCall);
-        ResponseEntity responseEntity = restTemplate.exchange(requestEntity, new HttpCallTypeReference<>(call));
+        ResponseEntity responseEntity;
+        try {
+            responseEntity = restTemplate.exchange(requestEntity, new HttpCallTypeReference<>(call));
+        } catch (HttpStatusCodeException e) {
+            HttpStatus status = new HttpStatus(e.getStatusCode().value(), e.getStatusText());
+            return new FailedResponse(status, e.getResponseBodyAsString(), e);
+        }
 
         ImmutableMultimap<String, String> headersBuilder = SpringUtils.toGuavaMultimap(responseEntity.getHeaders());
         HttpStatus status = new HttpStatus(responseEntity.getStatusCode().value(), responseEntity.getStatusCode().getReasonPhrase());

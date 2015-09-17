@@ -19,7 +19,7 @@ public class HttpCallExecutor implements CallExecutor {
             return ((SuccessfulResponse) responseEntity).getResult();
         } else if (responseEntity instanceof FailedResponse) {
             FailedResponse failedResponse = (FailedResponse) responseEntity;
-            throw new HttpExecutionException("Could not execute request", failedResponse.getCause(), failedResponse.getResponseBody().orElse(""));
+            throw new HttpExecutionException("Could not execute request", failedResponse.getCause(), failedResponse.getStatus(), failedResponse.getResponseBody().orElse(""));
         } else {
             throw new AssertionError("Should never happen");
         }

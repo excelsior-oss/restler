@@ -7,9 +7,11 @@ import java.util.Optional;
 public class HttpExecutionException extends RestlerException {
 
     private final String responseBody;
+    private HttpStatus status;
 
-    public HttpExecutionException(String msg, Throwable cause, String responseBody) {
+    public HttpExecutionException(String msg, Throwable cause, HttpStatus status, String responseBody) {
         super(msg, cause);
+        this.status = status;
         this.responseBody = responseBody;
     }
 
@@ -17,4 +19,7 @@ public class HttpExecutionException extends RestlerException {
         return Optional.ofNullable(responseBody);
     }
 
+    public HttpStatus getStatus() {
+        return status;
+    }
 }

@@ -1,7 +1,7 @@
 package org.restler.async;
 
+import org.restler.RestlerConfig;
 import org.restler.client.CallEnhancer;
-import org.restler.client.RestlerConfig;
 
 import java.util.List;
 import java.util.function.Function;
