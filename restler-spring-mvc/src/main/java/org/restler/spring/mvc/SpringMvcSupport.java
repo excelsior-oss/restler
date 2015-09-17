@@ -1,7 +1,6 @@
 package org.restler.spring.mvc;
 
 import com.fasterxml.jackson.databind.Module;
-import org.restler.Restler;
 import org.restler.client.CallExecutionAdvice;
 import org.restler.client.CoreModule;
 import org.restler.client.RestlerConfig;
@@ -12,7 +11,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,14 +21,14 @@ public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
     private final List<Module> jacksonModules = new ArrayList<>();
 
     private ParameterResolver parameterResolver = ParameterResolver.valueOfParamResolver();
-    private Executor executor = Restler.restlerExecutor;
+
     private Optional<RequestExecutor> requestExecutor = Optional.empty();
 
     @Override
     public CoreModule apply(RestlerConfig config) {
         List<CallExecutionAdvice<?>> totalEnhancers = new ArrayList<>();
         totalEnhancers.addAll(config.getEnhancers());
-        totalEnhancers.addAll(singletonList(new DeferredResultHandler(executor)));
+        totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
 
         return new SpringMvc(requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
     }
@@ -47,11 +45,6 @@ public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
 
     public SpringMvcSupport parameterResolver(ParameterResolver parameterResolver) {
         this.parameterResolver = parameterResolver;
-        return this;
-    }
-
-    public SpringMvcSupport threadPool(Executor executor) {
-        this.executor = executor;
         return this;
     }
 

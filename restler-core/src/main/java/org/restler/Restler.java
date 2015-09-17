@@ -22,13 +22,14 @@ import java.util.function.Function;
  */
 public class Restler {
 
-    public static Executor restlerExecutor = Executors.newCachedThreadPool();
+    public static Executor defaultThreadPool = Executors.newCachedThreadPool();
 
     private final List<CallExecutionAdvice<?>> enhancers = new ArrayList<>();
     private final UriBuilder uriBuilder;
 
     private AuthenticationStrategy authenticationStrategy;
     private AuthorizationStrategy authorizationStrategy;
+    private Executor threadPool = Restler.defaultThreadPool;
 
     private boolean autoAuthorize = true;
     private Function<RestlerConfig, CoreModule> createCoreModule;
@@ -67,6 +68,11 @@ public class Restler {
         return this;
     }
 
+    public Restler threadPool(Executor executor) {
+        this.threadPool = executor;
+        return this;
+    }
+
     public Restler addEnhancer(CallExecutionAdvice<?> enhancer) {
         enhancers.add(enhancer);
         return this;
@@ -98,7 +104,7 @@ public class Restler {
             advices.add(new AuthenticatingExecutionAdvice(session));
         }
 
-        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(createCoreModule.apply(new RestlerConfig(uriBuilder.build(), advices))));
+        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(createCoreModule.apply(new RestlerConfig(uriBuilder.build(), advices, threadPool))));
 
         return new Service(factory, session);
     }
