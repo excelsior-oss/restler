@@ -1,11 +1,14 @@
 package org.restler.integration
 
+import org.springframework.scheduling.annotation.Async
+import org.springframework.scheduling.annotation.AsyncResult
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.context.request.async.DeferredResult
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.concurrent.Callable
+import java.util.concurrent.Future
 import javax.servlet.http.HttpServletRequest
 import kotlin.concurrent.thread
 
@@ -44,6 +47,13 @@ public open class Controller {
                     return "Callable OK"
                 }
         );
+    }
+
+    @Async
+    @RequestMapping("getFuture")
+    open fun futureGet(): Future<String> {
+        Thread.sleep(1000)
+        return AsyncResult<String>("Future OK")
     }
 
     RequestMapping("getWithVariable/{title}")

@@ -41,6 +41,20 @@ class SpringMvcAsyncIntegrationTest extends Specification implements Integration
         asyncCondition.await(5)
     }
 
+    def "test future get"() {
+        def future = controller.futureGet()
+        def asyncCondition = new AsyncConditions();
+
+        Thread.start {
+            while (!future.done);
+            asyncCondition.evaluate {
+                assert future.get() == "Future OK"
+            }
+        }
+
+        expect:
+        asyncCondition.await(5)
+    }
     def "test callable get"() {
         when:
         def result = controller.callableGet()

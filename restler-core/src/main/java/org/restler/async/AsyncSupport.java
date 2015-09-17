@@ -12,7 +12,8 @@ public class AsyncSupport implements Function<RestlerConfig, List<CallEnhancer>>
 
     @Override
     public List<CallEnhancer> apply(RestlerConfig restlerConfig) {
-        return asList(new CallableSupport());
+        return asList(new CallableSupport(),
+                new FutureSupport(restlerConfig.getRestlerThreadPool()));
     }
 
 }
