@@ -5,10 +5,10 @@ import com.google.common.reflect.TypeToken;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-public abstract class AbstractWrapperHandler<T> implements CallExecutionAdvice<Object> {
+public abstract class AbstractWrapperHandler<T> implements CallEnhancer {
 
     @Override
-    public Object advice(Call call, CallExecutor callExecutor) {
+    public Object apply(Call call, CallExecutor callExecutor) {
         TypeToken<?> type = TypeToken.of(call.getReturnType());
         if (type.getRawType().equals(wrapperClass())) {
             ParameterizedType parameterizedType = (ParameterizedType) call.getReturnType();

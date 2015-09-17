@@ -7,10 +7,10 @@ import java.util.concurrent.Executor;
 public class RestlerConfig {
 
     private final URI baseUri;
-    private final List<CallExecutionAdvice<?>> enhancers;
+    private final List<CallEnhancer> enhancers;
     private final Executor restlerThreadPool;
 
-    public RestlerConfig(URI baseUri, List<CallExecutionAdvice<?>> enhancers, Executor restlerThreadPool) {
+    public RestlerConfig(URI baseUri, List<CallEnhancer> enhancers, Executor restlerThreadPool) {
         this.baseUri = baseUri;
         this.enhancers = enhancers;
         this.restlerThreadPool = restlerThreadPool;
@@ -20,7 +20,7 @@ public class RestlerConfig {
         return baseUri;
     }
 
-    public List<CallExecutionAdvice<?>> getEnhancers() {
+    public List<CallEnhancer> getEnhancers() {
         return enhancers;
     }
 

@@ -1,7 +1,7 @@
 package org.restler;
 
 import org.restler.client.*;
-import org.restler.http.security.AuthenticatingExecutionAdvice;
+import org.restler.http.security.AuthenticatingEnhancer;
 import org.restler.http.security.SecuritySession;
 import org.restler.http.security.authentication.AuthenticationStrategy;
 import org.restler.http.security.authentication.CookieAuthenticationStrategy;
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * The entry point into library
@@ -24,7 +25,8 @@ public class Restler {
 
     public static Executor defaultThreadPool = Executors.newCachedThreadPool();
 
-    private final List<CallExecutionAdvice<?>> enhancers = new ArrayList<>();
+    private final List<CallEnhancer> enhancers = new ArrayList<>();
+    private final List<Function<RestlerConfig, List<CallEnhancer>>> enhancerFactories = new ArrayList<>();
     private final UriBuilder uriBuilder;
 
     private AuthenticationStrategy authenticationStrategy;
@@ -73,8 +75,13 @@ public class Restler {
         return this;
     }
 
-    public Restler addEnhancer(CallExecutionAdvice<?> enhancer) {
+    public Restler addEnhancer(CallEnhancer enhancer) {
         enhancers.add(enhancer);
+        return this;
+    }
+
+    public Restler add(Function<RestlerConfig, List<CallEnhancer>> enhancerFactory) {
+        enhancerFactories.add(enhancerFactory);
         return this;
     }
 
@@ -98,13 +105,15 @@ public class Restler {
 
         SecuritySession session = new SecuritySession(authorizationStrategy, authenticationStrategy, autoAuthorize);
 
-        List<CallExecutionAdvice<?>> advices = new ArrayList<>(enhancers);
-        advices.add(new CallableHandler());
+        List<CallEnhancer> enhancers = new ArrayList<>(this.enhancers);
+        RestlerConfig config = new RestlerConfig(uriBuilder.build(), enhancers, threadPool);
+        List<CallEnhancer> additionalEnhancers = enhancerFactories.stream().flatMap((enhancerFactory) -> enhancerFactory.apply(config).stream()).collect(Collectors.toList());
+        enhancers.addAll(additionalEnhancers);
         if (authenticationStrategy != null) {
-            advices.add(new AuthenticatingExecutionAdvice(session));
+            enhancers.add(new AuthenticatingEnhancer(session));
         }
 
-        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(createCoreModule.apply(new RestlerConfig(uriBuilder.build(), advices, threadPool))));
+        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(createCoreModule.apply(new RestlerConfig(uriBuilder.build(), enhancers, threadPool))));
 
         return new Service(factory, session);
     }

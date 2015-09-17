@@ -1,7 +1,7 @@
 package org.restler.spring.mvc;
 
 import com.fasterxml.jackson.databind.Module;
-import org.restler.client.CallExecutionAdvice;
+import org.restler.client.CallEnhancer;
 import org.restler.client.CoreModule;
 import org.restler.client.RestlerConfig;
 import org.restler.http.RequestExecutor;
@@ -26,7 +26,7 @@ public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
 
     @Override
     public CoreModule apply(RestlerConfig config) {
-        List<CallExecutionAdvice<?>> totalEnhancers = new ArrayList<>();
+        List<CallEnhancer> totalEnhancers = new ArrayList<>();
         totalEnhancers.addAll(config.getEnhancers());
         totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
 

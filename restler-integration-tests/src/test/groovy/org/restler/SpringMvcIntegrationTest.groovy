@@ -10,24 +10,17 @@ import org.restler.spring.mvc.SpringMvcSupport
 import org.restler.util.IntegrationSpec
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
-import spock.util.concurrent.AsyncConditions
 
-class SimpleIntegrationTest extends Specification implements IntegrationSpec {
+import static org.restler.Tests.login
+import static org.restler.Tests.password
 
-    def login = "user";
-    def password = "password";
+class SpringMvcIntegrationTest extends Specification implements IntegrationSpec {
 
     // TODO: find better solution, so users would not required to instantiate execution chain manually
     def executor = new SpringMvcRequestExecutor(new RestTemplate())
     def formAuth = new FormAuthorizationStrategy(executor, new URI("http://localhost:8080/login"), login, "username", password, "password");
 
-    def spySimpleHttpRequestExecutor = Spy(SpringMvcRequestExecutor, constructorArgs: [new RestTemplate()])
-
-
-    SpringMvcSupport support = new SpringMvcSupport().
-            requestExecutor(spySimpleHttpRequestExecutor)
-
-    Service serviceWithFormAuth = new Restler("http://localhost:8080", support).
+    Service serviceWithFormAuth = new Restler("http://localhost:8080", new SpringMvcSupport()).
             authorizationStrategy(formAuth).
             cookieBasedAuthentication().
             build();
@@ -42,38 +35,6 @@ class SimpleIntegrationTest extends Specification implements IntegrationSpec {
     def "test unsecured get"() {
         expect:
         "OK" == controller.publicGet()
-    }
-
-    def "test deferred get"() {
-        def deferredResult = controller.deferredGet()
-        def asyncCondition = new AsyncConditions();
-
-        Thread.start {
-            while (!deferredResult.hasResult());
-            asyncCondition.evaluate {
-                assert deferredResult.getResult() == "Deferred OK"
-            }
-        }
-
-        expect:
-        asyncCondition.await(5)
-    }
-
-    def "test callable get"() {
-        when:
-        def result = controller.callableGet()
-        def asyncCondition = new AsyncConditions();
-        then:
-        0 * spySimpleHttpRequestExecutor.execute(_)
-        and:
-        when:
-        Thread.start {
-            asyncCondition.evaluate {
-                assert result.call() == "Callable OK"
-            }
-        }
-        then:
-        asyncCondition.await(5)
     }
 
     def "test get with variable"() {

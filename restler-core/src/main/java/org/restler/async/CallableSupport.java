@@ -1,8 +1,12 @@
-package org.restler.client;
+package org.restler.async;
+
+import org.restler.client.AbstractWrapperHandler;
+import org.restler.client.Call;
+import org.restler.client.CallExecutor;
 
 import java.util.concurrent.Callable;
 
-public class CallableHandler extends AbstractWrapperHandler {
+public class CallableSupport extends AbstractWrapperHandler {
 
     @Override
     protected Class<?> wrapperClass() {
