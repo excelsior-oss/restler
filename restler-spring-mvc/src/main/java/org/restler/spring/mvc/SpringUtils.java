@@ -14,9 +14,9 @@ public final class SpringUtils {
     private SpringUtils() {
     }
 
-    public static <T> HttpCall<T> prepareForSpringMvc(HttpCall<T> call) {
+    public static <T> HttpCall prepareForSpringMvc(HttpCall call) {
         if (call.getRequestBody() instanceof HttpForm) {
-            return new HttpCall<>(call.getUrl(), call.getHttpMethod(), toMultiValueMap(((HttpForm) call.getRequestBody()).getFields()), call.getHeaders(), call.getReturnType());
+            return new HttpCall(call.getUrl(), call.getHttpMethod(), toMultiValueMap(((HttpForm) call.getRequestBody()).getFields()), call.getHeaders(), call.getReturnType());
         } else {
             return call;
         }

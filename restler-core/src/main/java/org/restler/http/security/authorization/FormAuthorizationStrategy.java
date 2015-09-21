@@ -45,7 +45,7 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
                 add(loginParameterName, loginParameterValue).
                 add(passwordParameterName, passwordParameterValue);
 
-        Response response = requestExecutor.execute(new HttpCall<>(urlString, HttpMethod.POST, form));
+        Response response = requestExecutor.execute(new HttpCall(urlString, HttpMethod.POST, form));
 
         Stream<String> headers = response.getHeaders().get(HttpHeaders.SET_COOKIE).stream();
         return headers.filter(s -> s.startsWith(cookieName + "=")).

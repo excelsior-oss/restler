@@ -8,6 +8,7 @@ import org.eclipse.jetty.servlet.FilterHolder
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.servlet.ServletHolder
 import org.restler.integration.security.SecurityConfig
+import org.restler.integration.springdata.SpringDataRestConfig
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.http.converter.HttpMessageConverter
@@ -22,7 +23,7 @@ import java.util.EnumSet
 import javax.servlet.DispatcherType
 
 EnableWebMvc
-Import(SecurityConfig::class)
+Import(SecurityConfig::class, SpringDataRestConfig::class)
 open class WebConfig : WebMvcConfigurerAdapter() {
 
     override fun extendMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {

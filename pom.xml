@@ -86,6 +86,7 @@
             <modules>
                 <module>restler-core</module>
                 <module>restler-spring-mvc</module>
+                <module>restler-spring-data-rest</module>
                 <module>restler-integration-tests</module>
             </modules>
         </profile>

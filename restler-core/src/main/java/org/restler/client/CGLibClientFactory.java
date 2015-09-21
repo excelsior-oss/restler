@@ -9,7 +9,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 @SuppressWarnings("unchecked")
 public class CGLibClientFactory implements ClientFactory {
 
-    private CoreModule coreModule;
+    private final CoreModule coreModule;
 
     public CGLibClientFactory(CoreModule coreModule) {
         this.coreModule = coreModule;

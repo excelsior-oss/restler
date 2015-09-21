@@ -2,6 +2,7 @@ package org.restler.spring.mvc;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
+import org.restler.client.MethodInvocationMapper;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
@@ -18,14 +19,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Maps a properly annotated Java method invocation to invocation of a service method.
  */
-public class ControllerMethodInvocationMapper implements BiFunction<Method, Object[], Call> {
+public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
 
     private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
     private static final Pattern pathVariablesPattern = Pattern.compile("\\{([-a-zA-Z0-9@:%_\\+.~#?&/=]*)\\}");
@@ -33,13 +33,13 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
     private final URI baseUrl;
     private final ParameterResolver paramResolver;
 
-    public ControllerMethodInvocationMapper(URI baseUrl, ParameterResolver paramResolver) {
+    public SpringMvcMethodInvocationMapper(URI baseUrl, ParameterResolver paramResolver) {
         this.baseUrl = baseUrl;
         this.paramResolver = paramResolver;
     }
 
     @Override
-    public Call apply(Method method, Object[] args) {
+    public Call map(Object receiver, Method method, Object[] args) {
         ResponseBody methodResponseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
         ResponseBody classResponseBodyAnnotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), ResponseBody.class);
         if (methodResponseBodyAnnotation == null && classResponseBodyAnnotation == null) {
@@ -100,7 +100,7 @@ public class ControllerMethodInvocationMapper implements BiFunction<Method, Obje
         }
 
         URI url = url(baseUrl, pathTemplate, requestParams.build(), pathVariables);
-        return new HttpCall<>(url, getHttpMethod(methodMapping), requestBody, ImmutableMultimap.<String, String>of(), getReturnType(method));
+        return new HttpCall(url, getHttpMethod(methodMapping), requestBody, ImmutableMultimap.<String, String>of(), getReturnType(method));
     }
 
     private HttpMethod getHttpMethod(RequestMapping methodMapping) {

@@ -33,10 +33,10 @@ public class SpringMvcRequestExecutor implements RequestExecutor {
         ImmutableMultimap<String, String> headersBuilder = SpringUtils.toGuavaMultimap(responseEntity.getHeaders());
         HttpStatus status = new HttpStatus(responseEntity.getStatusCode().value(), responseEntity.getStatusCode().getReasonPhrase());
 
-        return new SuccessfulResponse<>(status, headersBuilder, responseEntity.getBody());
+        return new SuccessfulResponse(status, headersBuilder, responseEntity.getBody());
     }
 
-    public RequestEntity<?> toRequestEntity(HttpCall<?> call) {
+    private RequestEntity<?> toRequestEntity(HttpCall call) {
         MultiValueMap<String, String> headers = new HttpHeaders();
         call.getHeaders().entries().stream().forEach(entry -> headers.add(entry.getKey(), entry.getValue()));
         return new RequestEntity<>(call.getRequestBody(), headers, HttpMethod.valueOf(call.getHttpMethod().name()), call.getUrl());

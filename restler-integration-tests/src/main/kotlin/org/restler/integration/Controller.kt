@@ -87,9 +87,9 @@ public open class Controller {
     open fun isNull(@RequestParam(required = false) str: String?) = str identityEquals null
 
     RequestMapping("valueOf")
-    open fun valueOf(@RequestParam(required = false) str: String?) = when {
-        str == null -> "The Null"
-        str == "" -> "Empty string object"
+    open fun valueOf(@RequestParam(required = false) str: String?) = when (str) {
+        null -> "The Null"
+        "" -> "Empty string object"
         else -> "String object with value: $str"
     }
 }

@@ -29,7 +29,7 @@ public class SpringMvc implements CoreModule {
         if (!(descriptor instanceof ClassServiceDescriptor)) {
             return false;
         }
-        Class<?> controllerClass = ((ClassServiceDescriptor) descriptor).serviceDescriptor;
+        Class<?> controllerClass = ((ClassServiceDescriptor) descriptor).getServiceDescriptor();
         return controllerClass.getDeclaredAnnotation(Controller.class) != null || controllerClass.getDeclaredAnnotation(RestController.class) != null;
     }
 
@@ -37,7 +37,7 @@ public class SpringMvc implements CoreModule {
     public InvocationHandler createHandler(ServiceDescriptor descriptor) {
         HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
         CallExecutionChain chain = new CallExecutionChain(callExecutor, enhancers);
-        return new CallExecutorInvocationHandler(chain, new ControllerMethodInvocationMapper(baseUri, parameterResolver));
+        return new CallExecutorInvocationHandler(chain, new SpringMvcMethodInvocationMapper(baseUri, parameterResolver));
     }
 
 }

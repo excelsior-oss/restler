@@ -17,10 +17,10 @@ import java.util.stream.Collectors;
 
 public class UriBuilder {
 
-    public static final Escaper urlPathSegmentEscaper = UrlEscapers.urlPathSegmentEscaper();
-    public static final Escaper urlFormParameterEscaper = UrlEscapers.urlFormParameterEscaper();
-    private static final Map<String, Integer> defaultSchemePort;
+    private static final Escaper urlPathSegmentEscaper = UrlEscapers.urlPathSegmentEscaper();
+    private static final Escaper urlFormParameterEscaper = UrlEscapers.urlFormParameterEscaper();
 
+    private static final Map<String, Integer> defaultSchemePort;
     static {
         defaultSchemePort = new HashMap<String, Integer>() {{
             put("http", 80);

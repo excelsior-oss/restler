@@ -7,7 +7,7 @@ import java.util.Optional;
 public class HttpExecutionException extends RestlerException {
 
     private final String responseBody;
-    private HttpStatus status;
+    private final HttpStatus status;
 
     public HttpExecutionException(String msg, Throwable cause, HttpStatus status, String responseBody) {
         super(msg, cause);

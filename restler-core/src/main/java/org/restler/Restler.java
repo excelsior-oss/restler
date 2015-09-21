@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 public class Restler {
 
-    public static Executor defaultThreadPool = Executors.newCachedThreadPool();
+    public static final Executor defaultThreadPool = Executors.newCachedThreadPool();
 
     private final List<CallEnhancer> enhancers = new ArrayList<>();
     private final List<Function<RestlerConfig, List<CallEnhancer>>> enhancerFactories = new ArrayList<>();
