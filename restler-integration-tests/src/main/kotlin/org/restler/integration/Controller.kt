@@ -1,12 +1,15 @@
 package org.restler.integration
 
+import org.springframework.scheduling.annotation.Async
+import org.springframework.scheduling.annotation.AsyncResult
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.context.request.async.DeferredResult
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.util.concurrent.Callable
-import javax.servlet.http.HttpServletRequest
+import java.util.concurrent.Future
 import kotlin.concurrent.thread
 
 RestController
@@ -46,6 +49,13 @@ public open class Controller {
         );
     }
 
+    @Async
+    @RequestMapping("getFuture")
+    open fun futureGet(): Future<String> {
+        Thread.sleep(1000)
+        return AsyncResult<String>("Future OK")
+    }
+
     RequestMapping("getWithVariable/{title}")
     open fun getWithVariable(@PathVariable(value = "title") title: String, @RequestParam(value = "name") name: String): String {
         return name;
@@ -53,16 +63,8 @@ public open class Controller {
 
     RequestMapping("throwException")
     @throws(Throwable::class)
-    open fun throwException(@RequestParam exceptionClass: String) {
+    open fun throwException(@RequestParam exceptionClass: String): String {
         throw Class.forName(exceptionClass).asSubclass(javaClass<Throwable>()).newInstance()
-    }
-
-    @ExceptionHandler(Exception::class)
-    open fun printStackTrace(req: HttpServletRequest, e: Exception): String {
-        val stringWriter = StringWriter()
-        e.printStackTrace(PrintWriter(stringWriter))
-        return stringWriter.toString()
-
     }
 
     RequestMapping("listOfStrings")
@@ -83,4 +85,11 @@ public open class Controller {
 
     RequestMapping("isNull")
     open fun isNull(@RequestParam(required = false) str: String?) = str identityEquals null
+
+    RequestMapping("valueOf")
+    open fun valueOf(@RequestParam(required = false) str: String?) = when (str) {
+        null -> "The Null"
+        "" -> "Empty string object"
+        else -> "String object with value: $str"
+    }
 }

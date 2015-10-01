@@ -9,3 +9,4 @@ appender("CONSOLE", ConsoleAppender) {
 root(DEBUG, ["CONSOLE"])
 logger("org.eclipse", WARN)
 logger("org.springframework", WARN)
+logger("org.hibernate", WARN)

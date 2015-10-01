@@ -1,9 +1,9 @@
 package org.restler.http.security.authentication;
 
-import org.restler.http.Request;
+import org.restler.client.Call;
 
 public interface AuthenticationStrategy {
 
-    <T> Request<T> authenticate(Request<T> request, AuthenticationContext context);
+    Call authenticate(Call call, AuthenticationContext context);
 
 }

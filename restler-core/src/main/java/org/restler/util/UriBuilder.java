@@ -1,16 +1,26 @@
 package org.restler.util;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.escape.Escaper;
+import com.google.common.net.UrlEscapers;
 import org.restler.client.RestlerException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 public class UriBuilder {
 
-    private static final Map<String, Integer> defaultSchemePort;
+    private static final Escaper urlPathSegmentEscaper = UrlEscapers.urlPathSegmentEscaper();
+    private static final Escaper urlFormParameterEscaper = UrlEscapers.urlFormParameterEscaper();
 
+    private static final Map<String, Integer> defaultSchemePort;
     static {
         defaultSchemePort = new HashMap<String, Integer>() {{
             put("http", 80);
@@ -22,6 +32,8 @@ public class UriBuilder {
     private int port;
     private String path;
     private String scheme;
+    private ImmutableMultimap<String, String> queryParams = ImmutableMultimap.of();
+    private Map<String, ?> pathVariables = ImmutableMap.of();
 
     public UriBuilder(String baseUrl) {
         this(toUri(baseUrl));
@@ -32,32 +44,6 @@ public class UriBuilder {
         host = baseUrl.getHost();
         port = validPort(baseUrl);
         path = baseUrl.getPath();
-    }
-
-    public void host(String host) {
-        this.host = host;
-    }
-
-    public void port(int port) {
-        this.port = port;
-    }
-
-    public void path(String path) {
-        this.path = path.startsWith("/")
-                ? path
-                : "/" + path;
-    }
-
-    public void scheme(String scheme) {
-        this.scheme = scheme;
-    }
-
-    public URI build() {
-        try {
-            return new URI(scheme + "://" + host + ":" + port + path);
-        } catch (URISyntaxException e) {
-            throw new RestlerException(e);
-        }
     }
 
     private static int validPort(URI baseUrl) {
@@ -75,6 +61,85 @@ public class UriBuilder {
             return new URI(baseUrl);
         } catch (URISyntaxException e) {
             throw new RestlerException(e);
+        }
+    }
+
+    public UriBuilder host(String host) {
+        this.host = host;
+        return this;
+    }
+
+    public UriBuilder port(int port) {
+        this.port = port;
+        return this;
+    }
+
+    public UriBuilder replacePath(String path) {
+        this.path = addSlash(path);
+        return this;
+    }
+    public UriBuilder path(String path) {
+        String pathWithoutSlash = path.startsWith("/")
+                ? path.substring(1)
+                : path;
+
+        if (this.path == null) {
+            this.path = addSlash(path);
+        } else {
+            if (this.path.endsWith("/")) {
+                this.path += pathWithoutSlash;
+            } else {
+                this.path += addSlash(path);
+            }
+        }
+        return this;
+    }
+
+    private String addSlash(String path) {
+        return path.startsWith("/")
+                ? path
+                : "/" + path;
+    }
+
+    public UriBuilder scheme(String scheme) {
+        this.scheme = scheme;
+        return this;
+    }
+
+    public UriBuilder queryParams(ImmutableMultimap<String, String> queryParams) {
+        this.queryParams = queryParams;
+        return this;
+    }
+
+    public UriBuilder pathVariables(Map<String, ?> pathVariables) {
+        this.pathVariables = Collections.unmodifiableMap(pathVariables);
+        return this;
+    }
+
+    public URI build() {
+        try {
+            String path = substituteVariables(this.path);
+            return new URI(scheme + "://" + host + ":" + port + path + queryParamsString());
+        } catch (URISyntaxException e) {
+            throw new RestlerException(e);
+        }
+    }
+
+    private String substituteVariables(String path) {
+        BiFunction<String, Map.Entry<String, ?>, String> accumulator = (String acc, Map.Entry<String, ?> e) ->
+                acc.replaceAll("\\{" + e.getKey() + "\\}", urlPathSegmentEscaper.escape(String.valueOf(e.getValue())));
+        BinaryOperator<String> combiner = (String __, String expandedPath) -> expandedPath;
+        return pathVariables.entrySet().stream().reduce(path, accumulator, combiner);
+    }
+
+    private String queryParamsString() {
+        String entryStream = queryParams.entries().stream().
+                map(entryPair -> urlFormParameterEscaper.escape(entryPair.getKey()) + "=" + urlFormParameterEscaper.escape(entryPair.getValue())).
+                collect(Collectors.joining("&"));
+        if (entryStream.length() > 0) {
+            return "?" + entryStream;
+        } else {
+            return "";
         }
     }
 }

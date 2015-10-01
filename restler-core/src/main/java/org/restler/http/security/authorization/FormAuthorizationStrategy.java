@@ -1,14 +1,10 @@
 package org.restler.http.security.authorization;
 
+import com.google.common.net.HttpHeaders;
 import org.restler.client.RestlerException;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestOperations;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.restler.http.*;
 
+import java.net.URI;
 import java.util.stream.Stream;
 
 /**
@@ -16,14 +12,14 @@ import java.util.stream.Stream;
  */
 public class FormAuthorizationStrategy implements AuthorizationStrategy {
 
-    protected final String urlString;
+    protected final URI urlString;
     protected final String loginParameterName;
     protected final String loginParameterValue;
     protected final String passwordParameterName;
     protected final String passwordParameterValue;
     protected final String cookieName = "JSESSIONID";
 
-    protected final RestOperations restOperations;
+    private final RequestExecutor requestExecutor;
 
     /**
      * Creates a strategy that uses custom parameter names.
@@ -34,24 +30,24 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
      * @param password              password of the user
      * @param passwordParameterName name of the form parameter holding the <tt>password</tt> value
      */
-    public FormAuthorizationStrategy(String url, String login, String loginParameterName, String password, String passwordParameterName) {
+    public FormAuthorizationStrategy(RequestExecutor requestExecutor, URI url, String login, String loginParameterName, String password, String passwordParameterName) {
+        this.requestExecutor = requestExecutor;
         this.urlString = url;
         this.loginParameterValue = login;
         this.passwordParameterValue = password;
-        restOperations = new RestTemplate();
         this.loginParameterName = loginParameterName;
         this.passwordParameterName = passwordParameterName;
     }
 
     @Override
     public Object authorize() {
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add(loginParameterName, loginParameterValue);
-        params.add(passwordParameterName, passwordParameterValue);
+        HttpForm form = new HttpForm().
+                add(loginParameterName, loginParameterValue).
+                add(passwordParameterName, passwordParameterValue);
 
-        ResponseEntity<?> responseEntity = restOperations.postForEntity(UriComponentsBuilder.fromUriString(urlString).build().toUri(), params, Object.class);
+        Response response = requestExecutor.execute(new HttpCall(urlString, HttpMethod.POST, form));
 
-        Stream<String> headers = responseEntity.getHeaders().get(HttpHeaders.SET_COOKIE).stream();
+        Stream<String> headers = response.getHeaders().get(HttpHeaders.SET_COOKIE).stream();
         return headers.filter(s -> s.startsWith(cookieName + "=")).
                 findAny().
                 map(s -> s.split("[=;]")[1]).

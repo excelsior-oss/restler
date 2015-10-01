@@ -1,9 +1,9 @@
 package org.restler.http;
 
-import org.springframework.http.ResponseEntity;
+import org.restler.client.Call;
 
 public interface RequestExecutor {
 
-    <T> ResponseEntity<T> execute(Request<T> request);
+    Response execute(Call request);
 
 }

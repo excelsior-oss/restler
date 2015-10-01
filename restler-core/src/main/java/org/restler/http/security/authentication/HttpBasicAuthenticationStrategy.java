@@ -1,6 +1,7 @@
 package org.restler.http.security.authentication;
 
-import org.springframework.http.HttpHeaders;
+import com.google.common.net.HttpHeaders;
+import org.restler.http.Header;
 
 import java.util.Collections;
 import java.util.List;

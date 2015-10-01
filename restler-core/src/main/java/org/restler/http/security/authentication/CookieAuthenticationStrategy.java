@@ -1,7 +1,8 @@
 package org.restler.http.security.authentication;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.util.StringUtils;
+import com.google.common.base.Strings;
+import com.google.common.net.HttpHeaders;
+import org.restler.http.Header;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +29,7 @@ public class CookieAuthenticationStrategy extends HeaderBasedAuthenticationStrat
      * @param cookieName the name of the cookie.
      */
     public CookieAuthenticationStrategy(String cookieName) {
-        if (StringUtils.isEmpty(cookieName))
+        if (Strings.isNullOrEmpty(cookieName))
             throw new IllegalArgumentException("Authentication cookie name must be not empty.");
         this.cookieName = cookieName;
     }
