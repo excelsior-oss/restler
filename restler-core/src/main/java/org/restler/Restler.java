@@ -85,20 +85,29 @@ public class Restler {
         return this;
     }
 
-    public void scheme(String scheme) {
+    public Restler scheme(String scheme) {
         uriBuilder.scheme(scheme);
+        return this;
     }
 
-    public void host(String host) {
+    public Restler host(String host) {
         uriBuilder.host(host);
+        return this;
     }
 
-    public void port(int port) {
+    public Restler port(int port) {
         uriBuilder.port(port);
+        return this;
     }
 
-    public void path(String path) {
+    public Restler path(String path) {
         uriBuilder.path(path);
+        return this;
+    }
+
+    public Restler replacePath(String path) {
+        uriBuilder.replacePath(path);
+        return this;
     }
 
     public Service build() throws RestlerException {

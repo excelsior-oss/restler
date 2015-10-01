@@ -1,5 +1,6 @@
 package org.restler.util
 
+import com.google.common.collect.ImmutableMultimap
 import spock.lang.Specification
 
 class UriBuilderSpec extends Specification {
@@ -21,7 +22,7 @@ class UriBuilderSpec extends Specification {
         def builder = new UriBuilder(new URI(baseUrl + "/v1"))
 
         when:
-        builder.path("api/v2")
+        builder.replacePath("api/v2")
 
         then:
         new URI(baseUrl + "/v2") == builder.build()
@@ -42,4 +43,17 @@ class UriBuilderSpec extends Specification {
         "http"   || 80
         "https"  || 443
     }
+
+    def "UriBuilder should support request parameters"() {
+        given:
+        def baseUrl = "http://localhost:8080/test"
+        def builder = new UriBuilder(new URI(baseUrl))
+
+        when:
+        builder.queryParams(ImmutableMultimap.of("key1", "param1", "key2", "param2"))
+
+        then:
+        new URI(baseUrl + "?key1=param1&key2=param2") == builder.build()
+    }
+
 }

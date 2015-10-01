@@ -74,11 +74,31 @@ public class UriBuilder {
         return this;
     }
 
+    public UriBuilder replacePath(String path) {
+        this.path = addSlash(path);
+        return this;
+    }
     public UriBuilder path(String path) {
-        this.path = path.startsWith("/")
+        String pathWithoutSlash = path.startsWith("/")
+                ? path.substring(1)
+                : path;
+
+        if (this.path == null) {
+            this.path = addSlash(path);
+        } else {
+            if (this.path.endsWith("/")) {
+                this.path += pathWithoutSlash;
+            } else {
+                this.path += addSlash(path);
+            }
+        }
+        return this;
+    }
+
+    private String addSlash(String path) {
+        return path.startsWith("/")
                 ? path
                 : "/" + path;
-        return this;
     }
 
     public UriBuilder scheme(String scheme) {
@@ -98,7 +118,8 @@ public class UriBuilder {
 
     public URI build() {
         try {
-            return new URI(scheme + "://" + host + ":" + port + substituteVariables(path) + queryParamsString());
+            String path = substituteVariables(this.path);
+            return new URI(scheme + "://" + host + ":" + port + path + queryParamsString());
         } catch (URISyntaxException e) {
             throw new RestlerException(e);
         }
@@ -114,7 +135,7 @@ public class UriBuilder {
     private String queryParamsString() {
         String entryStream = queryParams.entries().stream().
                 map(entryPair -> urlFormParameterEscaper.escape(entryPair.getKey()) + "=" + urlFormParameterEscaper.escape(entryPair.getValue())).
-                collect(Collectors.joining());
+                collect(Collectors.joining("&"));
         if (entryStream.length() > 0) {
             return "?" + entryStream;
         } else {

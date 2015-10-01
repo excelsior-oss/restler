@@ -23,7 +23,7 @@ import java.util.EnumSet
 import javax.servlet.DispatcherType
 
 EnableWebMvc
-Import(SecurityConfig::class, SpringDataRestConfig::class)
+Import(SecurityConfig::class, SpringDataRestConfig::class, SlashesConfig::class)
 open class WebConfig : WebMvcConfigurerAdapter() {
 
     override fun extendMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {

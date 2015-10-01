@@ -40,9 +40,10 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
 
     @Override
     public Call map(Object receiver, Method method, Object[] args) {
+        ResponseBody receiverResponseBodyAnnotation = AnnotationUtils.findAnnotation(receiver.getClass(), ResponseBody.class);
         ResponseBody methodResponseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
         ResponseBody classResponseBodyAnnotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), ResponseBody.class);
-        if (methodResponseBodyAnnotation == null && classResponseBodyAnnotation == null) {
+        if (receiverResponseBodyAnnotation == null && methodResponseBodyAnnotation == null && classResponseBodyAnnotation == null) {
             throw new RuntimeException("The method " + method + " does not return response body");
         }
 
@@ -87,13 +88,13 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
             }
         }
 
-        RequestMapping controllerMapping = method.getDeclaringClass().getDeclaredAnnotation(RequestMapping.class);
+        RequestMapping controllerMapping = AnnotationUtils.findAnnotation(receiver.getClass(), RequestMapping.class);
         RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
         if (methodMapping == null) {
             throw new RuntimeException("The method " + method + " is not mapped");
         }
 
-        String pathTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(getMappedUriString(controllerMapping), getMappedUriString(methodMapping)).build().toUriString();
+        String pathTemplate = pathTemplate(controllerMapping, methodMapping);
         List<String> unboundPathVariables = unusedPathVariables(pathVariables, pathTemplate);
         if (unboundPathVariables.size() > 0) {
             throw new RestlerException("You should introduce method parameter with @PathVariable annotation for each url template variable. Unbound variables: " + unboundPathVariables);
@@ -101,6 +102,18 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
 
         URI url = url(baseUrl, pathTemplate, requestParams.build(), pathVariables);
         return new HttpCall(url, getHttpMethod(methodMapping), requestBody, ImmutableMultimap.<String, String>of(), getReturnType(method));
+    }
+
+    private String pathTemplate(RequestMapping controllerMapping, RequestMapping methodMapping) {
+        String controllerPath = getMappedUriString(controllerMapping);
+        String methodPath = getMappedUriString(methodMapping);
+        if (!controllerPath.startsWith("/")) {
+            controllerPath = "/" + controllerPath;
+        }
+        if (controllerPath.endsWith("/") && methodPath.startsWith("/")) {
+            controllerPath = controllerPath.substring(0, controllerPath.length() - 1);
+        }
+        return controllerPath + methodPath;
     }
 
     private HttpMethod getHttpMethod(RequestMapping methodMapping) {
@@ -139,7 +152,9 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         if (mapping == null) {
             return "";
         } else {
-            return getFirstOrEmpty(mapping.value());
+            String uriString = getFirstOrEmpty(mapping.value());
+            uriString = uriString.startsWith("/") ?  uriString : "/" + uriString;
+            return uriString;
         }
     }
 
