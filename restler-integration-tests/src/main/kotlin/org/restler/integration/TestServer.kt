@@ -22,14 +22,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 import java.util.EnumSet
 import javax.servlet.DispatcherType
 
-EnableWebMvc
-Import(SecurityConfig::class, SpringDataRestConfig::class, SlashesConfig::class)
+@EnableWebMvc
+@Import(SecurityConfig::class, SpringDataRestConfig::class, SlashesConfig::class)
 open class WebConfig : WebMvcConfigurerAdapter() {
 
     override fun extendMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {
         val paranamerModule = ParanamerModule()
-        converters.filterIsInstance(javaClass<MappingJackson2HttpMessageConverter>()).forEach {
-            it.getObjectMapper().registerModule(paranamerModule)
+        converters.filterIsInstance(MappingJackson2HttpMessageConverter::class.java).forEach {
+            it.objectMapper.registerModule(paranamerModule)
         }
     }
 
@@ -46,21 +46,21 @@ fun main(args: Array<String>) {
 
 fun server(): Server {
     val applicationContext = AnnotationConfigWebApplicationContext()
-    applicationContext.register(javaClass<WebConfig>())
+    applicationContext.register(WebConfig::class.java)
 
     val servletHolder = ServletHolder(DispatcherServlet(applicationContext))
     val context = ServletContextHandler()
-    context.setSessionHandler(SessionHandler(HashSessionManager()))
-    context.setContextPath("/")
+    context.sessionHandler = SessionHandler(HashSessionManager())
+    context.contextPath = "/"
     context.addServlet(servletHolder, "/*")
-    context.addFilter(FilterHolder(DelegatingFilterProxy("springSecurityFilterChain")), "/*", EnumSet.allOf(javaClass<DispatcherType>()))
+    context.addFilter(FilterHolder(DelegatingFilterProxy("springSecurityFilterChain")), "/*", EnumSet.allOf(DispatcherType::class.java))
     context.addEventListener(ContextLoaderListener(applicationContext))
 
     val webPort = System.getenv("PORT") ?: "8080"
 
     val server = Server(Integer.valueOf(webPort))
 
-    server.setHandler(context)
+    server.handler = context
     return server
 }
 

@@ -6,16 +6,16 @@ import java.io.Serializable;
 @Entity(name = "persons")
 public class Person implements Serializable {
 
-    @Id private String id;
+    @Id private Long id;
 
     @Column private String name;
 
-    public Person(String id, String name) {
+    public Person(Long id, String name) {
         this.id = id;
         this.name = name;
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
@@ -27,7 +27,7 @@ public class Person implements Serializable {
     Person() {
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

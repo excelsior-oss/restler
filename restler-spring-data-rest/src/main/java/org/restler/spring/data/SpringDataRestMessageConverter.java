@@ -14,6 +14,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
+import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -114,20 +115,26 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
     private void setId(Object object, Class<?> aClass, Object id) {
         Field[] fields = aClass.getDeclaredFields();
         String idFieldName = "";
+        Class fieldClass = null;
 
         for (Field field : fields) {
-            if (field.getDeclaredAnnotation(Id.class) != null) {
+            if (field.getDeclaredAnnotation(Id.class) != null || field.getDeclaredAnnotation(EmbeddedId.class) != null) {
                 idFieldName = field.getName();
+                fieldClass = field.getType();
             }
         }
 
-        if (!idFieldName.isEmpty()) {
+
+        if (!idFieldName.isEmpty() && fieldClass != null) {
             try {
-                BeanUtils.getPropertyDescriptor(aClass, idFieldName).getWriteMethod().invoke(object, id);
+                Object wrappedId = fieldClass.getConstructor(String.class).newInstance(id);
+                BeanUtils.getPropertyDescriptor(aClass, idFieldName).getWriteMethod().invoke(object, wrappedId);
             } catch (IllegalAccessException e) {
                 throw new RestlerException("Access denied to id write method", e);
             } catch (InvocationTargetException e) {
                 throw new RestlerException("Can't invoke id write method", e);
+            } catch (NoSuchMethodException | InstantiationException e) {
+                throw new RestlerException("Could not instantiate id object", e);
             }
         } else {
             throw new RestlerException("Can't find id field");
