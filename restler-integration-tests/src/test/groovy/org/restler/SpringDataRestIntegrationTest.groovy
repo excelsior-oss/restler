@@ -16,22 +16,22 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     def "test PersonRepository findOne"() {
         expect:
-        Person person = personRepository.findOne("0")
-        person.getId() == "0"
+        Person person = personRepository.findOne(0L)
+        person.getId() == 0L
         person.getName() == "test name"
     }
 
     def "test query method PersonRepository findById"() {
         expect:
-        Person person = personRepository.findById("0")
-        person.getId() == "0"
+        Person person = personRepository.findById(0L)
+        person.getId() == 0L
         person.getName() == "test name"
     }
 
     def "test query method PersonRepository findByName"() {
         expect:
         List<Person> persons = personRepository.findByName("test name")
-        persons[0].getId() == "0"
+        persons[0].getId() == 0L
         persons[0].getName() == "test name"
     }
 

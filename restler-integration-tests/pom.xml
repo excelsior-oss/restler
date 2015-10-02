@@ -10,7 +10,7 @@
     </parent>
 
     <properties>
-        <kotlin.version>0.12.200</kotlin.version>
+        <kotlin.version>0.14.449</kotlin.version>
         <spring.security.verion>3.2.7.RELEASE</spring.security.verion>
         <spring.version>4.1.6.RELEASE</spring.version>
         <jcl.slf4j.version>1.7.12</jcl.slf4j.version>

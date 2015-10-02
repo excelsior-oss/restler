@@ -39,9 +39,9 @@ open class DbConfig {
         vendorAdapter.setDatabase(Database.H2)
 
         val factory = LocalContainerEntityManagerFactoryBean()
-        factory.setJpaVendorAdapter(vendorAdapter)
-        factory.setPackagesToScan(this.javaClass.getPackage().getName())
-        factory.setDataSource(dataSource())
+        factory.jpaVendorAdapter = vendorAdapter
+        factory.setPackagesToScan(this.javaClass.`package`.name)
+        factory.dataSource = dataSource()
 
         return factory
     }

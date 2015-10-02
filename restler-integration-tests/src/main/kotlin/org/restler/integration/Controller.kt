@@ -12,22 +12,22 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import kotlin.concurrent.thread
 
-RestController
+@RestController
 public open class Controller {
 
-    RequestMapping("get")
+    @RequestMapping("get")
     open fun publicGet() = "OK"
 
-    RequestMapping("secured/get")
+    @RequestMapping("secured/get")
     open fun securedGet() = "Secure OK"
 
-    RequestMapping("forceLogout")
+    @RequestMapping("forceLogout")
     open fun logout(): String {
-        SecurityContextHolder.getContext().getAuthentication().setAuthenticated(false)
+        SecurityContextHolder.getContext().authentication.isAuthenticated = false
         return "OK"
     }
 
-    RequestMapping("getDeferred")
+    @RequestMapping("getDeferred")
     open fun deferredGet(): DeferredResult<String> {
         var deferredResult = DeferredResult<String>();
 
@@ -39,7 +39,7 @@ public open class Controller {
         return deferredResult;
     }
 
-    RequestMapping("getCallable")
+    @RequestMapping("getCallable")
     open fun callableGet(): Callable<String> {
         return Callable (
                 fun(): String {
@@ -56,37 +56,37 @@ public open class Controller {
         return AsyncResult<String>("Future OK")
     }
 
-    RequestMapping("getWithVariable/{title}")
+    @RequestMapping("getWithVariable/{title}")
     open fun getWithVariable(@PathVariable(value = "title") title: String, @RequestParam(value = "name") name: String): String {
         return name;
     }
 
-    RequestMapping("throwException")
-    @throws(Throwable::class)
+    @RequestMapping("throwException")
+    @Throws(Throwable::class)
     open fun throwException(@RequestParam exceptionClass: String): String {
-        throw Class.forName(exceptionClass).asSubclass(javaClass<Throwable>()).newInstance()
+        throw Class.forName(exceptionClass).asSubclass(Throwable::class.java).newInstance()
     }
 
-    RequestMapping("listOfStrings")
+    @RequestMapping("listOfStrings")
     open fun getListOfStrings() = listOf("item1", "item2")
 
     private val simpleDto1 = SimpleDto("1", "dto1")
 
     private val simpleDto2 = SimpleDto("2", "dto2");
 
-    RequestMapping("listOfDtos")
+    @RequestMapping("listOfDtos")
     open fun getListOfDtos() = listOf(simpleDto1, simpleDto2)
 
-    RequestMapping("setOfDtos")
+    @RequestMapping("setOfDtos")
     open fun getSetOfDtos() = setOf(simpleDto1, simpleDto2)
 
-    RequestMapping("mapOfDtos")
+    @RequestMapping("mapOfDtos")
     open fun getMapOfDtos() = mapOf("1" to simpleDto1, "2" to simpleDto2)
 
-    RequestMapping("isNull")
-    open fun isNull(@RequestParam(required = false) str: String?) = str identityEquals null
+    @RequestMapping("isNull")
+    open fun isNull(@RequestParam(required = false) str: String?) = str === null
 
-    RequestMapping("valueOf")
+    @RequestMapping("valueOf")
     open fun valueOf(@RequestParam(required = false) str: String?) = when (str) {
         null -> "The Null"
         "" -> "Empty string object"

@@ -8,11 +8,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint
 
-Configuration
-EnableWebSecurity
+@Configuration
+@EnableWebSecurity
 public open class SecurityConfig : WebSecurityConfigurerAdapter() {
 
-    Autowired
+    @Autowired
     public fun configureGlobal(auth: AuthenticationManagerBuilder) {
         auth.
                 inMemoryAuthentication().
