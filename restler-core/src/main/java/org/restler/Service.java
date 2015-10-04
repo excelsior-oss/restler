@@ -4,7 +4,9 @@ import org.restler.client.ClientFactory;
 import org.restler.http.security.SecuritySession;
 
 /**
- * Enriches functionality of {@link ClientFactory} with authorization management helper methods.
+ * Service it is representation of remote service, which holds session information and able
+ * to produce proxies of remote services from description of that services. Supported service descriptions
+ * formats are depend {@code org.restler.client.CoreModule}, that was specified for {@code org.restler.Restler}.
  */
 public class Service {
 

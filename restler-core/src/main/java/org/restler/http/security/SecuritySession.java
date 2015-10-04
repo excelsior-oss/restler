@@ -23,7 +23,7 @@ public class SecuritySession implements AuthenticationContext {
     }
 
     @Override
-    public Object getAuthenticationToken() {
+    public synchronized Object getAuthenticationToken() {
         if (authorized) {
             return authenticationToken;
         } else {
@@ -37,7 +37,7 @@ public class SecuritySession implements AuthenticationContext {
 
     }
 
-    public void authorize() {
+    public synchronized void authorize() {
         if (authorizationStrategy == null) {
             throw new IllegalStateException("Can't authorize session as authorization strategy is not set.");
         }

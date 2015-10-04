@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class Header {
 
-    public final String name;
+    private final String name;
     private final String[] values;
 
     public Header(String name, String ... values) {
@@ -14,6 +14,10 @@ public class Header {
 
     public String[] values() {
         return Arrays.copyOf(values, values.length);
+    }
+
+    public String getName() {
+        return name;
     }
 
 }
