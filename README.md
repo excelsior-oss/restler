@@ -34,7 +34,7 @@ public interface Greeter {
 }
 ```
 
-Then you can invoke getGreating method on implementation class using following code snippet
+Then from your client you can invoke getGreating method on remote service using following code snippet
 ```java
 Service service = new Restler("https://www.excelsior-usa.com/api", new SpringMvcSupport()).build();
 Greeter greeter = service.produceClient(Greeter.class);
