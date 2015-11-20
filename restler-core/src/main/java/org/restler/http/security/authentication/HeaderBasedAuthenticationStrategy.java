@@ -14,7 +14,7 @@ public abstract class HeaderBasedAuthenticationStrategy implements Authenticatio
     public Call authenticate(Call call, AuthenticationContext context) {
         HttpCall res = (HttpCall) call;
         for (Header header : headers(context)) {
-            res = res.setHeader(header.name, header.values());
+            res = res.setHeader(header.getName(), header.values());
         }
         return res;
     }

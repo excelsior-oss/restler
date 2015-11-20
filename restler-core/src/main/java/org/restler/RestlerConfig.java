@@ -7,6 +7,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.concurrent.Executor;
 
+/**
+ * RestlerConfig is used to pass configuration to {@code org.restler.client.CoreModule} implementations
+ */
 public class RestlerConfig {
 
     private final URI baseUri;

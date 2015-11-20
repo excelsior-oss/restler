@@ -12,7 +12,6 @@ import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -153,8 +152,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
             return "";
         } else {
             String uriString = getFirstOrEmpty(mapping.value());
-            uriString = uriString.startsWith("/") ?  uriString : "/" + uriString;
-            return uriString;
+            return uriString.startsWith("/") ?  uriString : "/" + uriString;
         }
     }
 

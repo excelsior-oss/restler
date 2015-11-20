@@ -5,16 +5,16 @@ import org.restler.client.CallExecutor;
 
 public class HttpCallExecutor implements CallExecutor {
 
-    private final RequestExecutor executors;
+    private final RequestExecutor executor;
 
     public HttpCallExecutor(RequestExecutor executor) {
-        this.executors = executor;
+        this.executor = executor;
     }
 
     @Override
     public Object execute(Call call) {
 
-        Response responseEntity = executors.execute(call);
+        Response responseEntity = executor.execute(call);
         if (responseEntity instanceof SuccessfulResponse) {
             return ((SuccessfulResponse) responseEntity).getResult();
         } else if (responseEntity instanceof FailedResponse) {
