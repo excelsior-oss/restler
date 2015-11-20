@@ -1,7 +1,9 @@
 package org.restler.client;
 
+import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.InvocationHandler;
+import org.objenesis.ObjenesisStd;
 
 /**
  * A CGLib implementation of {@link ClientFactory} that uses {@link CallExecutor} for execution client methods.
@@ -9,6 +11,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 @SuppressWarnings("unchecked")
 public class CGLibClientFactory implements ClientFactory {
 
+    private final ObjenesisStd objenesis = new ObjenesisStd();
     private final CoreModule coreModule;
 
     public CGLibClientFactory(CoreModule coreModule) {
@@ -26,9 +29,12 @@ public class CGLibClientFactory implements ClientFactory {
 
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(serviceDescriptor);
-        enhancer.setCallback(handler);
+        enhancer.setCallbackType(handler.getClass());
 
-        return (C) enhancer.create();
+        Class aClass = enhancer.createClass();
+        Enhancer.registerCallbacks(aClass, new Callback[] { handler });
+
+        return (C) objenesis.newInstance(aClass);
     }
 
 }
