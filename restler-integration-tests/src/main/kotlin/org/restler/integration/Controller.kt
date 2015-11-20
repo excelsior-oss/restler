@@ -29,14 +29,14 @@ public open class Controller {
 
     @RequestMapping("getDeferred")
     open fun deferredGet(): DeferredResult<String> {
-        var deferredResult = DeferredResult<String>();
+        var deferredResult = DeferredResult<String>()
 
         thread {
             Thread.sleep(1000)
-            deferredResult.setResult("Deferred OK");
+            deferredResult.setResult("Deferred OK")
         }
 
-        return deferredResult;
+        return deferredResult
     }
 
     @RequestMapping("getCallable")
@@ -46,7 +46,7 @@ public open class Controller {
                     Thread.sleep(1000)
                     return "Callable OK"
                 }
-        );
+        )
     }
 
     @Async
@@ -58,7 +58,7 @@ public open class Controller {
 
     @RequestMapping("getWithVariable/{title}")
     open fun getWithVariable(@PathVariable(value = "title") title: String, @RequestParam(value = "name") name: String): String {
-        return name;
+        return name
     }
 
     @RequestMapping("throwException")
@@ -72,7 +72,7 @@ public open class Controller {
 
     private val simpleDto1 = SimpleDto("1", "dto1")
 
-    private val simpleDto2 = SimpleDto("2", "dto2");
+    private val simpleDto2 = SimpleDto("2", "dto2")
 
     @RequestMapping("listOfDtos")
     open fun getListOfDtos() = listOf(simpleDto1, simpleDto2)

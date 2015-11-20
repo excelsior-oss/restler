@@ -1,11 +1,11 @@
 package org.restler.util
 
-import org.restler.integration.IntegrationPackage
+import org.restler.integration.TestServerKt
 
 @Singleton(lazy = true)
 class TestServer {
 
-    private def server = IntegrationPackage.server()
+    private def server = TestServerKt.server()
 
     def ensureStarted() {
         if (!server.started) {
