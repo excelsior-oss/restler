@@ -22,23 +22,27 @@ class CGLibClientFactorySpec extends Specification {
         proxy != null
     }
 
-    class InvocationHandlerStub implements InvocationHandler {
+    def "CGLibClientFactory should create independent proxies of same class"() {
+        given:
+        def module = Mock(CoreModule)
+        module.canHandle(_) >> true
 
-        @Override
-        Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-            return null
-        }
+        def invocationHandler1 = new InvocationHandlerStub()
+        def invocationHandler2 = new InvocationHandlerStub()
+        module.createHandler(_) >>> [invocationHandler1, invocationHandler2]
 
+        def factory = new CGLibClientFactory(module)
+
+        when:
+        def proxy1 = factory.produceClient(ControllerWithoutDefaultConstructor.class)
+        def proxy2 = factory.produceClient(ControllerWithoutDefaultConstructor.class)
+
+        proxy1.someMethod("any")
+        proxy2.someMethod("any")
+
+        then:
+        invocationHandler1.callsCount == 1
+        invocationHandler2.callsCount == 1
     }
 
-    class ControllerWithoutDefaultConstructor {
-
-        private final Object someDependency;
-
-        public ControllerWithoutDefaultConstructor(Object someDependency) {
-            this.someDependency = someDependency;
-        }
-
-    }
 }
-
