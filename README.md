@@ -10,10 +10,9 @@ Restler
 **EPA warning: Restler currently is in early public access stage and it is neither feature complete, tested in production or backward compatible**
 
 ### Features
- * Easuly extensible architecture
+ * Easily extensible architecture
  * Custom authentication, authorization and errors mapping strategies.
- * Form-based authorization.
- * Cookie and HTTP Basic authentication.
+ * Support of form-based, http basic, cookie-based and generic header-based authentication.
  * Support of async controllers through methods returning Future, DefferedResult or Callabe objects
  * Experemental Spring Data Rest support
 
