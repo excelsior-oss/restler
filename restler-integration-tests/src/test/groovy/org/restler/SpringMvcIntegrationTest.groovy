@@ -18,7 +18,7 @@ class SpringMvcIntegrationTest extends Specification implements IntegrationSpec 
 
     // TODO: find better solution, so users would not required to instantiate execution chain manually
     def executor = new SpringMvcRequestExecutor(new RestTemplate())
-    def formAuth = new FormAuthorizationStrategy(executor, new URI("http://localhost:8080/login"), login, "username", password, "password");
+    def formAuth = new FormAuthorizationStrategy(new URI("http://localhost:8080/login"), login, "username", password, "password");
 
     Service serviceWithFormAuth = new Restler("http://localhost:8080", new SpringMvcSupport()).
             authorizationStrategy(formAuth).
@@ -66,4 +66,10 @@ class SpringMvcIntegrationTest extends Specification implements IntegrationSpec 
         thrown(IllegalArgumentException)
     }
 
+    def "methods, that returns void should be called successfully"() {
+        when:
+        controller.returnVoid()
+        then:
+        true
+    }
 }
