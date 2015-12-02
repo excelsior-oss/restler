@@ -17,4 +17,5 @@ public class AuthenticatingEnhancer implements CallEnhancer {
         Call authenticatedRequest = session.getAuthenticationStrategy().authenticate(call, session);
         return callExecutor.execute(authenticatedRequest);
     }
+
 }

@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * The implementation that performs an HTTP(S) post request of a login form data to obtain a session id.
+ * The implementation that performs an HTTP post request of a login form data to obtain a session id.
  */
 public class FormAuthorizationStrategy implements AuthorizationStrategy {
 
@@ -20,23 +20,18 @@ public class FormAuthorizationStrategy implements AuthorizationStrategy {
     protected final String loginParameterValue;
     protected final String passwordParameterName;
     protected final String passwordParameterValue;
-    protected final String cookieName = "JSESSIONID";
+    protected final String cookieName;
 
     /**
      * Creates a strategy that uses custom parameter names.
-     *
-     * @param url                   url of the login service.
-     * @param login                 login of the user
-     * @param loginParameterName    name of the form parameter holding the <tt>login</tt> value
-     * @param password              password of the user
-     * @param passwordParameterName name of the form parameter holding the <tt>password</tt> value
      */
-    public FormAuthorizationStrategy(URI url, String login, String loginParameterName, String password, String passwordParameterName) {
+    public FormAuthorizationStrategy(URI url, String loginParameterName, String login, String passwordParameterName, String password, String cookieName) {
         this.url = url;
         this.loginParameterValue = login;
         this.passwordParameterValue = password;
         this.loginParameterName = loginParameterName;
         this.passwordParameterName = passwordParameterName;
+        this.cookieName = cookieName;
     }
 
     @Override

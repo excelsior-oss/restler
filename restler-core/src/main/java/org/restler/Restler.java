@@ -7,7 +7,7 @@ import org.restler.http.security.authentication.AuthenticationStrategy;
 import org.restler.http.security.authentication.CookieAuthenticationStrategy;
 import org.restler.http.security.authentication.HttpBasicAuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
-import org.restler.http.security.authorization.BasicAuthorizationStrategy;
+import org.restler.http.security.authorization.FormAuthorizationStrategy;
 import org.restler.util.UriBuilder;
 
 import java.net.URI;
@@ -17,6 +17,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.restler.http.security.authentication.CookieAuthenticationStrategy.JSESSIONID;
 
 /**
  * The entry point into library. Restler is actually builder for {@code Service} classes. Instances of
@@ -71,18 +73,20 @@ public class Restler {
         return this;
     }
 
-    public Restler authorizationStrategy(AuthorizationStrategy authorizationStrategy) {
+    public Restler authorizationStrategy(AuthorizationStrategy authorizationStrategy, AuthenticationStrategy authenticationStrategy) {
         this.authorizationStrategy = authorizationStrategy;
-        return this;
+        return authenticationStrategy(authenticationStrategy);
     }
 
-    public Restler cookieBasedAuthentication() {
-        return authenticationStrategy(new CookieAuthenticationStrategy());
+    public Restler formAuthentication(URI loginUrl, String userName, String password) {
+        return formAuthentication(loginUrl, "username", userName, "password", password, JSESSIONID);
+    }
+    public Restler formAuthentication(URI loginUrl, String userNameParam, String userName, String passwordParam, String password, String sessionCookieName) {
+        return authorizationStrategy(new FormAuthorizationStrategy(loginUrl, userNameParam, userName, passwordParam, password, sessionCookieName), new CookieAuthenticationStrategy());
     }
 
     public Restler httpBasicAuthentication(String login, String password) {
-        authorizationStrategy(new BasicAuthorizationStrategy(login, password));
-        return authenticationStrategy(new HttpBasicAuthenticationStrategy());
+        return authenticationStrategy(new HttpBasicAuthenticationStrategy(login, password));
     }
 
     public Restler autoAuthorize(boolean autoAuthorize) {
