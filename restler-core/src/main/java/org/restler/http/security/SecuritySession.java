@@ -5,7 +5,7 @@ import org.restler.http.security.authentication.AuthenticationStrategy;
 import org.restler.http.security.authorization.AuthorizationStrategy;
 
 /**
- * Maintains security aspect of a user session
+ * Mutable (but thread-safe) class that obtains authenticationToken from authorization strategy, stores it and passes to authentication strategy.
  */
 public class SecuritySession implements AuthenticationContext {
 

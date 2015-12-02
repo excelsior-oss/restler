@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class CookieAuthenticationStrategy extends HeaderBasedAuthenticationStrategy {
 
-    protected static final String JSESSIONID = "JSESSIONID";
+    public static final String JSESSIONID = "JSESSIONID";
 
     private final String cookieName;
 
@@ -44,4 +44,5 @@ public class CookieAuthenticationStrategy extends HeaderBasedAuthenticationStrat
         String cookieValue = token == null ? null : token.toString();
         return cookieName + "=" + cookieValue + ";";
     }
+
 }

@@ -1,5 +1,8 @@
 package org.restler.http.security.authentication;
 
+/**
+ * Interface of session state holder, that passed to implementations of AuthenticationStrategy
+ */
 public interface AuthenticationContext {
 
     /**

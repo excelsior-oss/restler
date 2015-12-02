@@ -3,12 +3,9 @@ package org.restler
 import org.restler.client.CGLibClientFactory
 import org.restler.client.RestlerException
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
-import org.restler.http.security.authorization.FormAuthorizationStrategy
 import org.restler.integration.Controller
-import org.restler.spring.mvc.SpringMvcRequestExecutor
 import org.restler.spring.mvc.SpringMvcSupport
 import org.restler.util.IntegrationSpec
-import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
 
 import static org.restler.Tests.login
@@ -16,13 +13,8 @@ import static org.restler.Tests.password
 
 class SpringMvcIntegrationTest extends Specification implements IntegrationSpec {
 
-    // TODO: find better solution, so users would not required to instantiate execution chain manually
-    def executor = new SpringMvcRequestExecutor(new RestTemplate())
-    def formAuth = new FormAuthorizationStrategy(new URI("http://localhost:8080/login"), login, "username", password, "password");
-
     Service serviceWithFormAuth = new Restler("http://localhost:8080", new SpringMvcSupport()).
-            authorizationStrategy(formAuth).
-            cookieBasedAuthentication().
+            formAuthentication(new URI("http://localhost:8080/login"), login, password).
             build();
 
     Service serviceWithBasicAuth = new Restler("http://localhost:8080", new SpringMvcSupport()).
