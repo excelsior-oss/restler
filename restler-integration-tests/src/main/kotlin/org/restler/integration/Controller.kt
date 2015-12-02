@@ -92,4 +92,7 @@ public open class Controller {
         "" -> "Empty string object"
         else -> "String object with value: $str"
     }
+
+    @RequestMapping("void")
+    open fun returnVoid() {}
 }
