@@ -28,6 +28,7 @@ public class CGLibClientFactory implements ClientFactory {
         InvocationHandler handler = coreModule.createHandler(descriptor);
 
         Enhancer enhancer = new Enhancer();
+        enhancer.setUseCache(false);
         enhancer.setSuperclass(serviceDescriptor);
         enhancer.setCallbackType(handler.getClass());
 
