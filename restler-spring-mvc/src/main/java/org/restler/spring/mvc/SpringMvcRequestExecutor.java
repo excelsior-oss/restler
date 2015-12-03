@@ -2,11 +2,13 @@ package org.restler.spring.mvc;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
+import org.restler.client.RestlerException;
 import org.restler.http.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -28,6 +30,8 @@ public class SpringMvcRequestExecutor implements RequestExecutor {
         } catch (HttpStatusCodeException e) {
             HttpStatus status = new HttpStatus(e.getStatusCode().value(), e.getStatusText());
             return new FailedResponse(status, e.getResponseBodyAsString(), e);
+        } catch (HttpMessageNotWritableException e) {
+            throw new RestlerException("Could not serialize body", e);
         }
 
         ImmutableMultimap<String, String> headersBuilder = SpringUtils.toGuavaMultimap(responseEntity.getHeaders());

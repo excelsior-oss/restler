@@ -3,10 +3,7 @@ package org.restler.integration
 import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.AsyncResult
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.context.request.async.DeferredResult
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
@@ -95,4 +92,7 @@ public open class Controller {
 
     @RequestMapping("void")
     open fun returnVoid() {}
+
+    @RequestMapping("postBody", method = arrayOf(RequestMethod.POST))
+    open fun postBody(@RequestBody body: Any) = body
 }
