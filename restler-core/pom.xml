@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.restler</groupId>
         <artifactId>restler</artifactId>
-        <version>0.4.2</version>
+        <version>0.4.3-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>restler-core</artifactId>
-    <version>0.4.2</version>
+    <version>0.4.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <build>
