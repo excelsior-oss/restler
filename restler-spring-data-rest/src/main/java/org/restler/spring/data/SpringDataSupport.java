@@ -5,6 +5,7 @@ import org.restler.RestlerConfig;
 import org.restler.client.CallEnhancer;
 import org.restler.client.CoreModule;
 import org.restler.http.RequestExecutor;
+import org.restler.spring.data.chain.ChainCallEnhancer;
 import org.restler.spring.data.proxy.ProxyCallEnhancer;
 import org.restler.spring.mvc.SpringMvcRequestExecutor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -25,6 +26,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
     @Override
     public CoreModule apply(RestlerConfig config) {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
+        totalEnhancers.add(new ChainCallEnhancer());
         totalEnhancers.add(new ProxyCallEnhancer(config));
         totalEnhancers.addAll(config.getEnhancers());
 

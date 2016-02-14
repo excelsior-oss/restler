@@ -4,18 +4,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.google.common.collect.ImmutableMultimap;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Enhancer;
 import org.objenesis.ObjenesisStd;
 import org.restler.RestlerConfig;
-import org.restler.client.Call;
 import org.restler.client.CallExecutor;
 import org.restler.client.RestlerException;
-import org.restler.http.HttpCall;
-import org.restler.http.HttpMethod;
-import org.restler.spring.data.proxy.ProxyObject;
-import org.restler.util.UriBuilder;
+import org.restler.spring.data.proxy.Resource;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
@@ -112,18 +107,26 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
         net.sf.cglib.proxy.InvocationHandler handler = (Object o, Method method, Object[] args)->{
 
-            if(method.equals(ProxyObject.class.getMethod("getCallExecutor"))) {
+            if(method.equals(Resource.class.getMethod("getResourceId"))) {
+                String self = hrefs.get("self");
+                return getWrappedId(object, self.substring(self.lastIndexOf("/")+1));
+            }else if(method.equals(Resource.class.getMethod("getRepositoryUri"))) {
+                String self = hrefs.get("self");
+                return self.substring(0, self.lastIndexOf("/"));
+            }else if(method.equals(Resource.class.getMethod("getSelfUri"))) {
+                return hrefs.get("self");
+            }else if(method.equals(Resource.class.getMethod("getCallExecutor"))) {
                 return proxyObjectData.executor;
-            }else if(method.equals(ProxyObject.class.getMethod("getObject"))) {
+            }else if(method.equals(Resource.class.getMethod("getObject"))) {
                 return object;
-            }else if(method.equals(ProxyObject.class.getMethod("getHrefs"))) {
+            }else if(method.equals(Resource.class.getMethod("getHrefs"))) {
                 return hrefs;
-            }else if(method.equals(ProxyObject.class.getMethod("getRestlerConfig"))) {
+            }else if(method.equals(Resource.class.getMethod("getRestlerConfig"))) {
                 return proxyObjectData.config;
-            }else if(method.equals(ProxyObject.class.getMethod("setExecutor", CallExecutor.class))) {
+            }else if(method.equals(Resource.class.getMethod("setExecutor", CallExecutor.class))) {
                 proxyObjectData.executor = (CallExecutor) args[0];
                 return null;
-            } else if(method.equals(ProxyObject.class.getMethod("setRestlerConfig", RestlerConfig.class))) {
+            } else if(method.equals(Resource.class.getMethod("setRestlerConfig", RestlerConfig.class))) {
                 proxyObjectData.config = (RestlerConfig)args[0];
                 return null;
             }
@@ -144,7 +147,7 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
         Enhancer enhancer = new Enhancer();
         enhancer.setUseCache(false);
         enhancer.setSuperclass(aClass);
-        enhancer.setInterfaces(new Class<?>[]{ProxyObject.class});
+        enhancer.setInterfaces(new Class<?>[]{Resource.class});
         enhancer.setCallbackType(handler.getClass());
 
         Class proxyClass = enhancer.createClass();
@@ -212,6 +215,31 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
         int leftOffset = selfLinkString.lastIndexOf("/") + 1;
         int rightOffset = selfLinkString.indexOf('"', leftOffset);
         return selfLinkString.substring(leftOffset, rightOffset);
+    }
+
+    private Object getWrappedId(Object object, String id) {
+        Field[] fields = object.getClass().getDeclaredFields();
+        Class fieldClass;
+
+        for (Field field : fields) {
+            if (field.getDeclaredAnnotation(Id.class) != null || field.getDeclaredAnnotation(EmbeddedId.class) != null) {
+                fieldClass = field.getType();
+
+                field.setAccessible(true);
+
+                try {
+                    return fieldClass.getConstructor(String.class).newInstance(id);
+                } catch (IllegalAccessException e) {
+                    throw new RestlerException("Access denied to change id", e);
+                } catch (InvocationTargetException e) {
+                    throw new RestlerException("Can't create id wrapper", e);
+                } catch (NoSuchMethodException | InstantiationException e) {
+                    throw new RestlerException("Could not instantiate id object", e);
+                }
+            }
+        }
+
+        return null;
     }
 
     private void setId(Object object, Class<?> aClass, Object id) {

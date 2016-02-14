@@ -80,10 +80,18 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
         ParameterizedTypeImpl crudRepositoryType = (ParameterizedTypeImpl) repositoryType.getGenericInterfaces()[0];
         Class<?> idClass = TypeToken.of(crudRepositoryType.getActualTypeArguments()[1]).getRawType();
 
+        String repositoryUri = getRepositoryUri(declaringClass, repositoryAnnotation);
+
         Type genericReturnType;
         if (isCrudMethod(method)) {
             CrudMethod crudMethod = getCrudMethod(method);
-            methodMappedUriString = crudMethod.getPathSegment(unmappedArgs.toArray());
+            Call call = crudMethod.getCall(unmappedArgs.toArray());
+
+            if(call != null) {
+                return call;
+            }
+
+            methodMappedUriString = crudMethod.getPathPart(unmappedArgs.toArray());
             httpMethod = crudMethod.getHttpMethod();
             requestBody = crudMethod.getRequestBody(unmappedArgs.toArray());
             header = crudMethod.getHeader();
@@ -94,8 +102,6 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
             httpMethod = HttpMethod.GET;
             genericReturnType = method.getGenericReturnType();
         }
-
-        String repositoryUri = getRepositoryUri(declaringClass, repositoryAnnotation);
 
         String uriTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(repositoryUri, methodMappedUriString).build().toUriString();
 

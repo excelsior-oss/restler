@@ -9,9 +9,13 @@ import java.util.HashMap;
 /**
  * Created by rudenko on 09.02.2016.
  */
-public interface ProxyObject {
+public interface Resource {
     void setExecutor(CallExecutor executor);
     void setRestlerConfig(RestlerConfig config);
+
+    String getRepositoryUri();
+    String getSelfUri();
+    Object getResourceId();
 
     CallExecutor getCallExecutor();
     RestlerConfig getRestlerConfig();

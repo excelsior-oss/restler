@@ -1,7 +1,6 @@
 package org.restler.spring.data.proxy;
 
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.reflect.TypeToken;
 import org.restler.RestlerConfig;
 import org.restler.client.*;
 import org.restler.http.HttpCall;
@@ -48,15 +47,15 @@ public class ProxyCallEnhancer implements CallEnhancer {
     }
 
     private void initProxyObject(Object object, CallExecutor callExecutor) {
-        if(object instanceof ProxyObject) {
+        if(object instanceof Resource) {
             List<CallEnhancer> proxyEnhancer = new ArrayList<>();
             proxyEnhancer.add(this);
             CallExecutionChain chain = new CallExecutionChain(callExecutor, proxyEnhancer);
-            ProxyObject proxyObject = (ProxyObject)object;
-            proxyObject.setExecutor(chain);
-            proxyObject.setRestlerConfig(config);
+            Resource resource = (Resource)object;
+            resource.setExecutor(chain);
+            resource.setRestlerConfig(config);
 
-            Object realObject = proxyObject.getObject();
+            Object realObject = resource.getObject();
             Class<?> aClass = realObject.getClass();
 
             try {
@@ -71,7 +70,7 @@ public class ProxyCallEnhancer implements CallEnhancer {
                         Method getMethod = property.getReadMethod();
 
 
-                        String uri = getHrefByMethod(getMethod, proxyObject.getHrefs());
+                        String uri = getHrefByMethod(getMethod, resource.getHrefs());
 
                         if (uri != null) {
                             Call httpCall = new HttpCall(new UriBuilder(uri).build(), HttpMethod.GET, null, ImmutableMultimap.of(), getMethod.getGenericReturnType());

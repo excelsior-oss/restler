@@ -1,36 +1,22 @@
 package org.restler.spring.data.methods;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import com.fasterxml.jackson.databind.ser.FilterProvider;
-import com.fasterxml.jackson.databind.ser.PropertyFilter;
-import com.fasterxml.jackson.databind.ser.PropertyWriter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.reflect.TypeToken;
-import org.restler.client.Call;
-import org.restler.client.CallExecutor;
-import org.restler.client.RestlerException;
+import org.restler.client.*;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
-import org.restler.spring.data.proxy.ProxyObject;
+import org.restler.spring.data.chain.ChainCall;
+import org.restler.spring.data.proxy.Resource;
 import org.restler.util.UriBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Created by rudenko on 11.02.2016.
@@ -43,15 +29,18 @@ public class SaveCrudMethod implements CrudMethod
     }
 
     @Override
+    public Call getCall(Object[] args) {
+        return makeCall(args[0]);
+    }
+
+    @Override
     public Object getRequestBody(Object[] args) {
         Object arg = args[0];
 
-        if(arg instanceof ProxyObject) {
-            ProxyObject proxyObject = (ProxyObject)arg;
-            arg = proxyObject.getObject();
-            saveChilds(arg, proxyObject.getCallExecutor());
+        if(arg instanceof Resource) {
+            Resource resource = (Resource)arg;
+            arg = resource.getObject();
         }
-
 
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -73,15 +62,12 @@ public class SaveCrudMethod implements CrudMethod
     }
 
     @Override
-    public String getPathSegment(Object[] args) {
+    public String getPathPart(Object[] args) {
         Object arg = args[0];
+        if(arg instanceof Resource) {
+            Resource resource = (Resource)arg;
 
-        if(arg instanceof ProxyObject) {
-            ProxyObject proxyObject = (ProxyObject)arg;
-            HashMap<String, String> hrefs = proxyObject.getHrefs();
-            String self = hrefs.get("self");
-
-            return self.substring(self.lastIndexOf('/'));
+            return resource.getResourceId().toString();
         }
 
         return "{id}";
@@ -92,7 +78,65 @@ public class SaveCrudMethod implements CrudMethod
         return ImmutableMultimap.of("Content-Type", "application/json");
     }
 
-    private Object saveChilds(Object object, CallExecutor executor) {
+    private String getFullPath(Object object) {
+        if(object instanceof Resource) {
+            Resource resource = (Resource)object;
+            return resource.getRepositoryUri() + "/" + resource.getResourceId().toString();
+        }
+        return null;
+    }
+
+    private Call makeCall(Object object) {
+        List<AbstractMap.SimpleEntry<Field, Object>> childs = getChilds(object);
+
+        List<Call> calls = new ArrayList<>();
+        List<Function< Object, Object>> functions = new ArrayList<>();
+
+        try {
+            for(AbstractMap.SimpleEntry<Field, Object> child : childs) {
+                child.getKey().setAccessible(true);
+                Object value = child.getValue();
+
+                if(value instanceof Collection) {
+                    Collection collection = (Collection) value;
+
+                    for(Object item : collection) {
+                        calls.add(makeCall(item));
+                    }
+                } else if(value instanceof Resource) {
+                    calls.add(makeCall(value));
+                }
+
+                if(object instanceof Resource) {
+                    child.getKey().set(((Resource) object).getObject(), null);
+                }
+            }
+        } catch (IllegalAccessException e) {
+            throw new RestlerException("Can't set value to field.", e);
+        }
+
+        String fullPath  = getFullPath(object);
+
+        if(object instanceof Resource) {
+            object = ((Resource)object).getObject();
+        }
+
+        //if resource have repository and id
+        if(fullPath != null) {
+            calls.add(getHttpCall(object, fullPath, object.getClass()));
+        }
+
+
+        return new ChainCall(calls, functions);
+    }
+
+    private List<AbstractMap.SimpleEntry<Field, Object>> getChilds(Object object) {
+        List<AbstractMap.SimpleEntry<Field, Object>> result = new ArrayList<>();
+
+        if(object instanceof Resource) {
+            object = ((Resource) object).getObject();
+        }
+
         Class<?> argClass = object.getClass();
 
         Field[] fields = argClass.getDeclaredFields();
@@ -102,60 +146,29 @@ public class SaveCrudMethod implements CrudMethod
                 field.setAccessible(true);
                 Object fieldValue = field.get(object);
 
-
                 if(fieldValue != null) {
                     if(fieldValue instanceof Collection) {
-                        Collection collection = (Collection) fieldValue;
-
-
-                        Collection resultCollection = collection.getClass().getConstructor().newInstance(null);
-
-                        for(Object item : collection) {
-                            if(item instanceof ProxyObject) {
-                                saveProxyObject((ProxyObject)item, executor);
-                                //resultCollection.add(((ProxyObject) item).getHrefs().get("self"));
-                            }
-                            else {
-                                resultCollection.add(item);
-                            }
-                        }
-
-                        field.set(object, null);
-
-                    } else if(fieldValue instanceof ProxyObject) {
-                        saveProxyObject((ProxyObject) fieldValue, executor);
-                        field.set(object, null);
-                        //field.set(object, ((ProxyObject) fieldValue).getHrefs().get("self"));
+                        result.add(new AbstractMap.SimpleEntry<>(field, fieldValue));
+                    } else if(fieldValue instanceof Resource) {
+                        result.add(new AbstractMap.SimpleEntry<>(field, fieldValue));
                     }
                 }
 
                 field.setAccessible(false);
             } catch (IllegalAccessException e) {
-                throw new RestlerException("Can't use field", e);
-            } catch (NoSuchMethodException e) {
-                throw new RestlerException("Can't get collection constructor", e);
-            } catch (InstantiationException e) {
-                throw new RestlerException("Can't get collection constructor", e);
-            } catch (InvocationTargetException e) {
-                throw new RestlerException("Can't get collection constructor", e);
+                throw new RestlerException("Can't get value from field", e);
             }
         }
 
-        return object;
+        return result;
     }
 
-    private Object saveProxyObject(ProxyObject proxyObject, CallExecutor executor) {
-        Object[] args = {proxyObject};
-        Object body = getRequestBody(args);
+    private HttpCall getHttpCall(Object object, String path, Class<?> returnType) {
+        Object[] objects = {object};
+
+        Object body = getRequestBody(objects);
         ImmutableMultimap<String, String> header = getHeader();
 
-        Call httpCall = new HttpCall(new UriBuilder(proxyObject.getHrefs().get("self")).build(), HttpMethod.PUT, body, header, proxyObject.getObject().getClass());
-        Object result = executor.execute(httpCall);
-
-        if(result instanceof ProxyObject) {
-            return ((ProxyObject)result).getObject();
-        }
-
-        return result;
+        return new HttpCall(new UriBuilder(path).build(), getHttpMethod(), body, header, returnType);
     }
 }

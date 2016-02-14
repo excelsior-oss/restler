@@ -21,42 +21,42 @@ public class HttpCall implements Call {
         this.method = method;
         this.requestBody = requestBody;
         this.headers = headers;
-        this.returnType = returnType;
-    }
+this.returnType = returnType;
+        }
 
-    public HttpCall(URI url, HttpMethod method, Object requestBody) {
+public HttpCall(URI url, HttpMethod method, Object requestBody) {
         this(url, method, requestBody, ImmutableMultimap.<String, String>of(), Object.class);
-    }
+        }
 
-    public URI getUrl() {
+public URI getUrl() {
         return url;
-    }
+        }
 
-    public HttpMethod getHttpMethod() {
+public HttpMethod getHttpMethod() {
         return method;
-    }
+        }
 
-    public Object getRequestBody() {
+public Object getRequestBody() {
         return requestBody;
-    }
+        }
 
-    public ImmutableMultimap<String, String> getHeaders() {
+public ImmutableMultimap<String, String> getHeaders() {
         return headers;
-    }
+        }
 
-    @Override
-    public Type getReturnType() {
+@Override
+public Type getReturnType() {
         return returnType;
-    }
+        }
 
-    @Override
-    public Call withReturnType(Type type) {
+@Override
+public Call withReturnType(Type type) {
         return new HttpCall(url, method, requestBody, headers, type);
-    }
+        }
 
-    public HttpCall setHeader(String name, String... values) {
+public HttpCall setHeader(String name, String... values) {
         ImmutableMultimap.Builder<String, String> newHeaders = new ImmutableMultimap.Builder<String, String>().putAll(headers);
         Arrays.stream(values).forEach(value -> newHeaders.put(name, value));
         return new HttpCall(url, method, requestBody, newHeaders.build(), returnType);
-    }
-}
+        }
+        }
