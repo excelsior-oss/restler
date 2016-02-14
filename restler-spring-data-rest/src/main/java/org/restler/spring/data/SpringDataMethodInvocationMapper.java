@@ -7,6 +7,9 @@ import org.restler.client.MethodInvocationMapper;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
+import org.restler.spring.data.methods.CrudMethod;
+import org.restler.spring.data.methods.FindOneCrudMethod;
+import org.restler.spring.data.methods.SaveCrudMethod;
 import org.restler.util.UriBuilder;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
@@ -70,6 +73,8 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
 
         String methodMappedUriString;
         HttpMethod httpMethod;
+        Object requestBody = null;
+        ImmutableMultimap<String, String> header = ImmutableMultimap.of();
 
         Class repositoryType = (Class) declaringClass.getMethods()[0].getDeclaringClass().getGenericInterfaces()[0];
         ParameterizedTypeImpl crudRepositoryType = (ParameterizedTypeImpl) repositoryType.getGenericInterfaces()[0];
@@ -77,8 +82,12 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
 
         Type genericReturnType;
         if (isCrudMethod(method)) {
-            methodMappedUriString = getCrudMethodPath(method);
-            httpMethod = HttpMethod.GET;
+            CrudMethod crudMethod = getCrudMethod(method);
+            methodMappedUriString = crudMethod.getPathSegment(unmappedArgs.toArray());
+            httpMethod = crudMethod.getHttpMethod();
+            requestBody = crudMethod.getRequestBody(unmappedArgs.toArray());
+            header = crudMethod.getHeader();
+
             genericReturnType = crudRepositoryType.getActualTypeArguments()[0];
         } else {
             methodMappedUriString = getQueryMethodUri(method, methodAnnotation);
@@ -87,6 +96,7 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
         }
 
         String repositoryUri = getRepositoryUri(declaringClass, repositoryAnnotation);
+
         String uriTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(repositoryUri, methodMappedUriString).build().toUriString();
 
         // TODO: implement more generic solution
@@ -94,7 +104,7 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
                 filter(unmappedArg -> idClass.isAssignableFrom(unmappedArg.getClass())).
                 forEach(unmappedArg -> pathVariables.put("id", unmappedArg));
 
-        return new HttpCall(url(baseUrl, uriTemplate, requestParams, pathVariables), httpMethod, null, ImmutableMultimap.of(), genericReturnType);
+        return new HttpCall(url(baseUrl, uriTemplate, requestParams, pathVariables), httpMethod, requestBody, header, genericReturnType);
     }
 
     private URI url(URI baseUrl, String pathTemplate, ImmutableMultimap<String, String> queryParams, Map<String, Object> pathVariables) {
@@ -121,10 +131,15 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
         return repositoryUriString;
     }
 
-    private String getCrudMethodPath(Method method) {
-        if ("findOne".equals(method.getName())) {
-            return "{id}";
+    private CrudMethod getCrudMethod(Method method) {
+        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod()};
+
+        for(CrudMethod crudMethod : crudMethods) {
+            if(crudMethod.isCrudMethod(method)) {
+                return crudMethod;
+            }
         }
+
         throw new RestlerException("Method " + method + " is not supported");
     }
 

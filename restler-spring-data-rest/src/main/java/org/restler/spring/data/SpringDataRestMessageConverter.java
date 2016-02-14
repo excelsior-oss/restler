@@ -4,8 +4,18 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.common.collect.ImmutableMultimap;
+import net.sf.cglib.proxy.Callback;
+import net.sf.cglib.proxy.Enhancer;
+import org.objenesis.ObjenesisStd;
+import org.restler.RestlerConfig;
+import org.restler.client.Call;
+import org.restler.client.CallExecutor;
 import org.restler.client.RestlerException;
-import org.springframework.beans.BeanUtils;
+import org.restler.http.HttpCall;
+import org.restler.http.HttpMethod;
+import org.restler.spring.data.proxy.ProxyObject;
+import org.restler.util.UriBuilder;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
@@ -17,14 +27,11 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.reflect.*;
+import java.util.*;
 
 class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Object> {
+    private final ObjenesisStd objenesis = new ObjenesisStd();
 
     @Override
     public boolean canRead(Type type, Class<?> aClass, MediaType mediaType) {
@@ -54,7 +61,9 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
                 ArrayNode arr = ((ArrayNode) objects);
                 List<Object> res = new ArrayList<>();
                 for (int i = 0; i < arr.size(); i++) {
-                    res.add(mapObject(elementClass, objectMapper, arr.get(i)));
+                    HashMap<String, String> hrefs = getObjectHrefs(arr.get(i));
+                    Object object = mapObject(elementClass, objectMapper, arr.get(i));
+                    res.add(makeProxy(elementClass, object, hrefs));
                 }
                 return res;
             }
@@ -85,7 +94,75 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         JsonNode rootNode = objectMapper.readTree(httpInputMessage.getBody());
-        return mapObject(aClass, objectMapper, rootNode);
+
+        HashMap<String, String> hrefs = getObjectHrefs(rootNode);
+
+        Object object = mapObject(aClass, objectMapper, rootNode);
+
+        return makeProxy(aClass, object, hrefs);
+    }
+
+    private Object makeProxy(Class<?> aClass, Object object, HashMap<String, String> hrefs) {
+        class ProxyObjectData {
+            public CallExecutor executor = null;
+            public RestlerConfig config = null;
+        }
+
+        ProxyObjectData proxyObjectData = new ProxyObjectData();
+
+        net.sf.cglib.proxy.InvocationHandler handler = (Object o, Method method, Object[] args)->{
+
+            if(method.equals(ProxyObject.class.getMethod("getCallExecutor"))) {
+                return proxyObjectData.executor;
+            }else if(method.equals(ProxyObject.class.getMethod("getObject"))) {
+                return object;
+            }else if(method.equals(ProxyObject.class.getMethod("getHrefs"))) {
+                return hrefs;
+            }else if(method.equals(ProxyObject.class.getMethod("getRestlerConfig"))) {
+                return proxyObjectData.config;
+            }else if(method.equals(ProxyObject.class.getMethod("setExecutor", CallExecutor.class))) {
+                proxyObjectData.executor = (CallExecutor) args[0];
+                return null;
+            } else if(method.equals(ProxyObject.class.getMethod("setRestlerConfig", RestlerConfig.class))) {
+                proxyObjectData.config = (RestlerConfig)args[0];
+                return null;
+            }
+
+            /*if(proxyObjectData.executor != null) {
+                String uri = getHrefByMethod(method, hrefs);
+
+                if(uri != null) {
+                    Call httpCall = new HttpCall(new UriBuilder(uri).build(), HttpMethod.GET, null, ImmutableMultimap.of(), method.getGenericReturnType());
+
+                    return proxyObjectData.executor.execute(httpCall);
+                }
+            }*/
+
+            return method.invoke(object, args);
+        };
+
+        Enhancer enhancer = new Enhancer();
+        enhancer.setUseCache(false);
+        enhancer.setSuperclass(aClass);
+        enhancer.setInterfaces(new Class<?>[]{ProxyObject.class});
+        enhancer.setCallbackType(handler.getClass());
+
+        Class proxyClass = enhancer.createClass();
+        Enhancer.registerCallbacks(proxyClass, new Callback[] { handler });
+
+        Object proxy = objenesis.newInstance(proxyClass);
+
+        try {
+            for(Field objectField : aClass.getDeclaredFields()) {
+                objectField.setAccessible(true);
+                objectField.set(proxy, objectField.get(object));
+                objectField.setAccessible(false);
+            }
+        } catch (IllegalAccessException e) {
+            throw new RestlerException("Illegal access to field.", e);
+        }
+
+        return proxy;
     }
 
     private Object mapObject(Class<?> aClass, ObjectMapper objectMapper, JsonNode rootNode) throws com.fasterxml.jackson.core.JsonProcessingException {
@@ -97,6 +174,31 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
     @Override
     public void write(Object o, MediaType mediaType, HttpOutputMessage httpOutputMessage) throws IOException, HttpMessageNotWritableException {
 
+    }
+
+    private HashMap<String, String> getObjectHrefs(JsonNode objectNode) {
+        HashMap<String, String> result = new LinkedHashMap<>();
+
+        JsonNode linksNode = objectNode.get("_links");
+        Iterator<String> names = linksNode.fieldNames();
+
+        linksNode.forEach((JsonNode node)->{
+            String name = names.next();
+            result.put(name, node.get("href").toString().replace("\"", ""));
+        });
+
+       return result;
+    }
+
+    private String getHrefByMethod(Method method, HashMap<String, String> hrefs) {
+        String methodName = method.getName();
+
+        if(methodName.startsWith("get")) {
+            String hrefName = methodName.substring(3).toLowerCase();
+            return hrefs.get(hrefName);
+        }
+
+        return null;
     }
 
     private Object getId(JsonNode objectNode) {
@@ -114,30 +216,26 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
     private void setId(Object object, Class<?> aClass, Object id) {
         Field[] fields = aClass.getDeclaredFields();
-        String idFieldName = "";
-        Class fieldClass = null;
+        Class fieldClass;
 
         for (Field field : fields) {
             if (field.getDeclaredAnnotation(Id.class) != null || field.getDeclaredAnnotation(EmbeddedId.class) != null) {
-                idFieldName = field.getName();
                 fieldClass = field.getType();
-            }
-        }
 
+                field.setAccessible(true);
 
-        if (!idFieldName.isEmpty() && fieldClass != null) {
-            try {
-                Object wrappedId = fieldClass.getConstructor(String.class).newInstance(id);
-                BeanUtils.getPropertyDescriptor(aClass, idFieldName).getWriteMethod().invoke(object, wrappedId);
-            } catch (IllegalAccessException e) {
-                throw new RestlerException("Access denied to id write method", e);
-            } catch (InvocationTargetException e) {
-                throw new RestlerException("Can't invoke id write method", e);
-            } catch (NoSuchMethodException | InstantiationException e) {
-                throw new RestlerException("Could not instantiate id object", e);
+                try {
+                    Object wrappedId = fieldClass.getConstructor(String.class).newInstance(id);
+                    field.set(object, wrappedId);
+                    field.setAccessible(false);
+                } catch (IllegalAccessException e) {
+                    throw new RestlerException("Access denied to change id", e);
+                } catch (InvocationTargetException e) {
+                    throw new RestlerException("Can't create id wrapper", e);
+                } catch (NoSuchMethodException | InstantiationException e) {
+                    throw new RestlerException("Could not instantiate id object", e);
+                }
             }
-        } else {
-            throw new RestlerException("Can't find id field");
         }
     }
 
