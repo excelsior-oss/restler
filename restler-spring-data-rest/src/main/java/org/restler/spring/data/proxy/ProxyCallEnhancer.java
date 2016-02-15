@@ -1,24 +1,12 @@
 package org.restler.spring.data.proxy;
 
-import com.google.common.collect.ImmutableMultimap;
 import org.restler.RestlerConfig;
 import org.restler.client.*;
-import org.restler.http.HttpCall;
-import org.restler.http.HttpMethod;
-import org.restler.util.UriBuilder;
-import org.springframework.beans.BeanUtils;
 
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by rudenko on 08.02.2016.
- */
 public class ProxyCallEnhancer implements CallEnhancer {
     private RestlerConfig config;
 
@@ -47,55 +35,15 @@ public class ProxyCallEnhancer implements CallEnhancer {
     }
 
     private void initProxyObject(Object object, CallExecutor callExecutor) {
-        if(object instanceof Resource) {
+        if(object instanceof ResourceProxy) {
             List<CallEnhancer> proxyEnhancer = new ArrayList<>();
             proxyEnhancer.add(this);
             CallExecutionChain chain = new CallExecutionChain(callExecutor, proxyEnhancer);
-            Resource resource = (Resource)object;
-            resource.setExecutor(chain);
-            resource.setRestlerConfig(config);
-
-            Object realObject = resource.getObject();
-            Class<?> aClass = realObject.getClass();
-
-            try {
-                for(Field objectField : aClass.getDeclaredFields()) {
-                    objectField.setAccessible(true);
-                    Object fieldValue = objectField.get(realObject);
-
-                    if(fieldValue == null) {
-                        String fieldName = objectField.getName();
-                        PropertyDescriptor property = BeanUtils.getPropertyDescriptor(aClass, fieldName);
-
-                        Method getMethod = property.getReadMethod();
-
-
-                        String uri = getHrefByMethod(getMethod, resource.getHrefs());
-
-                        if (uri != null) {
-                            Call httpCall = new HttpCall(new UriBuilder(uri).build(), HttpMethod.GET, null, ImmutableMultimap.of(), getMethod.getGenericReturnType());
-                            objectField.set(realObject, callExecutor.execute(httpCall));
-                        }
-
-                    }
-
-                    objectField.setAccessible(false);
-                }
-            } catch (IllegalAccessException e) {
-                throw new RestlerException("Illegal access to field.", e);
-            }
+            ResourceProxy resourceProxy = (ResourceProxy)object;
+            resourceProxy.setExecutor(chain);
+            resourceProxy.setRestlerConfig(config);
         }
     }
 
-    private String getHrefByMethod(Method method, HashMap<String, String> hrefs) {
-        String methodName = method.getName();
-
-        if(methodName.startsWith("get")) {
-            String hrefName = methodName.substring(3).toLowerCase();
-            return hrefs.get(hrefName);
-        }
-
-        return null;
-    }
 
 }

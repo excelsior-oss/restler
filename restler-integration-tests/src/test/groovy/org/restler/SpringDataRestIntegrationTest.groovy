@@ -1,5 +1,6 @@
 package org.restler
 
+import org.restler.http.HttpExecutionException
 import org.restler.integration.springdata.Address
 import org.restler.integration.springdata.Person
 import org.restler.integration.springdata.PersonsRepository
@@ -71,11 +72,16 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def person = personRepository.findOne(0L)
         def pets = person.getPets();
         pets.get(0).setName("New value")
+
+        pets.get(0).getPerson().setName("adasdw")
+
         personRepository.save(person)
+
         def person2 = personRepository.findOne(0L);
+        def newName = person2.getPets().get(0).getName()
 
         then:
-        person2.getPets().get(0).getName()=="New value"
+        newName=="New value"
     }
 
 
@@ -86,11 +92,21 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         List<Address> addresses = person.getAddresses();
 
         addresses.get(0).setName("New value")
-        Person ppp  = personRepository.save(person)
+        personRepository.save(person)
         def person2Address = personRepository.findOne(0L).getAddresses().get(0)
 
         then:
         person2Address.getName() == "New value"
+    }
+
+    def "test delete person"() {
+        setup:
+        def person = personRepository.findOne(1L);
+        personRepository.delete(person);
+        when:
+        personRepository.findOne(1L);
+        then:
+        thrown HttpExecutionException
     }
 
 }

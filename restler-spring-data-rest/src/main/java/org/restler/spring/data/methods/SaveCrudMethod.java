@@ -8,19 +8,15 @@ import org.restler.client.*;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.spring.data.chain.ChainCall;
-import org.restler.spring.data.proxy.Resource;
+import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.util.UriBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.persistence.OneToMany;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * Created by rudenko on 11.02.2016.
- */
 public class SaveCrudMethod implements CrudMethod
 {
     @Override
@@ -30,16 +26,16 @@ public class SaveCrudMethod implements CrudMethod
 
     @Override
     public Call getCall(Object[] args) {
-        return makeCall(args[0]);
+        return makeCall(args[0], new HashSet<>());
     }
 
     @Override
     public Object getRequestBody(Object[] args) {
         Object arg = args[0];
 
-        if(arg instanceof Resource) {
-            Resource resource = (Resource)arg;
-            arg = resource.getObject();
+        if(arg instanceof ResourceProxy) {
+            ResourceProxy resourceProxy = (ResourceProxy)arg;
+            arg = resourceProxy.getObject();
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -58,16 +54,16 @@ public class SaveCrudMethod implements CrudMethod
 
     @Override
     public HttpMethod getHttpMethod() {
-        return HttpMethod.PUT;
+        return HttpMethod.POST;
     }
 
     @Override
     public String getPathPart(Object[] args) {
         Object arg = args[0];
-        if(arg instanceof Resource) {
-            Resource resource = (Resource)arg;
+        if(arg instanceof ResourceProxy) {
+            ResourceProxy resourceProxy = (ResourceProxy)arg;
 
-            return resource.getResourceId().toString();
+            return resourceProxy.getResourceId().toString();
         }
 
         return "{id}";
@@ -79,36 +75,60 @@ public class SaveCrudMethod implements CrudMethod
     }
 
     private String getFullPath(Object object) {
-        if(object instanceof Resource) {
-            Resource resource = (Resource)object;
-            return resource.getRepositoryUri() + "/" + resource.getResourceId().toString();
+        if(object instanceof ResourceProxy) {
+            ResourceProxy resourceProxy = (ResourceProxy)object;
+            return resourceProxy.getRepositoryUri();
         }
         return null;
     }
 
-    private Call makeCall(Object object) {
+    private Call makeCall(Object object, Set<Object> set) {
         List<AbstractMap.SimpleEntry<Field, Object>> childs = getChilds(object);
 
         List<Call> calls = new ArrayList<>();
         List<Function< Object, Object>> functions = new ArrayList<>();
 
+        List<String> childHrefs = new ArrayList<>();
+
         try {
             for(AbstractMap.SimpleEntry<Field, Object> child : childs) {
+
                 child.getKey().setAccessible(true);
+
+                if(set.contains(child.getValue()) && object instanceof ResourceProxy) {
+                    child.getKey().set(((ResourceProxy) object).getObject(), null);
+                    continue;
+                }
+
+                set.add(child.getValue());
+
                 Object value = child.getValue();
+
+                String fieldName = null;
+
+                if(child.getKey().isAnnotationPresent(OneToMany.class)) {
+                    OneToMany oneToMany = child.getKey().getAnnotation(OneToMany.class);
+                    fieldName = oneToMany.mappedBy();
+                }
 
                 if(value instanceof Collection) {
                     Collection collection = (Collection) value;
 
                     for(Object item : collection) {
-                        calls.add(makeCall(item));
+                        if(fieldName != null && item instanceof ResourceProxy) {
+                            childHrefs.add(((ResourceProxy) item).getSelfUri() + "/" + fieldName);
+                        }
+                        calls.add(makeCall(item, set));
                     }
-                } else if(value instanceof Resource) {
-                    calls.add(makeCall(value));
+                } else if(value instanceof ResourceProxy) {
+                    if(fieldName != null) {
+                        childHrefs.add(((ResourceProxy) value).getSelfUri() + "/" + fieldName);
+                    }
+                    calls.add(makeCall(value, set));
                 }
 
-                if(object instanceof Resource) {
-                    child.getKey().set(((Resource) object).getObject(), null);
+                if(object instanceof ResourceProxy) {
+                    child.getKey().set(((ResourceProxy) object).getObject(), null);
                 }
             }
         } catch (IllegalAccessException e) {
@@ -117,24 +137,27 @@ public class SaveCrudMethod implements CrudMethod
 
         String fullPath  = getFullPath(object);
 
-        if(object instanceof Resource) {
-            object = ((Resource)object).getObject();
-        }
-
-        //if resource have repository and id
         if(fullPath != null) {
-            calls.add(getHttpCall(object, fullPath, object.getClass()));
+            Object callObject = object;
+            if(object instanceof ResourceProxy) {
+                callObject = ((ResourceProxy)object).getObject();
+            }
+            calls.add(getHttpCall(callObject, fullPath, callObject.getClass()));
         }
 
-
+        if(object instanceof ResourceProxy) {
+            for (String childHref : childHrefs) {
+                calls.add(new HttpCall(new UriBuilder(childHref).build(), HttpMethod.PUT, ((ResourceProxy) object).getSelfUri(), ImmutableMultimap.of("Content-Type", "text/uri-list"), String.class));
+            }
+        }
         return new ChainCall(calls, functions);
     }
 
     private List<AbstractMap.SimpleEntry<Field, Object>> getChilds(Object object) {
         List<AbstractMap.SimpleEntry<Field, Object>> result = new ArrayList<>();
 
-        if(object instanceof Resource) {
-            object = ((Resource) object).getObject();
+        if(object instanceof ResourceProxy) {
+            object = ((ResourceProxy) object).getObject();
         }
 
         Class<?> argClass = object.getClass();
@@ -149,7 +172,7 @@ public class SaveCrudMethod implements CrudMethod
                 if(fieldValue != null) {
                     if(fieldValue instanceof Collection) {
                         result.add(new AbstractMap.SimpleEntry<>(field, fieldValue));
-                    } else if(fieldValue instanceof Resource) {
+                    } else if(fieldValue instanceof ResourceProxy) {
                         result.add(new AbstractMap.SimpleEntry<>(field, fieldValue));
                     }
                 }

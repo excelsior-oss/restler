@@ -2,19 +2,15 @@ package org.restler.spring.data.methods;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
-import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
-import org.restler.util.UriBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.restler.spring.data.proxy.ResourceProxy;
 
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Set;
 
-public class FindOneCrudMethod implements CrudMethod {
+public class DeleteCrudMethod implements CrudMethod {
     @Override
     public boolean isCrudMethod(Method method) {
-        return "findOne".equals(method.getName());
+        return "delete".equals(method.getName());
     }
 
     @Override
@@ -29,16 +25,24 @@ public class FindOneCrudMethod implements CrudMethod {
 
     @Override
     public HttpMethod getHttpMethod() {
-        return HttpMethod.GET;
+        return HttpMethod.DELETE;
     }
 
     @Override
     public String getPathPart(Object[] args) {
+
+        Object arg;
+        if(args.length == 1 && (arg = args[0]) instanceof ResourceProxy) {
+            ResourceProxy resourceProxy = (ResourceProxy)arg;
+
+            return resourceProxy.getResourceId().toString();
+        }
+
         return "{id}";
     }
 
     @Override
     public ImmutableMultimap<String, String> getHeader() {
-        return ImmutableMultimap.of("Content-Type", "application/json");
+        return ImmutableMultimap.of();
     }
 }

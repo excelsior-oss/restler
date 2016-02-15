@@ -8,6 +8,7 @@ import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.spring.data.methods.CrudMethod;
+import org.restler.spring.data.methods.DeleteCrudMethod;
 import org.restler.spring.data.methods.FindOneCrudMethod;
 import org.restler.spring.data.methods.SaveCrudMethod;
 import org.restler.util.UriBuilder;
@@ -138,7 +139,7 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
     }
 
     private CrudMethod getCrudMethod(Method method) {
-        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod()};
+        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod(), new DeleteCrudMethod()};
 
         for(CrudMethod crudMethod : crudMethods) {
             if(crudMethod.isCrudMethod(method)) {
