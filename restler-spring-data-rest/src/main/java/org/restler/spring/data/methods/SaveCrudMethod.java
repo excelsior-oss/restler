@@ -11,14 +11,27 @@ import org.restler.spring.data.chain.ChainCall;
 import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.util.UriBuilder;
 
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SaveCrudMethod implements CrudMethod
 {
+
+    private String baseUri;
+
+    public SaveCrudMethod(String baseUri) {
+        this.baseUri = baseUri;
+    }
+
     @Override
     public boolean isCrudMethod(Method method) {
         return "save".equals(method.getName());
@@ -26,7 +39,7 @@ public class SaveCrudMethod implements CrudMethod
 
     @Override
     public Call getCall(Object[] args) {
-        return makeCall(args[0], new HashSet<>());
+        return save(args[0], new HashSet<>());
     }
 
     @Override
@@ -54,7 +67,7 @@ public class SaveCrudMethod implements CrudMethod
 
     @Override
     public HttpMethod getHttpMethod() {
-        return HttpMethod.POST;
+        return HttpMethod.PUT;
     }
 
     @Override
@@ -74,85 +87,6 @@ public class SaveCrudMethod implements CrudMethod
         return ImmutableMultimap.of("Content-Type", "application/json");
     }
 
-    private String getFullPath(Object object) {
-        if(object instanceof ResourceProxy) {
-            ResourceProxy resourceProxy = (ResourceProxy)object;
-            return resourceProxy.getRepositoryUri();
-        }
-        return null;
-    }
-
-    private Call makeCall(Object object, Set<Object> set) {
-        List<AbstractMap.SimpleEntry<Field, Object>> childs = getChilds(object);
-
-        List<Call> calls = new ArrayList<>();
-        List<Function< Object, Object>> functions = new ArrayList<>();
-
-        List<String> childHrefs = new ArrayList<>();
-
-        try {
-            for(AbstractMap.SimpleEntry<Field, Object> child : childs) {
-
-                child.getKey().setAccessible(true);
-
-                if(set.contains(child.getValue()) && object instanceof ResourceProxy) {
-                    child.getKey().set(((ResourceProxy) object).getObject(), null);
-                    continue;
-                }
-
-                set.add(child.getValue());
-
-                Object value = child.getValue();
-
-                String fieldName = null;
-
-                if(child.getKey().isAnnotationPresent(OneToMany.class)) {
-                    OneToMany oneToMany = child.getKey().getAnnotation(OneToMany.class);
-                    fieldName = oneToMany.mappedBy();
-                }
-
-                if(value instanceof Collection) {
-                    Collection collection = (Collection) value;
-
-                    for(Object item : collection) {
-                        if(fieldName != null && item instanceof ResourceProxy) {
-                            childHrefs.add(((ResourceProxy) item).getSelfUri() + "/" + fieldName);
-                        }
-                        calls.add(makeCall(item, set));
-                    }
-                } else if(value instanceof ResourceProxy) {
-                    if(fieldName != null) {
-                        childHrefs.add(((ResourceProxy) value).getSelfUri() + "/" + fieldName);
-                    }
-                    calls.add(makeCall(value, set));
-                }
-
-                if(object instanceof ResourceProxy) {
-                    child.getKey().set(((ResourceProxy) object).getObject(), null);
-                }
-            }
-        } catch (IllegalAccessException e) {
-            throw new RestlerException("Can't set value to field.", e);
-        }
-
-        String fullPath  = getFullPath(object);
-
-        if(fullPath != null) {
-            Object callObject = object;
-            if(object instanceof ResourceProxy) {
-                callObject = ((ResourceProxy)object).getObject();
-            }
-            calls.add(getHttpCall(callObject, fullPath, callObject.getClass()));
-        }
-
-        if(object instanceof ResourceProxy) {
-            for (String childHref : childHrefs) {
-                calls.add(new HttpCall(new UriBuilder(childHref).build(), HttpMethod.PUT, ((ResourceProxy) object).getSelfUri(), ImmutableMultimap.of("Content-Type", "text/uri-list"), String.class));
-            }
-        }
-        return new ChainCall(calls, functions);
-    }
-
     private List<AbstractMap.SimpleEntry<Field, Object>> getChilds(Object object) {
         List<AbstractMap.SimpleEntry<Field, Object>> result = new ArrayList<>();
 
@@ -170,11 +104,7 @@ public class SaveCrudMethod implements CrudMethod
                 Object fieldValue = field.get(object);
 
                 if(fieldValue != null) {
-                    if(fieldValue instanceof Collection) {
-                        result.add(new AbstractMap.SimpleEntry<>(field, fieldValue));
-                    } else if(fieldValue instanceof ResourceProxy) {
-                        result.add(new AbstractMap.SimpleEntry<>(field, fieldValue));
-                    }
+                    result.add(new AbstractMap.SimpleEntry<>(field, fieldValue));
                 }
 
                 field.setAccessible(false);
@@ -186,12 +116,175 @@ public class SaveCrudMethod implements CrudMethod
         return result;
     }
 
-    private HttpCall getHttpCall(Object object, String path, Class<?> returnType) {
+    private ChainCall save(Object object, Set<Object> set) {
+        List<AbstractMap.SimpleEntry<Field, Object>> childs = getChilds(object);
+
+        set.add(object);
+
+        childs = childs.stream().filter(
+                item-> {
+                        Object value = item.getValue();
+                        if(value instanceof ResourceProxy) {
+                            value = ((ResourceProxy)item.getValue()).getObject();
+                        }
+                        return value.getClass().isAnnotationPresent(Entity.class) &&
+                                getId(value) != null ||
+                                value instanceof Collection;
+                }
+        ).collect(Collectors.toList());
+
+        List<Call> calls = new ArrayList<>();
+
+        if(childs.isEmpty()) {
+            if(object instanceof ResourceProxy) {
+                calls.add(update((ResourceProxy) object));
+            } else {
+                calls.add(add(object));
+            }
+
+            return new ChainCall(calls);
+        }
+
+        try {
+            for(AbstractMap.SimpleEntry<Field, Object> child : childs) {
+                child.getKey().setAccessible(true);
+
+                if(set.contains(child.getValue()) && object instanceof ResourceProxy) {
+                    child.getKey().set(((ResourceProxy) object).getObject(), null);
+                    continue;
+                }
+
+                if(child.getValue() instanceof Collection) {
+                    for(Object item : (Collection)child.getValue()) {
+                        calls.add(save(item, set));
+                    }
+                } else {
+                    calls.add(save(child.getValue(), set));
+                }
+
+                if(object instanceof ResourceProxy) {
+                    child.getKey().set(((ResourceProxy) object).getObject(), null);
+                } else {
+                    child.getKey().set(object, null);
+                }
+            }
+        } catch (IllegalAccessException e) {
+            throw new RestlerException("Can't set value to field.", e);
+        }
+
+        if(object instanceof ResourceProxy) {
+            calls.add(update((ResourceProxy) object));
+            List<AbstractMap.SimpleEntry<Field, Object>> linkedChilds = childs.stream().filter(child->!(child instanceof ResourceProxy)).collect(Collectors.toList());
+            calls.add(makeLinks(object, linkedChilds));
+
+        } else {
+            calls.add(add(object));
+            calls.add(makeLinks(object, childs));
+        }
+
+        calls = calls.stream().filter(call->call!=null).collect(Collectors.toList());
+
+        return new ChainCall(calls);
+    }
+
+    private ChainCall makeLinks(Object parent, List<AbstractMap.SimpleEntry<Field, Object>> childs) {
+        List<Call> calls = new ArrayList<>();
+
+        String fieldName;
+
+        for(AbstractMap.SimpleEntry<Field, Object> child : childs) {
+            if(child.getKey().isAnnotationPresent(OneToMany.class)) {
+                OneToMany annotation = child.getKey().getAnnotation(OneToMany.class);
+                fieldName = annotation.mappedBy();
+
+                if(fieldName != null) {
+                    if (child.getValue() instanceof Collection) {
+                        for (Object item : (Collection) child.getValue()) {
+                            calls.add(link(parent, item, fieldName));
+                        }
+                    } else {
+                        calls.add(link(parent, child.getValue(), fieldName));
+                    }
+                }
+            }
+        }
+
+        return new ChainCall(calls);
+    }
+
+    private Call link(Object parent, Object child, String fieldName) {
+        String parentUri;
+        String childUri;
+        if(parent instanceof ResourceProxy) {
+            parentUri = ((ResourceProxy) parent).getSelfUri();
+        } else {
+            Object id = getId(parent);
+
+
+            if(id == null) {
+                return null;
+            }
+
+            parentUri = baseUri + "/" + parent.getClass().getName().toLowerCase() + "s" + "/" + id;
+        }
+
+        if(child instanceof ResourceProxy) {
+            childUri = ((ResourceProxy) child).getSelfUri();
+        } else {
+            Object id = getId(child);
+
+            if(id == null) {
+                return null;
+            }
+
+            childUri = baseUri + "/" + child.getClass().getName().toLowerCase() + "s" + "/" + id;
+        }
+
+        ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "text/uri-list");
+
+        return new HttpCall(new UriBuilder(childUri + "/" + fieldName).build(), HttpMethod.PUT, parentUri, header, String.class);
+    }
+
+    private Call add(Object object) {
+
+        if(getId(object) == null) {
+            return null;
+        }
+
         Object[] objects = {object};
 
-        Object body = getRequestBody(objects);
-        ImmutableMultimap<String, String> header = getHeader();
+        String repositoryPath = baseUri + "/" + object.getClass().getName().toLowerCase() + "s";
 
-        return new HttpCall(new UriBuilder(path).build(), getHttpMethod(), body, header, returnType);
+        Object body = getRequestBody(objects);
+        ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
+
+        return new HttpCall(new UriBuilder(repositoryPath).build(), HttpMethod.PUT, body, header, object.getClass());
+    }
+
+    private Call update(ResourceProxy resource) {
+        Object[] objects = {resource};
+
+        Object body = getRequestBody(objects);
+        ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
+
+        return new HttpCall(new UriBuilder(resource.getSelfUri()).build(), HttpMethod.PUT, body, header, resource.getObject().getClass());
+    }
+
+    private Object getId(Object object) {
+        Field[] fields = object.getClass().getDeclaredFields();
+
+        for (Field field : fields) {
+            if (field.getDeclaredAnnotation(Id.class) != null || field.getDeclaredAnnotation(EmbeddedId.class) != null) {
+                field.setAccessible(true);
+
+                try {
+                    return field.get(object);
+                } catch (IllegalAccessException e) {
+                    throw new RestlerException("Can't get value from id field.", e);
+                }
+            }
+        }
+
+        throw new RestlerException("Can't get id.");
     }
 }

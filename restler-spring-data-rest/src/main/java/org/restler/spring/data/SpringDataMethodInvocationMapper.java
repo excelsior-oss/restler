@@ -139,7 +139,7 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
     }
 
     private CrudMethod getCrudMethod(Method method) {
-        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod(), new DeleteCrudMethod()};
+        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod(baseUrl.toString()), new DeleteCrudMethod()};
 
         for(CrudMethod crudMethod : crudMethods) {
             if(crudMethod.isCrudMethod(method)) {

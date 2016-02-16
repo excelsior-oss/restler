@@ -7,29 +7,15 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Function;
 
-/**
- * Created by Admin on 14.02.2016.
- */
 public class ChainCall implements Call {
 
 
     private int index = 0;
 
-    private List<Function<Object, Object>> functions;
     private List<Call> calls;
 
-    public ChainCall(List<Call> calls, List<Function<Object, Object>> functions) {
+    public ChainCall(List<Call> calls) {
         this.calls = calls;
-        this.functions = functions;
-    }
-
-    public Function<Object, Object> getFunction() {
-
-        if(index < functions.size()) {
-            return functions.get(index);
-        }
-
-        return null;
     }
 
     public Call getCall() {

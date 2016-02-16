@@ -9,9 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-/**
- * Created by Admin on 14.02.2016.
- */
 public class ChainCallEnhancer implements CallEnhancer {
     @Override
     public Object apply(Call call, CallExecutor callExecutor) {
@@ -27,11 +24,7 @@ public class ChainCallEnhancer implements CallEnhancer {
 
             Object result = null;
             while((callFromChain = chainCall.getCall()) != null) {
-                Function<Object, Object> function = chainCall.getFunction();
-                Object callResult = chain.execute(callFromChain);
-                if (function != null) {
-                    result = function.apply(callResult);
-                }
+                result = chain.execute(callFromChain);
             }
 
             return result;
