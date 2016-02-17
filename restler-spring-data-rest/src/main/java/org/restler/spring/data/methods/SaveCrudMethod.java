@@ -7,29 +7,31 @@ import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.*;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
+import org.restler.spring.data.Repositories;
 import org.restler.spring.data.chain.ChainCall;
 import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.util.UriBuilder;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.Repository;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
+import javax.persistence.*;
+import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SaveCrudMethod implements CrudMethod
 {
 
-    private String baseUri;
+    private String repositoryUri;
+    private Repositories repositories;
 
-    public SaveCrudMethod(String baseUri) {
-        this.baseUri = baseUri;
+    public SaveCrudMethod(String repositoryUri, Repositories repositories) {
+        this.repositoryUri = repositoryUri;
+        this.repositories = repositories;
     }
 
     @Override
@@ -39,7 +41,27 @@ public class SaveCrudMethod implements CrudMethod
 
     @Override
     public Call getCall(Object[] args) {
-        return save(args[0], new HashSet<>());
+
+        List<Pair<Field, Object>> childs = getChilds(args[0]);
+        ResourceTree resourceTree = makeTree(args[0], new HashSet<>());
+
+        resourceTree.forEach(resource-> {
+            if(resource != args[0]) {
+                saveResource(resource);
+            }
+        });
+
+        List<Call> calls = new ArrayList<>();
+
+        if(args[0] instanceof ResourceProxy) {
+            calls.add(update((ResourceProxy) args[0]));
+        } else {
+            calls.add(add(args[0]));
+        }
+
+        calls.add(makeLinks(args[0], childs));
+
+        return new ChainCall(calls);
     }
 
     @Override
@@ -87,8 +109,8 @@ public class SaveCrudMethod implements CrudMethod
         return ImmutableMultimap.of("Content-Type", "application/json");
     }
 
-    private List<AbstractMap.SimpleEntry<Field, Object>> getChilds(Object object) {
-        List<AbstractMap.SimpleEntry<Field, Object>> result = new ArrayList<>();
+    private List<Pair<Field, Object>> getChilds(Object object) {
+        List<Pair<Field, Object>> result = new ArrayList<>();
 
         if(object instanceof ResourceProxy) {
             object = ((ResourceProxy) object).getObject();
@@ -104,7 +126,7 @@ public class SaveCrudMethod implements CrudMethod
                 Object fieldValue = field.get(object);
 
                 if(fieldValue != null) {
-                    result.add(new AbstractMap.SimpleEntry<>(field, fieldValue));
+                    result.add(new Pair<>(field, fieldValue));
                 }
 
                 field.setAccessible(false);
@@ -116,16 +138,16 @@ public class SaveCrudMethod implements CrudMethod
         return result;
     }
 
-    private ChainCall save(Object object, Set<Object> set) {
-        List<AbstractMap.SimpleEntry<Field, Object>> childs = getChilds(object);
+    private ResourceTree makeTree(Object object, Set<Object> set) {
+        List<Pair<Field, Object>> childs = getChilds(object);
 
         set.add(object);
 
         childs = childs.stream().filter(
                 item-> {
-                        Object value = item.getValue();
+                        Object value = item.secondValue;
                         if(value instanceof ResourceProxy) {
-                            value = ((ResourceProxy)item.getValue()).getObject();
+                            value = ((ResourceProxy)item.secondValue).getObject();
                         }
                         return value.getClass().isAnnotationPresent(Entity.class) &&
                                 getId(value) != null ||
@@ -133,111 +155,111 @@ public class SaveCrudMethod implements CrudMethod
                 }
         ).collect(Collectors.toList());
 
-        List<Call> calls = new ArrayList<>();
+        List<ResourceTree> resourceChilds = new ArrayList<>();
 
         if(childs.isEmpty()) {
-            if(object instanceof ResourceProxy) {
-                calls.add(update((ResourceProxy) object));
-            } else {
-                calls.add(add(object));
-            }
-
-            return new ChainCall(calls);
+            return new ResourceTree(object);
         }
 
         try {
-            for(AbstractMap.SimpleEntry<Field, Object> child : childs) {
-                child.getKey().setAccessible(true);
+            for(Pair<Field, Object> child : childs) {
+                child.firstValue.setAccessible(true);
 
-                if(set.contains(child.getValue()) && object instanceof ResourceProxy) {
-                    child.getKey().set(((ResourceProxy) object).getObject(), null);
-                    continue;
-                }
-
-                if(child.getValue() instanceof Collection) {
-                    for(Object item : (Collection)child.getValue()) {
-                        calls.add(save(item, set));
+                if(!set.contains(child.secondValue)) {
+                    if (child.secondValue instanceof Collection) {
+                        for (Object item : (Collection) child.secondValue) {
+                            resourceChilds.add(makeTree(item, set));
+                        }
+                    } else {
+                        resourceChilds.add(makeTree(child.secondValue, set));
                     }
-                } else {
-                    calls.add(save(child.getValue(), set));
                 }
 
                 if(object instanceof ResourceProxy) {
-                    child.getKey().set(((ResourceProxy) object).getObject(), null);
+                    child.firstValue.set(((ResourceProxy) object).getObject(), null);
                 } else {
-                    child.getKey().set(object, null);
+                    child.firstValue.set(object, null);
                 }
             }
         } catch (IllegalAccessException e) {
             throw new RestlerException("Can't set value to field.", e);
         }
 
-        if(object instanceof ResourceProxy) {
-            calls.add(update((ResourceProxy) object));
-            List<AbstractMap.SimpleEntry<Field, Object>> linkedChilds = childs.stream().filter(child->!(child instanceof ResourceProxy)).collect(Collectors.toList());
-            calls.add(makeLinks(object, linkedChilds));
-
-        } else {
-            calls.add(add(object));
-            calls.add(makeLinks(object, childs));
-        }
-
-        calls = calls.stream().filter(call->call!=null).collect(Collectors.toList());
-
-        return new ChainCall(calls);
+        return new ResourceTree(resourceChilds, object);
     }
 
-    private ChainCall makeLinks(Object parent, List<AbstractMap.SimpleEntry<Field, Object>> childs) {
+    private Object saveResource(Object resource) {
+        if(resource instanceof ResourceProxy) {
+            resource = ((ResourceProxy)resource).getObject();
+        }
+
+        Repository repository = repositories.getByResourceClass(resource.getClass());
+
+        if(repository == null) {
+            return null;
+        }
+
+        if(repository instanceof CrudRepository) {
+            return ((CrudRepository)repository).save(resource);
+        }
+
+        return null;
+    }
+
+    private ChainCall makeLinks(Object parent, List<Pair<Field, Object>> childs) {
         List<Call> calls = new ArrayList<>();
 
         String fieldName;
 
-        for(AbstractMap.SimpleEntry<Field, Object> child : childs) {
-            if(child.getKey().isAnnotationPresent(OneToMany.class)) {
-                OneToMany annotation = child.getKey().getAnnotation(OneToMany.class);
+        for(Pair<Field, Object> child : childs) {
+            if(child.firstValue.isAnnotationPresent(OneToMany.class)) {
+                OneToMany annotation = child.firstValue.getAnnotation(OneToMany.class);
                 fieldName = annotation.mappedBy();
 
                 if(fieldName != null) {
-                    if (child.getValue() instanceof Collection) {
-                        for (Object item : (Collection) child.getValue()) {
+                    if (child.secondValue instanceof Collection) {
+                        for (Object item : (Collection) child.secondValue) {
                             calls.add(link(parent, item, fieldName));
                         }
                     } else {
-                        calls.add(link(parent, child.getValue(), fieldName));
+                        calls.add(link(parent, child.secondValue, fieldName));
                     }
                 }
+            } else if(child.firstValue.isAnnotationPresent(ManyToOne.class)) {
+
+                calls.add(link(child.secondValue, parent, child.firstValue.getName()));
+
             }
         }
 
         return new ChainCall(calls);
+    }
+
+    private String getUri(Object object) {
+        String result;
+        if(object instanceof ResourceProxy) {
+            result = ((ResourceProxy) object).getSelfUri();
+        } else {
+            Repository repository = repositories.getByResourceClass(object.getClass());
+            Object id = getId(object);
+            if(id == null) {
+                return null;
+            }
+            result = repositories.getRepositoryUri(repository.getClass().getInterfaces()[0]) + "/" + id;
+        }
+
+        return result;
     }
 
     private Call link(Object parent, Object child, String fieldName) {
         String parentUri;
         String childUri;
-        if(parent instanceof ResourceProxy) {
-            parentUri = ((ResourceProxy) parent).getSelfUri();
-        } else {
-            Object id = getId(parent);
 
+        parentUri = getUri(parent);
+        childUri = getUri(child);
 
-            if(id == null) {
-                return null;
-            }
-
-            parentUri = baseUri + "/" + parent.getClass().getName().toLowerCase() + "s" + "/" + id;
-        }
-
-        if(child instanceof ResourceProxy) {
-            childUri = ((ResourceProxy) child).getSelfUri();
-        } else {
-            Object id = getId(child);
-
-            if(id == null) {
-                return null;
-            }
-
-            childUri = baseUri + "/" + child.getClass().getName().toLowerCase() + "s" + "/" + id;
+        if(parentUri == null || childUri == null) {
+            return null;
         }
 
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "text/uri-list");
@@ -253,12 +275,10 @@ public class SaveCrudMethod implements CrudMethod
 
         Object[] objects = {object};
 
-        String repositoryPath = baseUri + "/" + object.getClass().getName().toLowerCase() + "s";
-
         Object body = getRequestBody(objects);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 
-        return new HttpCall(new UriBuilder(repositoryPath).build(), HttpMethod.PUT, body, header, object.getClass());
+        return new HttpCall(new UriBuilder(repositoryUri).build(), HttpMethod.POST, body, header, object.getClass());
     }
 
     private Call update(ResourceProxy resource) {
@@ -287,4 +307,42 @@ public class SaveCrudMethod implements CrudMethod
 
         throw new RestlerException("Can't get id.");
     }
+
+    private class ResourceTree {
+        private Object resource;
+        private List<ResourceTree> childs = null;
+
+        ResourceTree(Object resource) {
+            this.resource = resource;
+        }
+
+        ResourceTree(List<ResourceTree> childs, Object resource) {
+            this(resource);
+            this.childs = childs;
+        }
+
+        void forEach(Consumer<Object> consumer) {
+            if(childs == null) {
+                consumer.accept(resource);
+                return;
+            }
+
+            for(ResourceTree child : childs) {
+                child.forEach(consumer);
+            }
+
+            consumer.accept(resource);
+        }
+    }
+
+    private class Pair<T1, T2> {
+        Pair(T1 firstValue, T2 secondValue) {
+            this.firstValue = firstValue;
+            this.secondValue = secondValue;
+        }
+        T1 firstValue;
+        T2 secondValue;
+    }
+
+
 }

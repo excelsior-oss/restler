@@ -2,6 +2,7 @@ package org.restler.integration.springdata;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -13,7 +14,7 @@ public class Person implements Serializable {
     @Column private String name;
 
     @OneToMany(mappedBy = "person"/*, cascade = CascadeType.ALL*/)
-    private List<Pet> pets;
+    private List<Pet> pets = new ArrayList<>();
 
     @OneToMany(mappedBy = "person"/*, cascade = CascadeType.ALL*/)
     private List<Address> addresses;

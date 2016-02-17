@@ -5,17 +5,19 @@ import org.restler.integration.springdata.Address
 import org.restler.integration.springdata.Person
 import org.restler.integration.springdata.PersonsRepository
 import org.restler.integration.springdata.Pet
+import org.restler.integration.springdata.PetsRepository
 import org.restler.spring.data.SpringDataSupport
 import org.restler.util.IntegrationSpec
 import spock.lang.Specification
 
 class SpringDataRestIntegrationTest extends Specification implements IntegrationSpec {
-
-    Service serviceWithBasicAuth = new Restler("http://localhost:8080", new SpringDataSupport()).
+    Service serviceWithBasicAuth = new Restler("http://localhost:8080",
+            new SpringDataSupport([PersonsRepository.class, PetsRepository.class])).
             httpBasicAuthentication("user", "password").
             build();
 
     PersonsRepository personRepository = serviceWithBasicAuth.produceClient(PersonsRepository.class)
+    PetsRepository petRepository = serviceWithBasicAuth.produceClient(PetsRepository.class)
 
     def "test PersonRepository findOne"() {
         expect:
@@ -82,6 +84,42 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
         then:
         newName=="New value"
+    }
+
+    def "test add new pet"() {
+        when:
+
+        def pet = new Pet(10, "test pet 10", personRepository.findOne(0L))
+        petRepository.save(pet);
+
+        def pet1 = petRepository.findOne(10L);
+        def person1 = pet1.getPerson();
+
+        then:
+        person1.getName() == "test name"
+
+    }
+
+    def "test add new person"() {
+        when:
+        //personRepository.delete(2L)
+        def person = new Person(2, "Test person")
+        def pets = person.getPets()
+
+        pets.add(new Pet(2, "pet2", null))
+        pets.add(new Pet(3, null, null))
+        pets.add(new Pet(4, "pet4", null))
+
+        personRepository.save(person)
+
+        def person1 = personRepository.findOne(2L)
+        def pets1 = person1.getPets()
+
+        then:
+        person1.getName() == "Test person"
+        pets1.get(0).getName() == "pet2"
+        pets1.get(1).getName() == null
+        pets1.get(2).getName() == "pet4"
     }
 
 

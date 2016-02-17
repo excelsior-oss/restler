@@ -24,6 +24,13 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
 
     private Optional<RequestExecutor> requestExecutor = Optional.empty();
 
+    private List<Class<?>> repositories = new ArrayList<>();
+
+    public SpringDataSupport(List<Class<?>> repositories) {
+        this.repositories = repositories;
+    }
+
+
     @Override
     public CoreModule apply(RestlerConfig config) {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
@@ -32,7 +39,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
         totalEnhancers.add(new ProxyCachingCallEnhancer());
         totalEnhancers.addAll(config.getEnhancers());
 
-        return new SpringData(config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers);
+        return new SpringData(config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers, repositories);
     }
 
     public SpringDataSupport addJacksonModule(Module module) {

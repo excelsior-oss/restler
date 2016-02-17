@@ -16,7 +16,6 @@ import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -24,7 +23,6 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
@@ -35,8 +33,11 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
 
     private final URI baseUrl;
 
-    public SpringDataMethodInvocationMapper(URI baseUrl) {
+    private final Repositories repositories;
+
+    public SpringDataMethodInvocationMapper(URI baseUrl, Repositories repositories) {
         this.baseUrl = baseUrl;
+        this.repositories = repositories;
     }
 
     @Override
@@ -69,7 +70,7 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
 
     private Call getDescription(Class<?> declaringClass, Method method, ImmutableMultimap<String, String> requestParams, Map<String, Object> pathVariables, Set<Object> unmappedArgs) {
 
-        RepositoryRestResource repositoryAnnotation = declaringClass.getInterfaces()[0].getDeclaredAnnotation(RepositoryRestResource.class);
+        //RepositoryRestResource repositoryAnnotation = declaringClass.getInterfaces()[0].getDeclaredAnnotation(RepositoryRestResource.class);
         RestResource methodAnnotation = method.getDeclaredAnnotation(RestResource.class);
 
         String methodMappedUriString;
@@ -81,11 +82,11 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
         ParameterizedTypeImpl crudRepositoryType = (ParameterizedTypeImpl) repositoryType.getGenericInterfaces()[0];
         Class<?> idClass = TypeToken.of(crudRepositoryType.getActualTypeArguments()[1]).getRawType();
 
-        String repositoryUri = getRepositoryUri(declaringClass, repositoryAnnotation);
+        String repositoryUri = repositories.getRepositoryUri(declaringClass.getInterfaces()[0]).replace(baseUrl.toString()+"/", "");
 
         Type genericReturnType;
         if (isCrudMethod(method)) {
-            CrudMethod crudMethod = getCrudMethod(method);
+            CrudMethod crudMethod = getCrudMethod(method, baseUrl + "/" + repositoryUri);
             Call call = crudMethod.getCall(unmappedArgs.toArray());
 
             if(call != null) {
@@ -121,25 +122,8 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
                 pathVariables(pathVariables).build();
     }
 
-    private String getRepositoryUri(Class<?> repositoryClass, RepositoryRestResource repositoryAnnotation) {
-
-        String repositoryUriString;
-        if (repositoryAnnotation == null || repositoryAnnotation.path().isEmpty()) {
-            Type entityType = ((ParameterizedType) repositoryClass.getClass().getInterfaces()[0].getGenericInterfaces()[0]).getActualTypeArguments()[0];
-            try {
-                repositoryUriString = Class.forName(entityType.getTypeName()).getSimpleName().toLowerCase() + "s";
-            } catch (ClassNotFoundException e) {
-                throw new RestlerException("Could not find class for repository's entity type", e);
-            }
-        } else {
-            repositoryUriString = repositoryAnnotation.path();
-        }
-
-        return repositoryUriString;
-    }
-
-    private CrudMethod getCrudMethod(Method method) {
-        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod(baseUrl.toString()), new DeleteCrudMethod()};
+    private CrudMethod getCrudMethod(Method method, String repositoryUri) {
+        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod(repositoryUri, repositories), new DeleteCrudMethod()};
 
         for(CrudMethod crudMethod : crudMethods) {
             if(crudMethod.isCrudMethod(method)) {
