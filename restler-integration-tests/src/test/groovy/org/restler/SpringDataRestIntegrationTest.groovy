@@ -18,23 +18,23 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     def "test PersonRepository findOne"() {
         expect:
-        Person person = personRepository.findOne(0L)
-        person.getId() == 0L
-        person.getName() == "person0"
+        Person person = personRepository.findOne(1L)
+        person.getId() == 1L
+        person.getName() == "person1"
     }
 
     def "test query method PersonRepository findById"() {
         expect:
-        Person person = personRepository.findById(0L)
-        person.getId() == 0L
-        person.getName() == "person0"
+        Person person = personRepository.findById(1L)
+        person.getId() == 1L
+        person.getName() == "person1"
     }
 
     def "test query method PersonRepository findByName"() {
         expect:
-        List<Person> persons = personRepository.findByName("person0")
-        persons[0].getId() == 0L
-        persons[0].getName() == "person0"
+        List<Person> persons = personRepository.findByName("person1")
+        persons[0].getId() == 1L
+        persons[0].getName() == "person1"
     }
 
     def "test person getPets"() {
@@ -49,12 +49,12 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     def "test pet getPerson"() {
         when:
-        def person = personRepository.findOne(0L)
+        def person = personRepository.findOne(1L)
         List<Pet> pets = person.getPets();
         Pet pet = pets.get(0);
         then:
-        pet.getPerson().getId() == 0L
-        pet.getPerson().getName() == "person0"
+        pet.getPerson().getId() == 1L
+        pet.getPerson().getName() == "person1"
     }
 
     def "test person getAddresses"() {
@@ -81,6 +81,23 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         newName=="New value"
     }
 
+    def "test add new pet"() {
+        when:
+
+        def pet = new Pet(10, "test pet 10", personRepository.findOne(1L))
+        petRepository.save(pet);
+
+        def pet1 = petRepository.findOne(10L);
+        def person1 = pet1.getPerson();
+
+        then:
+        pet1.getId() == 10L
+        pet1.getName() == "test pet 10"
+        person1.getId() == 1L
+        person1.getName() == "person1"
+
+    }
+
     def "test change person from pet"() {
         when:
         def person = personRepository.findOne(1L)
@@ -91,23 +108,6 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def person1 = personRepository.findOne(1L)
         then:
         person1.getName() == "New person name"
-
-    }
-
-    def "test add new pet"() {
-        when:
-
-        def pet = new Pet(10, "test pet 10", personRepository.findOne(0L))
-        petRepository.save(pet);
-
-        def pet1 = petRepository.findOne(10L);
-        def person1 = pet1.getPerson();
-
-        then:
-        pet1.getId() == 10L
-        pet1.getName() == "test pet 10"
-        person1.getId() == 0L
-        person1.getName() == "person0"
 
     }
 
@@ -135,13 +135,12 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
 
     def "test delete person without pets"() {
-        setup:
+        when:
         def person = personRepository.findOne(2L);
         personRepository.delete(person);
-        when:
-        personRepository.findOne(2L);
+        def person1 = personRepository.findOne(2L);
         then:
-        thrown HttpExecutionException
+        person1 == null
     }
 
     @Ignore

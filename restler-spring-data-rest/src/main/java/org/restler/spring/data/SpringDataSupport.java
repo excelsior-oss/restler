@@ -37,6 +37,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
         totalEnhancers.add(new ChainCallEnhancer());
         totalEnhancers.add(new ProxyCallEnhancer(config));
         totalEnhancers.add(new ProxyCachingCallEnhancer());
+        totalEnhancers.add(new HttpExceptionCallEnhancer());
         totalEnhancers.addAll(config.getEnhancers());
 
         return new SpringData(config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers, repositories);
