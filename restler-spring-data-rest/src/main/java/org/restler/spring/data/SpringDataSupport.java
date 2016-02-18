@@ -35,7 +35,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
     public CoreModule apply(RestlerConfig config) {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
         totalEnhancers.add(new ChainCallEnhancer());
-        totalEnhancers.add(new ProxyCallEnhancer(config));
+        totalEnhancers.add(new ProxyCallEnhancer());
         totalEnhancers.add(new ProxyCachingCallEnhancer());
         totalEnhancers.add(new HttpExceptionCallEnhancer());
         totalEnhancers.addAll(config.getEnhancers());

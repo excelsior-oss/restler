@@ -1,20 +1,15 @@
 package org.restler.spring.data.proxy;
 
-import org.restler.RestlerConfig;
-import org.restler.client.*;
+import org.restler.client.Call;
+import org.restler.client.CallEnhancer;
+import org.restler.client.CallExecutionChain;
+import org.restler.client.CallExecutor;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class ProxyCallEnhancer implements CallEnhancer {
-    private RestlerConfig config;
-
-    public ProxyCallEnhancer(RestlerConfig config) {
-        this.config = config;
-    }
-
-
     @Override
     public Object apply(Call call, CallExecutor callExecutor) {
         Object object = callExecutor.execute(call);
@@ -41,7 +36,6 @@ public class ProxyCallEnhancer implements CallEnhancer {
             CallExecutionChain chain = new CallExecutionChain(callExecutor, proxyEnhancer);
             ResourceProxy resourceProxy = (ResourceProxy)object;
             resourceProxy.setExecutor(chain);
-            resourceProxy.setRestlerConfig(config);
         }
     }
 

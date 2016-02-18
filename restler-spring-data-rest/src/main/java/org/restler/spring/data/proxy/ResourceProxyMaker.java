@@ -41,19 +41,12 @@ public class ResourceProxyMaker {
                 return self.substring(0, self.lastIndexOf("/"));
             }else if(method.equals(ResourceProxy.class.getMethod("getSelfUri"))) {
                 return hrefs.get("self");
-            }else if(method.equals(ResourceProxy.class.getMethod("getCallExecutor"))) {
-                return proxyObjectData.executor;
             }else if(method.equals(ResourceProxy.class.getMethod("getObject"))) {
                 return object;
             }else if(method.equals(ResourceProxy.class.getMethod("getHrefs"))) {
                 return hrefs;
-            }else if(method.equals(ResourceProxy.class.getMethod("getRestlerConfig"))) {
-                return proxyObjectData.config;
             }else if(method.equals(ResourceProxy.class.getMethod("setExecutor", CallExecutor.class))) {
                 proxyObjectData.executor = (CallExecutor) args[0];
-                return null;
-            } else if(method.equals(ResourceProxy.class.getMethod("setRestlerConfig", RestlerConfig.class))) {
-                proxyObjectData.config = (RestlerConfig)args[0];
                 return null;
             }
 
