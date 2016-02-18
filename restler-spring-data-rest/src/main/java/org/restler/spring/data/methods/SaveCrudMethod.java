@@ -8,6 +8,7 @@ import org.restler.client.*;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.spring.data.Repositories;
+import org.restler.spring.data.RepositoryUtils;
 import org.restler.spring.data.chain.ChainCall;
 import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.util.UriBuilder;
@@ -26,10 +27,12 @@ import java.util.stream.Collectors;
 public class SaveCrudMethod implements CrudMethod
 {
 
+    private String baseUri;
     private String repositoryUri;
     private Repositories repositories;
 
-    public SaveCrudMethod(String repositoryUri, Repositories repositories) {
+    public SaveCrudMethod(String baseUri, String repositoryUri, Repositories repositories) {
+        this.baseUri = baseUri;
         this.repositoryUri = repositoryUri;
         this.repositories = repositories;
     }
@@ -245,7 +248,7 @@ public class SaveCrudMethod implements CrudMethod
             if(id == null) {
                 return null;
             }
-            result = repositories.getRepositoryUri(repository.getClass().getInterfaces()[0]) + "/" + id;
+            result = baseUri + "/" + RepositoryUtils.getRepositoryPath(repository.getClass().getInterfaces()[0]) + "/" + id;
         }
 
         return result;

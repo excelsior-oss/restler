@@ -82,7 +82,7 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
         ParameterizedTypeImpl crudRepositoryType = (ParameterizedTypeImpl) repositoryType.getGenericInterfaces()[0];
         Class<?> idClass = TypeToken.of(crudRepositoryType.getActualTypeArguments()[1]).getRawType();
 
-        String repositoryUri = repositories.getRepositoryUri(declaringClass.getInterfaces()[0]).replace(baseUrl.toString()+"/", "");
+        String repositoryUri = RepositoryUtils.getRepositoryPath(declaringClass.getInterfaces()[0]);
 
         Type genericReturnType;
         if (isCrudMethod(method)) {
@@ -123,7 +123,7 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
     }
 
     private CrudMethod getCrudMethod(Method method, String repositoryUri) {
-        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod(repositoryUri, repositories), new DeleteCrudMethod()};
+        CrudMethod[] crudMethods = {new FindOneCrudMethod(), new SaveCrudMethod(baseUrl.toString(), repositoryUri, repositories), new DeleteCrudMethod()};
 
         for(CrudMethod crudMethod : crudMethods) {
             if(crudMethod.isCrudMethod(method)) {

@@ -23,7 +23,7 @@ public class SpringData implements CoreModule {
         this.requestExecutor = requestExecutor;
         this.enhancers = enhancers;
 
-        this.repositories = new Repositories(baseUrl.toString(), repositories, new CachingClientFactory(new CGLibClientFactory(this)));
+        this.repositories = new Repositories(repositories, new CachingClientFactory(new CGLibClientFactory(this)));
 
         this.repositories.initialize();
     }

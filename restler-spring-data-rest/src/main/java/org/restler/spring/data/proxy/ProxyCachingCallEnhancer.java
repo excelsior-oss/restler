@@ -17,11 +17,15 @@ public class ProxyCachingCallEnhancer implements CallEnhancer {
         Object object = callExecutor.execute(call);
 
         if(object instanceof ResourceProxy) {
-            Object value = cache.get(new AbstractMap.SimpleEntry<Class<?>, Object>(object.getClass(), ((ResourceProxy) object).getResourceId()));
+
+            Class<?> clazz = ((ResourceProxy) object).getObject().getClass();
+            Object id = ((ResourceProxy) object).getResourceId();
+
+            Object value = cache.get(new AbstractMap.SimpleEntry<Class<?>, Object>(clazz, id));
             if (value != null) {
                 return value;
             } else {
-                cache.put(new AbstractMap.SimpleEntry<Class<?>, Object>(object.getClass(), ((ResourceProxy) object).getResourceId()), object);
+                cache.put(new AbstractMap.SimpleEntry<Class<?>, Object>(clazz, id), object);
                 return object;
             }
         }
