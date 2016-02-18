@@ -1,7 +1,6 @@
-package groovy.org.restler.spring.data
+package org.restler.spring.data
 
 import org.restler.http.HttpCall
-import org.restler.spring.data.SpringDataMethodInvocationMapper
 import spock.lang.Specification
 
 class SpringDataMethodInvocationMapperSpec extends Specification {
