@@ -26,7 +26,6 @@ public class ResourceProxyMaker {
     public Object make(Class<?> aClass, Object object, HashMap<String, String> hrefs) {
         class ProxyObjectData {
             public CallExecutor executor = null;
-            public RestlerConfig config = null;
         }
 
         ProxyObjectData proxyObjectData = new ProxyObjectData();
