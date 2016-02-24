@@ -12,14 +12,14 @@ import java.util.List;
 
 public class SpringMvc implements CoreModule {
 
-    private final RequestExecutor requestExecutor;
-    private final List<CallEnhancer> enhancers;
+    private final HttpCallExecutor callExecutor;
+    private final CallExecutionChain chain;
     private final URI baseUri;
     private final ParameterResolver parameterResolver;
 
     public SpringMvc(RequestExecutor requestExecutor, List<CallEnhancer> enhancers, URI baseUri, ParameterResolver parameterResolver) {
-        this.requestExecutor = requestExecutor;
-        this.enhancers = enhancers;
+        callExecutor = new HttpCallExecutor(requestExecutor);
+        chain = new CallExecutionChain(callExecutor, enhancers);
         this.baseUri = baseUri;
         this.parameterResolver = parameterResolver;
     }
@@ -35,8 +35,7 @@ public class SpringMvc implements CoreModule {
 
     @Override
     public InvocationHandler createHandler(ServiceDescriptor descriptor) {
-        HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
-        CallExecutionChain chain = new CallExecutionChain(callExecutor, enhancers);
+
         return new CallExecutorInvocationHandler(chain, new SpringMvcMethodInvocationMapper(baseUri, parameterResolver));
     }
 

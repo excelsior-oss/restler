@@ -20,10 +20,9 @@ public class ChainCallEnhancer implements CallEnhancer {
         if(call instanceof ChainCall) {
             ChainCall chainCall = (ChainCall)call;
 
-            Call callFromChain;
-
             Object result = null;
-            while((callFromChain = chainCall.getCall()) != null) {
+
+            for(Call callFromChain : chainCall) {
                 result = chain.execute(callFromChain);
             }
 

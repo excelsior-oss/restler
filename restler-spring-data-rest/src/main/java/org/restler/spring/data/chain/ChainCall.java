@@ -4,40 +4,31 @@ import org.restler.client.Call;
 
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
-public class ChainCall implements Call {
+public class ChainCall implements Call, Iterable<Call> {
+    private final List<Call> calls;
+    private final Type returnType;
 
-
-    private int index = 0;
-
-    private List<Call> calls;
-
-    public ChainCall(List<Call> calls) {
+    public ChainCall(List<Call> calls, Type returnType) {
         this.calls = calls;
-    }
-
-    public Call getCall() {
-        if(index < calls.size()) {
-            return calls.get(index++);
-        }
-        return null;
+        this.returnType = returnType;
     }
 
     @Override
     public Type getReturnType() {
-        if(index >= calls.size()) {
-            return null;
-        }
-        return calls.get(index).getReturnType();
+        return returnType;
     }
 
     @Override
     public Call withReturnType(Type type) {
-        if(index >= calls.size()) {
-            return null;
-        }
-        return calls.get(index).withReturnType(type);
+        return new ChainCall(calls, type);
+    }
+
+    @Override
+    public Iterator iterator() {
+        return calls.iterator();
     }
 }

@@ -37,52 +37,57 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         persons[0].getName() == "person1"
     }
 
-    def "test person getPets"() {
-        when:
+    def "test composite objects retrieving that contain resource with repository"() {
+        given: "Person that have associated list of pets that have repository"
         def person = personRepository.findOne(0L)
-        List<Pet> pets = person.getPets();
 
-        then:
-        pets.get(0).getName() == "bobik"
-        pets.get(1).getName() == "sharik"
+        when: "List of associated pets are accessed"
+        def pets = person.getPets();
+
+        then: "It elements are correctly retrieved from remote server"
+        pets[0].getName() == "bobik"
+        pets[1].getName() == "sharik"
     }
 
-    def "test pet getPerson"() {
-        when:
+    def "test get objects with cycle references correctly"() {
+        given: "Person and pet that retrieved from remote server and have references to each other"
         def person = personRepository.findOne(1L)
-        List<Pet> pets = person.getPets();
-        Pet pet = pets.get(0);
-        then:
-        pet.getPerson().getId() == 1L
-        pet.getPerson().getName() == "person1"
+        def pet = person.getPets()[0]
+        when: "Person is got from pet"
+        def person1 = pet.getPerson()
+        then: "Person is correctly got from pet that got from this person"
+        person1.getId() == 1L
+        person1.getName() == "person1"
     }
 
-    def "test person getAddresses"() {
-        when:
+    def "test composite objects retrieving that contain resource without repository"() {
+        given: "Person that associated list of addresses without repository"
         def person = personRepository.findOne(0L)
-        List<Address> addresses = person.getAddresses();
 
-        then:
-        addresses.get(0).getName() == "Earth"
-        addresses.get(1).getName() == "Mars"
+        when: "List of associated addresses are accessed"
+        def addresses = person.getAddresses()
+
+        then: "It elements are correctly retrieved from remote server"
+        addresses[0].getName() == "Earth"
+        addresses[1].getName() == "Mars"
     }
 
-    def "test change pet"() {
-        when:
+    def "test change part of composite object"() {
+        given: "Person and pets where person is composite object and pets is part of person"
         def person = personRepository.findOne(1L)
         def pets = person.getPets();
+        when: "Change pet's name and get new value from server"
         pets.get(0).setName("New value")
-
         personRepository.save(person)
 
         def person2 = personRepository.findOne(1L);
         def newName = person2.getPets().get(0).getName()
-        then:
+        then: "Pet name was changed and saved on remote server"
         newName=="New value"
     }
 
-    def "test add new pet"() {
-        when:
+    def "test add new resource that part of other resource"() {
+        when: "New pet was added to person that exist already"
 
         def pet = new Pet(10, "test pet 10", personRepository.findOne(1L))
         petRepository.save(pet);
@@ -90,7 +95,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def pet1 = petRepository.findOne(10L);
         def person1 = pet1.getPerson();
 
-        then:
+        then: "Pet was added to person"
         pet1.getId() == 10L
         pet1.getName() == "test pet 10"
         person1.getId() == 1L
@@ -98,24 +103,25 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     }
 
-    def "test change person from pet"() {
-        when:
+    def "test change resource from resource that have reference to it"() {
+        given: "Person and pet that retrieved from remote server and have references to each other"
         def person = personRepository.findOne(1L)
         def pets = person.getPets()
-        pets.get(0).getPerson().setName("New person name")
+        when: "Change and save person using reference from pet"
+        pets[0].getPerson().setName("New person name")
         personRepository.save(person)
 
         def person1 = personRepository.findOne(1L)
-        then:
+        then: "Person was changed successfully"
         person1.getName() == "New person name"
-
     }
 
-    def "test add new person"() {
-        when:
+    def "test add new resources to list from composite resource"() {
+        given: "Person and list of associated pets"
         def person = new Person(3L, "person3")
         def pets = person.getPets()
 
+        when: "Add new pets and associate to person"
         pets.add(new Pet(2, "pet2", null))
         pets.add(new Pet(3, "pet3", null))
         pets.add(new Pet(4, "pet4", null))
@@ -125,21 +131,22 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def person1 = personRepository.findOne(3L)
         def pets1 = person1.getPets()
 
-        then:
+        then: "Pets was added to person successfully"
         person1.getId() == 3L
         person1.getName() == "person3"
-        pets1.get(0).getName() == "pet2"
-        pets1.get(1).getName() == "pet3"
-        pets1.get(2).getName() == "pet4"
+        pets1[0].getName() == "pet2"
+        pets1[1].getName() == "pet3"
+        pets1[2].getName() == "pet4"
     }
 
 
-    def "test delete person without pets"() {
-        when:
+    def "test delete resource from repository"() {
+        given: "Person that exist already"
         def person = personRepository.findOne(2L);
+        when: "Delete person from repository"
         personRepository.delete(person);
         def person1 = personRepository.findOne(2L);
-        then:
+        then: "Person was deleted successfully"
         person1 == null
     }
 

@@ -2,10 +2,6 @@ package org.restler.integration.springdata;
 
 import javax.persistence.*;
 
-/**
- * Created by rudenko on 10.02.2016.
- */
-
 @Entity(name = "addresses")
 public class Address {
     @Id
@@ -15,7 +11,7 @@ public class Address {
     private String name;
 
     @ManyToOne
-    @JoinColumn(name = "owner1_id")
+    @JoinColumn(name = "owner_id")
     private Person person;
 
     public Address(Long id, String name, Person person) {

@@ -4,10 +4,6 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Created by rudenko on 10.02.2016.
- */
-
 @Entity(name = "pets")
 public class Pet implements Serializable {
     @Id
@@ -17,7 +13,7 @@ public class Pet implements Serializable {
     private String name;
 
     @ManyToOne
-    @JoinColumn(name = "owner1_id")
+    @JoinColumn(name = "owner_id")
     private Person person;
 
     public Pet(Long id, String name, Person person) {
