@@ -6,7 +6,7 @@ import org.restler.client.CallExecutor;
 import org.restler.http.HttpExecutionException;
 import org.springframework.http.HttpStatus;
 
-public class HttpExceptionCallEnhancer implements CallEnhancer {
+public class SdrErrorMappingEnhancer implements CallEnhancer {
     @Override
     public Object apply(Call call, CallExecutor callExecutor) {
         try {
