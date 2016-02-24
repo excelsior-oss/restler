@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMultimap;
-import org.restler.client.*;
+import org.restler.client.Call;
+import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
+import org.restler.spring.data.Pair;
 import org.restler.spring.data.Repositories;
 import org.restler.spring.data.RepositoryUtils;
 import org.restler.spring.data.chain.ChainCall;
@@ -14,22 +16,21 @@ import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.util.UriBuilder;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import javax.persistence.*;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SaveCrudMethod implements CrudMethod
 {
 
-    private String baseUri;
-    private String repositoryUri;
-    private Repositories repositories;
+    private final String baseUri;
+    private final String repositoryUri;
+    private final Repositories repositories;
 
     public SaveCrudMethod(String baseUri, String repositoryUri, Repositories repositories) {
         this.baseUri = baseUri;
@@ -44,7 +45,6 @@ public class SaveCrudMethod implements CrudMethod
 
     @Override
     public Call getCall(Object[] args) {
-
         List<Pair<Field, Object>> childs = getChilds(args[0]);
         ResourceTree resourceTree = makeTree(args[0], new HashSet<>());
 
@@ -56,15 +56,21 @@ public class SaveCrudMethod implements CrudMethod
 
         List<Call> calls = new ArrayList<>();
 
+        Type returnType;
+
         if(args[0] instanceof ResourceProxy) {
-            calls.add(update((ResourceProxy) args[0]));
+            ResourceProxy resourceProxy = (ResourceProxy) args[0];
+            returnType = resourceProxy.getObject().getClass();
+            calls.add(update(resourceProxy));
         } else {
-            calls.add(add(args[0]));
+            Object object = args[0];
+            returnType = object.getClass();
+            calls.add(add(object));
         }
 
         calls.add(makeLinks(args[0], childs));
 
-        return new ChainCall(calls);
+        return new ChainCall(calls, returnType);
     }
 
     @Override
@@ -148,9 +154,9 @@ public class SaveCrudMethod implements CrudMethod
 
         childs = childs.stream().filter(
                 item-> {
-                        Object value = item.secondValue;
+                        Object value = item.getSecondValue();
                         if(value instanceof ResourceProxy) {
-                            value = ((ResourceProxy)item.secondValue).getObject();
+                            value = ((ResourceProxy)item.getSecondValue()).getObject();
                         }
                         return value.getClass().isAnnotationPresent(Entity.class) &&
                                 getId(value) != null ||
@@ -166,22 +172,22 @@ public class SaveCrudMethod implements CrudMethod
 
         try {
             for(Pair<Field, Object> child : childs) {
-                child.firstValue.setAccessible(true);
+                child.getFirstValue().setAccessible(true);
 
-                if(!set.contains(child.secondValue)) {
-                    if (child.secondValue instanceof Collection) {
-                        for (Object item : (Collection) child.secondValue) {
+                if(!set.contains(child.getSecondValue())) {
+                    if (child.getSecondValue() instanceof Collection) {
+                        for (Object item : (Collection) child.getSecondValue()) {
                             resourceChilds.add(makeTree(item, set));
                         }
                     } else {
-                        resourceChilds.add(makeTree(child.secondValue, set));
+                        resourceChilds.add(makeTree(child.getSecondValue(), set));
                     }
                 }
 
                 if(object instanceof ResourceProxy) {
-                    child.firstValue.set(((ResourceProxy) object).getObject(), null);
+                    child.getFirstValue().set(((ResourceProxy) object).getObject(), null);
                 } else {
-                    child.firstValue.set(object, null);
+                    child.getFirstValue().set(object, null);
                 }
             }
         } catch (IllegalAccessException e) {
@@ -215,27 +221,27 @@ public class SaveCrudMethod implements CrudMethod
         String fieldName;
 
         for(Pair<Field, Object> child : childs) {
-            if(child.firstValue.isAnnotationPresent(OneToMany.class)) {
-                OneToMany annotation = child.firstValue.getAnnotation(OneToMany.class);
+            if(child.getFirstValue().isAnnotationPresent(OneToMany.class)) {
+                OneToMany annotation = child.getFirstValue().getAnnotation(OneToMany.class);
                 fieldName = annotation.mappedBy();
 
-                if(fieldName != null) {
-                    if (child.secondValue instanceof Collection) {
-                        for (Object item : (Collection) child.secondValue) {
+                if(!fieldName.isEmpty()) {
+                    if (child.getSecondValue() instanceof Collection) {
+                        for (Object item : (Collection) child.getSecondValue()) {
                             calls.add(link(parent, item, fieldName));
                         }
                     } else {
-                        calls.add(link(parent, child.secondValue, fieldName));
+                        calls.add(link(parent, child.getSecondValue(), fieldName));
                     }
                 }
-            } else if(child.firstValue.isAnnotationPresent(ManyToOne.class)) {
+            } else if(child.getFirstValue().isAnnotationPresent(ManyToOne.class)) {
 
-                calls.add(link(child.secondValue, parent, child.firstValue.getName()));
+                calls.add(link(child.getSecondValue(), parent, child.getFirstValue().getName()));
 
             }
         }
 
-        return new ChainCall(calls);
+        return new ChainCall(calls, String.class);
     }
 
     private String getUri(Object object) {
@@ -337,15 +343,4 @@ public class SaveCrudMethod implements CrudMethod
             consumer.accept(resource);
         }
     }
-
-    private class Pair<T1, T2> {
-        Pair(T1 firstValue, T2 secondValue) {
-            this.firstValue = firstValue;
-            this.secondValue = secondValue;
-        }
-        T1 firstValue;
-        T2 secondValue;
-    }
-
-
 }
