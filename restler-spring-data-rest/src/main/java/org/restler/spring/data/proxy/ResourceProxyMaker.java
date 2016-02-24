@@ -3,6 +3,7 @@ package org.restler.spring.data.proxy;
 import com.google.common.collect.ImmutableMultimap;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.InvocationHandler;
 import org.objenesis.ObjenesisStd;
 import org.restler.RestlerConfig;
 import org.restler.client.Call;
@@ -12,6 +13,7 @@ import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.util.UriBuilder;
 import org.springframework.beans.BeanUtils;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
@@ -21,67 +23,15 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 
 public class ResourceProxyMaker {
-    private final ObjenesisStd objenesis = new ObjenesisStd();
-
     public Object make(Class<?> aClass, Object object, HashMap<String, String> hrefs) {
-        class ProxyObjectData {
-            public CallExecutor executor = null;
-        }
-
-        ProxyObjectData proxyObjectData = new ProxyObjectData();
-
-        net.sf.cglib.proxy.InvocationHandler handler = (Object o, Method method, Object[] args)->{
-
-            if(method.equals(ResourceProxy.class.getMethod("getResourceId"))) {
-                String self = hrefs.get("self");
-                return getWrappedId(object, self.substring(self.lastIndexOf("/")+1));
-            }else if(method.equals(ResourceProxy.class.getMethod("getRepositoryUri"))) {
-                String self = hrefs.get("self");
-                return self.substring(0, self.lastIndexOf("/"));
-            }else if(method.equals(ResourceProxy.class.getMethod("getSelfUri"))) {
-                return hrefs.get("self");
-            }else if(method.equals(ResourceProxy.class.getMethod("getObject"))) {
-                return object;
-            }else if(method.equals(ResourceProxy.class.getMethod("getHrefs"))) {
-                return hrefs;
-            }else if(method.equals(ResourceProxy.class.getMethod("setExecutor", CallExecutor.class))) {
-                proxyObjectData.executor = (CallExecutor) args[0];
-                return null;
-            }
-
-            if(proxyObjectData.executor != null) {
-                String uri = getHrefByMethod(method, hrefs);
-
-                if(uri != null) {
-                    String fieldName = BeanUtils.findPropertyForMethod(method).getName();
-                    Field field = object.getClass().getDeclaredField(fieldName);
-
-                    field.setAccessible(true);
-
-
-                    Call httpCall = new HttpCall(new UriBuilder(uri).build(), HttpMethod.GET, null, ImmutableMultimap.of(), method.getGenericReturnType());
-
-                    Object newValue = proxyObjectData.executor.execute(httpCall);
-                    field.set(object, newValue);
-                    field.set(o, newValue);
-
-                    return field.get(object);
-                }
-            }
-
-            return method.invoke(object, args);
-        };
+        net.sf.cglib.proxy.InvocationHandler handler = new ResourceInvocationHandler(object, hrefs);
 
         Enhancer enhancer = new Enhancer();
-        enhancer.setUseCache(false);
         enhancer.setSuperclass(aClass);
         enhancer.setInterfaces(new Class<?>[]{ResourceProxy.class});
-        enhancer.setCallbackType(handler.getClass());
+        enhancer.setCallback(handler);
 
-        Class proxyClass = enhancer.createClass();
-        Enhancer.registerCallbacks(proxyClass, new Callback[] { handler });
-
-        Object proxy = objenesis.newInstance(proxyClass);
+        Object proxy = enhancer.create();
 
         try {
             for(Field objectField : aClass.getDeclaredFields()) {
@@ -130,5 +80,61 @@ public class ResourceProxyMaker {
         }
 
         return null;
+    }
+
+    private class ResourceInvocationHandler implements InvocationHandler {
+        private Object object;
+        private HashMap<String, String> hrefs;
+        private CallExecutor executor;
+
+        public ResourceInvocationHandler(Object object, HashMap<String, String> hrefs) {
+            this.object = object;
+            this.hrefs = hrefs;
+            this.executor = null;
+        }
+
+        @Override
+        public Object invoke(Object o, Method method, Object[] args) throws Throwable {
+            if(method.equals(ResourceProxy.class.getMethod("getResourceId"))) {
+                String self = hrefs.get("self");
+                return getWrappedId(object, self.substring(self.lastIndexOf("/")+1));
+            }else if(method.equals(ResourceProxy.class.getMethod("getRepositoryUri"))) {
+                String self = hrefs.get("self");
+                return self.substring(0, self.lastIndexOf("/"));
+            }else if(method.equals(ResourceProxy.class.getMethod("getSelfUri"))) {
+                return hrefs.get("self");
+            }else if(method.equals(ResourceProxy.class.getMethod("getObject"))) {
+                return object;
+            }else if(method.equals(ResourceProxy.class.getMethod("getHrefs"))) {
+                return hrefs;
+            }else if(method.equals(ResourceProxy.class.getMethod("setExecutor", CallExecutor.class))) {
+                executor = (CallExecutor) args[0];
+                return null;
+            }
+
+            if(executor != null) {
+                String uri = getHrefByMethod(method, hrefs);
+
+                if(uri != null) {
+                    String fieldName = BeanUtils.findPropertyForMethod(method).getName();
+                    Field field = object.getClass().getDeclaredField(fieldName);
+
+                    field.setAccessible(true);
+
+
+                    Call httpCall = new HttpCall(new UriBuilder(uri).build(), HttpMethod.GET, null, ImmutableMultimap.of(), method.getGenericReturnType());
+
+                    Object newValue = executor.execute(httpCall);
+                    field.set(object, newValue);
+                    field.set(o, newValue);
+
+                    return field.get(object);
+                }
+            } else {
+                throw new InvalidStateException("Executor must be initialized. For initialize executor use ProxyCallEnhancer.");
+            }
+
+            return method.invoke(object, args);
+        }
     }
 }
