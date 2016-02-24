@@ -43,6 +43,6 @@ public class DeleteCrudMethod implements CrudMethod {
 
     @Override
     public ImmutableMultimap<String, String> getHeader() {
-        return ImmutableMultimap.of();
+        return ImmutableMultimap.of("Content-Type", "application/json");
     }
 }
