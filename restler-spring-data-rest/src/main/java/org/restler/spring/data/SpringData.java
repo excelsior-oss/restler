@@ -13,18 +13,17 @@ import java.util.List;
 public class SpringData implements CoreModule {
 
     private final URI baseUrl;
-    private final RequestExecutor requestExecutor;
-    private final List<CallEnhancer> enhancers;
+    private final HttpCallExecutor callExecutor;
+    private final CallExecutionChain chain;
 
-    private Repositories repositories;
+    private final Repositories repositories;
 
     public SpringData(URI baseUrl, RequestExecutor requestExecutor, List<CallEnhancer> enhancers, List<Class<?>> repositories) {
         this.baseUrl = baseUrl;
-        this.requestExecutor = requestExecutor;
-        this.enhancers = enhancers;
+        callExecutor = new HttpCallExecutor(requestExecutor);
+        chain = new CallExecutionChain(callExecutor, enhancers);
 
         this.repositories = new Repositories(repositories, new CachingClientFactory(new CGLibClientFactory(this)));
-
         this.repositories.initialize();
     }
 
@@ -35,8 +34,6 @@ public class SpringData implements CoreModule {
 
     @Override
     public InvocationHandler createHandler(ServiceDescriptor descriptor) {
-        HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
-        CallExecutionChain chain = new CallExecutionChain(callExecutor, enhancers);
         return new CallExecutorInvocationHandler(chain, new SpringDataMethodInvocationMapper(baseUrl, repositories));
     }
 

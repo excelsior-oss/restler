@@ -16,7 +16,7 @@ public class RepositoryUtils {
             try {
                 repositoryUriString = Class.forName(entityType.getTypeName()).getSimpleName().toLowerCase() + "s";
             } catch (ClassNotFoundException e) {
-                throw new RestlerException("Could not find class for repository's entity type", e);
+                throw new RestlerException("Could not find class for repository's entity type " + entityType.getTypeName(), e);
             }
         } else {
             repositoryUriString = repositoryAnnotation.path();
