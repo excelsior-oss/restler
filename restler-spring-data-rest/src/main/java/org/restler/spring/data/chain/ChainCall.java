@@ -2,11 +2,9 @@ package org.restler.spring.data.chain;
 
 import org.restler.client.Call;
 
-import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
 
 public class ChainCall implements Call, Iterable<Call> {
     private final List<Call> calls;

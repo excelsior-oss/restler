@@ -21,30 +21,30 @@ import javax.persistence.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class SaveCrudMethod implements CrudMethod
-{
+public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     private final String baseUri;
     private final String repositoryUri;
     private final Repositories repositories;
 
-    public SaveCrudMethod(String baseUri, String repositoryUri, Repositories repositories) {
+    public SaveRepositoryMethod(String baseUri, String repositoryUri, Repositories repositories) {
         this.baseUri = baseUri;
         this.repositoryUri = repositoryUri;
         this.repositories = repositories;
     }
 
     @Override
-    public boolean isCrudMethod(Method method) {
+    public boolean isRepositoryMethod(Method method) {
         return "save".equals(method.getName());
     }
 
     @Override
-    public Call getCall(Object[] args) {
+    public Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
         List<Pair<Field, Object>> childs = getChilds(args[0]);
         ResourceTree resourceTree = makeTree(args[0], new HashSet<>());
 
@@ -74,9 +74,19 @@ public class SaveCrudMethod implements CrudMethod
     }
 
     @Override
-    public Object getRequestBody(Object[] args) {
+    public String getPathPart(Object[] args) {
         Object arg = args[0];
+        if(arg instanceof ResourceProxy) {
+            ResourceProxy resourceProxy = (ResourceProxy)arg;
 
+            return resourceProxy.getResourceId().toString();
+        }
+
+        return getId(arg).toString();
+    }
+
+
+    private Object getRequestBody(Object arg) {
         if(arg instanceof ResourceProxy) {
             ResourceProxy resourceProxy = (ResourceProxy)arg;
             arg = resourceProxy.getObject();
@@ -94,28 +104,6 @@ public class SaveCrudMethod implements CrudMethod
         }
 
         return json;
-    }
-
-    @Override
-    public HttpMethod getHttpMethod() {
-        return HttpMethod.PUT;
-    }
-
-    @Override
-    public String getPathPart(Object[] args) {
-        Object arg = args[0];
-        if(arg instanceof ResourceProxy) {
-            ResourceProxy resourceProxy = (ResourceProxy)arg;
-
-            return resourceProxy.getResourceId().toString();
-        }
-
-        return "{id}";
-    }
-
-    @Override
-    public ImmutableMultimap<String, String> getHeader() {
-        return ImmutableMultimap.of("Content-Type", "application/json");
     }
 
     private List<Pair<Field, Object>> getChilds(Object object) {
@@ -277,23 +265,18 @@ public class SaveCrudMethod implements CrudMethod
     }
 
     private Call add(Object object) {
-
         if(getId(object) == null) {
             return null;
         }
 
-        Object[] objects = {object};
-
-        Object body = getRequestBody(objects);
+        Object body = getRequestBody(object);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 
         return new HttpCall(new UriBuilder(repositoryUri).build(), HttpMethod.POST, body, header, object.getClass());
     }
 
     private Call update(ResourceProxy resource) {
-        Object[] objects = {resource};
-
-        Object body = getRequestBody(objects);
+        Object body = getRequestBody(resource);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 
         return new HttpCall(new UriBuilder(resource.getSelfUri()).build(), HttpMethod.PUT, body, header, resource.getObject().getClass());

@@ -2,35 +2,26 @@ package org.restler.spring.data.methods;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
+import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.spring.data.proxy.ResourceProxy;
 
 import java.lang.reflect.Method;
+import java.net.URI;
 
-public class DeleteCrudMethod implements CrudMethod {
+public class DeleteRepositoryMethod extends DefaultRepositoryMethod {
     @Override
-    public boolean isCrudMethod(Method method) {
+    public boolean isRepositoryMethod(Method method) {
         return "delete".equals(method.getName());
     }
 
     @Override
-    public Call getCall(Object[] args) {
-        return null;
-    }
-
-    @Override
-    public Object getRequestBody(Object[] args) {
-        return null;
-    }
-
-    @Override
-    public HttpMethod getHttpMethod() {
-        return HttpMethod.DELETE;
+    public Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
+        return new HttpCall(uri, HttpMethod.DELETE, null, ImmutableMultimap.of("Content-Type", "application/json"), getRepositoryType(declaringClass).getActualTypeArguments()[0]);
     }
 
     @Override
     public String getPathPart(Object[] args) {
-
         Object arg;
         if(args.length == 1 && (arg = args[0]) instanceof ResourceProxy) {
             ResourceProxy resourceProxy = (ResourceProxy)arg;
@@ -39,10 +30,5 @@ public class DeleteCrudMethod implements CrudMethod {
         }
 
         return "{id}";
-    }
-
-    @Override
-    public ImmutableMultimap<String, String> getHeader() {
-        return ImmutableMultimap.of("Content-Type", "application/json");
     }
 }

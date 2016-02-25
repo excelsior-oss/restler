@@ -5,7 +5,6 @@ import org.restler.client.CallEnhancer;
 import org.restler.client.CallExecutor;
 import org.restler.spring.data.Pair;
 
-import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 

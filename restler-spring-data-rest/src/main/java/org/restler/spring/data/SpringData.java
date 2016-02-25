@@ -1,7 +1,6 @@
 package org.restler.spring.data;
 
 import net.sf.cglib.proxy.InvocationHandler;
-import org.restler.RestlerConfig;
 import org.restler.client.*;
 import org.restler.http.HttpCallExecutor;
 import org.restler.http.RequestExecutor;

@@ -1,11 +1,8 @@
 package org.restler.spring.data.proxy;
 
 import com.google.common.collect.ImmutableMultimap;
-import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.InvocationHandler;
-import org.objenesis.ObjenesisStd;
-import org.restler.RestlerConfig;
 import org.restler.client.Call;
 import org.restler.client.CallExecutor;
 import org.restler.client.RestlerException;

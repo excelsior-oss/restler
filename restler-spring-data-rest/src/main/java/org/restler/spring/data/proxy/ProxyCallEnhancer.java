@@ -8,7 +8,6 @@ import org.restler.client.CallExecutor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 public class ProxyCallEnhancer implements CallEnhancer {
     @Override
@@ -22,7 +21,7 @@ public class ProxyCallEnhancer implements CallEnhancer {
                 initProxyObject(item, callExecutor);
             }
         } else if(object instanceof Collection) {
-            Collection<Object> collection = (Collection<Object>)object;
+            Collection collection = (Collection)object;
 
             for(Object item : collection) {
                 initProxyObject(item, callExecutor);

@@ -2,7 +2,6 @@ package org.restler.spring.data;
 
 import com.google.common.reflect.TypeToken;
 import org.restler.client.ClientFactory;
-import org.restler.client.RestlerException;
 import org.springframework.data.repository.Repository;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
