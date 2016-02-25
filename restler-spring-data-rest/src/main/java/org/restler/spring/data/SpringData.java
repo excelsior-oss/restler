@@ -9,28 +9,30 @@ import org.springframework.data.repository.Repository;
 import java.net.URI;
 import java.util.List;
 
-public class SpringData implements CoreModule {
+public class SpringData extends DefaultCoreModule {
 
     private final URI baseUrl;
     private final CallExecutionChain chain;
 
     private final Repositories repositories;
 
-    public SpringData(URI baseUrl, RequestExecutor requestExecutor, List<CallEnhancer> enhancers, List<Class<?>> repositories) {
+    public SpringData(ClientFactory factory, URI baseUrl, RequestExecutor requestExecutor, List<CallEnhancer> enhancers, List<Class<?>> repositories) {
+        super(factory);
         this.baseUrl = baseUrl;
         HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
         chain = new CallExecutionChain(callExecutor, enhancers);
 
-        this.repositories = new Repositories(repositories, new CachingClientFactory(new CGLibClientFactory(this)));
+        // this leak
+        this.repositories = new Repositories(repositories, this);
     }
 
     @Override
-    public boolean canHandle(ServiceDescriptor descriptor) {
+    protected boolean canHandle(ServiceDescriptor descriptor) {
         return descriptor instanceof ClassServiceDescriptor && isRepository(((ClassServiceDescriptor) descriptor).getServiceDescriptor());
     }
 
     @Override
-    public InvocationHandler createHandler(ServiceDescriptor descriptor) {
+    protected InvocationHandler createHandler(ServiceDescriptor descriptor) {
         return new CallExecutorInvocationHandler(chain, new SpringDataMethodInvocationMapper(baseUrl, repositories));
     }
 

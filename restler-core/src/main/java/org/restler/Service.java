@@ -1,6 +1,6 @@
 package org.restler;
 
-import org.restler.client.ClientFactory;
+import org.restler.client.CoreModule;
 import org.restler.http.security.SecuritySession;
 
 /**
@@ -10,16 +10,17 @@ import org.restler.http.security.SecuritySession;
  */
 public class Service {
 
-    private final ClientFactory factory;
+    private final CoreModule coreModule;
     private final SecuritySession session;
 
-    Service(ClientFactory factory, SecuritySession session) {
-        this.factory = factory;
+    Service(CoreModule module, SecuritySession session) {
+        this.coreModule = module;
         this.session = session;
     }
 
+
     public <C> C produceClient(Class<C> controllerClass) {
-        return factory.produceClient(controllerClass);
+        return coreModule.produceClient(controllerClass);
     }
 
     public void authorize() {

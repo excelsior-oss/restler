@@ -1,6 +1,7 @@
 package org.restler.client;
 
-import java.util.Map;
+import net.sf.cglib.proxy.InvocationHandler;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -22,8 +23,8 @@ public class CachingClientFactory implements ClientFactory {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <C> C produceClient(Class<C> controllerClass) {
-        return (C) clients.computeIfAbsent(controllerClass, factory::produceClient);
+    public <C> C produceClient(Class<C> controllerClass, InvocationHandler handler) {
+        return (C) clients.computeIfAbsent(controllerClass, (Class<?> aClass)->factory.produceClient(aClass, handler));
     }
 
 }

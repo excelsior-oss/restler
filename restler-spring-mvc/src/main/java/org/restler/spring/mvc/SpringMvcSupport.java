@@ -30,7 +30,7 @@ public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
         totalEnhancers.addAll(config.getEnhancers());
         totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
 
-        return new SpringMvc(requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
+        return new SpringMvc(config.getClientFactory(), requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
     }
 
     public SpringMvcSupport addJacksonModule(Module module) {

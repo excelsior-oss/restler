@@ -1,15 +1,11 @@
 package org.restler.client;
 
-import net.sf.cglib.proxy.InvocationHandler;
-
 /**
- * CoreModule it is main extension point of the library. Instances of core modules are responsible for service descriptions
- * parsing and producing instanced of {@code InvocationHandler} that will used to proxy remote services.
+ * CoreModule it is main extension point of the library.
+ * It produces client by class.
  */
 public interface CoreModule {
 
-    boolean canHandle(ServiceDescriptor descriptor);
-
-    InvocationHandler createHandler(ServiceDescriptor descriptor);
+    <C> C produceClient(Class<C> controllerClass) throws IllegalArgumentException;
 
 }

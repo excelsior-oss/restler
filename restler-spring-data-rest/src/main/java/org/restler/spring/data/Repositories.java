@@ -4,7 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
-import org.restler.client.ClientFactory;
+import org.restler.client.CoreModule;
 import org.restler.client.RestlerException;
 import org.springframework.data.repository.Repository;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
@@ -14,18 +14,17 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class Repositories {
+
     private final List<Class<?>> repositoriesList;
-    private final ClientFactory clientFactory;
     private final LoadingCache<Class<?>, Repository> cache;
 
-    public Repositories(List<Class<?>> repositories, ClientFactory factory) {
+    public Repositories(List<Class<?>> repositories, CoreModule coreModule) {
         this.repositoriesList = repositories;
-        this.clientFactory = factory;
         this.cache = CacheBuilder.newBuilder().
                 build(new CacheLoader<Class<?>, Repository>() {
                     @Override
                     public Repository load(Class<?> aClass) throws Exception {
-                        return (Repository) clientFactory.produceClient(aClass);
+                        return (Repository) coreModule.produceClient(aClass);
                     }
                 });
     }

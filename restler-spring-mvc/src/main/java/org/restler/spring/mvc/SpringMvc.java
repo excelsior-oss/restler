@@ -10,13 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 import java.util.List;
 
-public class SpringMvc implements CoreModule {
+public class SpringMvc extends DefaultCoreModule {
 
     private final CallExecutionChain chain;
     private final URI baseUri;
     private final ParameterResolver parameterResolver;
 
-    public SpringMvc(RequestExecutor requestExecutor, List<CallEnhancer> enhancers, URI baseUri, ParameterResolver parameterResolver) {
+    public SpringMvc(ClientFactory factory, RequestExecutor requestExecutor, List<CallEnhancer> enhancers, URI baseUri, ParameterResolver parameterResolver) {
+        super(factory);
         HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
         chain = new CallExecutionChain(callExecutor, enhancers);
         this.baseUri = baseUri;
@@ -24,7 +25,7 @@ public class SpringMvc implements CoreModule {
     }
 
     @Override
-    public boolean canHandle(ServiceDescriptor descriptor) {
+    protected boolean canHandle(ServiceDescriptor descriptor) {
         if (!(descriptor instanceof ClassServiceDescriptor)) {
             return false;
         }
@@ -33,7 +34,7 @@ public class SpringMvc implements CoreModule {
     }
 
     @Override
-    public InvocationHandler createHandler(ServiceDescriptor descriptor) {
+    protected InvocationHandler createHandler(ServiceDescriptor descriptor) {
 
         return new CallExecutorInvocationHandler(chain, new SpringMvcMethodInvocationMapper(baseUri, parameterResolver));
     }

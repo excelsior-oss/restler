@@ -12,21 +12,9 @@ import org.objenesis.ObjenesisStd;
 public class CGLibClientFactory implements ClientFactory {
 
     private final ObjenesisStd objenesis = new ObjenesisStd();
-    private final CoreModule coreModule;
-
-    public CGLibClientFactory(CoreModule coreModule) {
-        this.coreModule = coreModule;
-    }
 
     @Override
-    public <C> C produceClient(Class<C> serviceDescriptor) {
-
-        ClassServiceDescriptor descriptor = new ClassServiceDescriptor(serviceDescriptor);
-        if (!coreModule.canHandle(descriptor)) {
-            throw new RestlerException("Could not handle " + serviceDescriptor + " with " + coreModule);
-        }
-        InvocationHandler handler = coreModule.createHandler(descriptor);
-
+    public <C> C produceClient(Class<C> serviceDescriptor, InvocationHandler handler) {
         Enhancer enhancer = new Enhancer();
         enhancer.setUseCache(false);
         enhancer.setSuperclass(serviceDescriptor);

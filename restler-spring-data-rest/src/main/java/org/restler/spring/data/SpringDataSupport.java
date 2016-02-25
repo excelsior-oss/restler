@@ -40,7 +40,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
         totalEnhancers.add(new SdrErrorMappingEnhancer());
         totalEnhancers.addAll(config.getEnhancers());
 
-        return new SpringData(config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers, repositories);
+        return new SpringData(config.getClientFactory(), config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers, repositories);
     }
 
     public SpringDataSupport addJacksonModule(Module module) {

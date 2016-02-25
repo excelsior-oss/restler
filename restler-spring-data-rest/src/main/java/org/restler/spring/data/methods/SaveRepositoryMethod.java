@@ -19,6 +19,7 @@ import org.springframework.data.repository.Repository;
 
 import javax.persistence.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -45,6 +46,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
+
         List<Pair<Field, Object>> children = getChildren(args[0]);
         ResourceTree resourceTree = makeTree(args[0], new HashSet<>());
 
@@ -136,6 +138,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
     }
 
     private ResourceTree makeTree(Object object, Set<Object> set) {
+
         List<Pair<Field, Object>> children = getChildren(object);
 
         set.add(object);
