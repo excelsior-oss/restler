@@ -142,10 +142,10 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     def "test delete resource from repository"() {
         given: "Person that exist already"
-        def person = personRepository.findOne(2L);
+        def person = personRepository.findOne(2L)
         when: "Delete person from repository"
-        personRepository.delete(person);
-        def person1 = personRepository.findOne(2L);
+        personRepository.delete(person)
+        def person1 = personRepository.findOne(2L)
         then: "Person was deleted successfully"
         person1 == null
     }

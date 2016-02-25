@@ -45,7 +45,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
-        List<Pair<Field, Object>> childs = getChilds(args[0]);
+        List<Pair<Field, Object>> children = getChildren(args[0]);
         ResourceTree resourceTree = makeTree(args[0], new HashSet<>());
 
         resourceTree.forEach(resource-> {
@@ -68,7 +68,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             calls.add(add(object));
         }
 
-        calls.add(makeLinks(args[0], childs));
+        calls.add(makeLinks(args[0], children));
 
         return new ChainCall(calls, returnType);
     }
@@ -106,7 +106,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return json;
     }
 
-    private List<Pair<Field, Object>> getChilds(Object object) {
+    private List<Pair<Field, Object>> getChildren(Object object) {
         List<Pair<Field, Object>> result = new ArrayList<>();
 
         if(object instanceof ResourceProxy) {
@@ -136,11 +136,11 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
     }
 
     private ResourceTree makeTree(Object object, Set<Object> set) {
-        List<Pair<Field, Object>> childs = getChilds(object);
+        List<Pair<Field, Object>> children = getChildren(object);
 
         set.add(object);
 
-        childs = childs.stream().filter(
+        children = children.stream().filter(
                 item-> {
                         Object value = item.getSecondValue();
                         if(value instanceof ResourceProxy) {
@@ -152,23 +152,23 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                 }
         ).collect(Collectors.toList());
 
-        List<ResourceTree> resourceChilds = new ArrayList<>();
+        List<ResourceTree> resourceChildren = new ArrayList<>();
 
-        if(childs.isEmpty()) {
+        if(children.isEmpty()) {
             return new ResourceTree(object);
         }
 
         try {
-            for(Pair<Field, Object> child : childs) {
+            for(Pair<Field, Object> child : children) {
                 child.getFirstValue().setAccessible(true);
 
                 if(!set.contains(child.getSecondValue())) {
                     if (child.getSecondValue() instanceof Collection) {
                         for (Object item : (Collection) child.getSecondValue()) {
-                            resourceChilds.add(makeTree(item, set));
+                            resourceChildren.add(makeTree(item, set));
                         }
                     } else {
-                        resourceChilds.add(makeTree(child.getSecondValue(), set));
+                        resourceChildren.add(makeTree(child.getSecondValue(), set));
                     }
                 }
 
@@ -182,7 +182,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             throw new RestlerException("Can't set value to field.", e);
         }
 
-        return new ResourceTree(resourceChilds, object);
+        return new ResourceTree(resourceChildren, object);
     }
 
     private Object saveResource(Object resource) {
@@ -203,12 +203,12 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return null;
     }
 
-    private ChainCall makeLinks(Object parent, List<Pair<Field, Object>> childs) {
+    private ChainCall makeLinks(Object parent, List<Pair<Field, Object>> children) {
         List<Call> calls = new ArrayList<>();
 
         String fieldName;
 
-        for(Pair<Field, Object> child : childs) {
+        for(Pair<Field, Object> child : children) {
             if(child.getFirstValue().isAnnotationPresent(OneToMany.class)) {
                 OneToMany annotation = child.getFirstValue().getAnnotation(OneToMany.class);
                 fieldName = annotation.mappedBy();
@@ -302,24 +302,24 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     private class ResourceTree {
         private Object resource;
-        private List<ResourceTree> childs = null;
+        private List<ResourceTree> children = null;
 
         ResourceTree(Object resource) {
             this.resource = resource;
         }
 
-        ResourceTree(List<ResourceTree> childs, Object resource) {
+        ResourceTree(List<ResourceTree> children, Object resource) {
             this(resource);
-            this.childs = childs;
+            this.children = children;
         }
 
         void forEach(Consumer<Object> consumer) {
-            if(childs == null) {
+            if(children == null) {
                 consumer.accept(resource);
                 return;
             }
 
-            for(ResourceTree child : childs) {
+            for(ResourceTree child : children) {
                 child.forEach(consumer);
             }
 
