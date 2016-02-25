@@ -10,10 +10,14 @@ import org.restler.spring.data.Pair;
 import java.util.Collection;
 
 public class ProxyCachingCallEnhancer implements CallEnhancer {
-    private Cache<Pair<Class<?>, Object>, Object> cache = CacheBuilder.newBuilder().
-            maximumSize(1000).
-            weakValues().
-            build();
+    private final Cache<Pair<Class<?>, Object>, Object> cache;
+
+    public ProxyCachingCallEnhancer(long maxSize) {
+        cache = CacheBuilder.newBuilder().
+                maximumSize(maxSize).
+                weakValues().
+                build();
+    }
 
     @Override
     public Object apply(Call call, CallExecutor callExecutor) {

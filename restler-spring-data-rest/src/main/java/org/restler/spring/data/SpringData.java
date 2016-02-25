@@ -12,14 +12,13 @@ import java.util.List;
 public class SpringData implements CoreModule {
 
     private final URI baseUrl;
-    private final HttpCallExecutor callExecutor;
     private final CallExecutionChain chain;
 
     private final Repositories repositories;
 
     public SpringData(URI baseUrl, RequestExecutor requestExecutor, List<CallEnhancer> enhancers, List<Class<?>> repositories) {
         this.baseUrl = baseUrl;
-        callExecutor = new HttpCallExecutor(requestExecutor);
+        HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
         chain = new CallExecutionChain(callExecutor, enhancers);
 
         this.repositories = new Repositories(repositories, new CachingClientFactory(new CGLibClientFactory(this)));

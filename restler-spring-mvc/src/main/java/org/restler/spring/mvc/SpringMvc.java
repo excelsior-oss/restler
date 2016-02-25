@@ -12,13 +12,12 @@ import java.util.List;
 
 public class SpringMvc implements CoreModule {
 
-    private final HttpCallExecutor callExecutor;
     private final CallExecutionChain chain;
     private final URI baseUri;
     private final ParameterResolver parameterResolver;
 
     public SpringMvc(RequestExecutor requestExecutor, List<CallEnhancer> enhancers, URI baseUri, ParameterResolver parameterResolver) {
-        callExecutor = new HttpCallExecutor(requestExecutor);
+        HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
         chain = new CallExecutionChain(callExecutor, enhancers);
         this.baseUri = baseUri;
         this.parameterResolver = parameterResolver;
