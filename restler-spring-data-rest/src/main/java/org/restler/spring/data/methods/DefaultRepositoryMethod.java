@@ -3,7 +3,7 @@ package org.restler.spring.data.methods;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.reflect.TypeToken;
 import org.restler.client.Call;
-import org.restler.spring.data.RepositoryUtils;
+import org.restler.spring.data.util.RepositoryUtils;
 import org.restler.util.UriBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;

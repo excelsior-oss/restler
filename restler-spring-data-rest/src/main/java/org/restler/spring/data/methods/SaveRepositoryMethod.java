@@ -3,14 +3,15 @@ package org.restler.spring.data.methods;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
-import org.restler.spring.data.Pair;
-import org.restler.spring.data.Repositories;
-import org.restler.spring.data.RepositoryUtils;
+import org.restler.spring.data.util.Pair;
+import org.restler.spring.data.util.Repositories;
+import org.restler.spring.data.util.RepositoryUtils;
 import org.restler.spring.data.chain.ChainCall;
 import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.util.UriBuilder;
@@ -19,7 +20,6 @@ import org.springframework.data.repository.Repository;
 
 import javax.persistence.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -70,7 +70,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             calls.add(add(object));
         }
 
-        calls.add(makeLinks(args[0], children));
+        calls.add(makeAssociations(args[0], children));
 
         return new ChainCall(calls, returnType);
     }
@@ -193,7 +193,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             resource = ((ResourceProxy)resource).getObject();
         }
 
-        Repository repository = repositories.getByResourceClass(resource.getClass());
+        Repository repository = repositories.getByResourceClass(resource.getClass()).orElse(null);
 
         if(repository == null) {
             return null;
@@ -206,7 +206,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return null;
     }
 
-    private ChainCall makeLinks(Object parent, List<Pair<Field, Object>> children) {
+    private ChainCall makeAssociations(Object parent, List<Pair<Field, Object>> children) {
         List<Call> calls = new ArrayList<>();
 
         String fieldName;
@@ -219,15 +219,15 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                 if(!fieldName.isEmpty()) {
                     if (child.getSecondValue() instanceof Collection) {
                         for (Object item : (Collection) child.getSecondValue()) {
-                            calls.add(link(parent, item, fieldName));
+                            calls.add(associate(parent, item, fieldName));
                         }
                     } else {
-                        calls.add(link(parent, child.getSecondValue(), fieldName));
+                        calls.add(associate(parent, child.getSecondValue(), fieldName));
                     }
                 }
             } else if(child.getFirstValue().isAnnotationPresent(ManyToOne.class)) {
 
-                calls.add(link(child.getSecondValue(), parent, child.getFirstValue().getName()));
+                calls.add(associate(child.getSecondValue(), parent, child.getFirstValue().getName()));
 
             }
         }
@@ -240,7 +240,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         if(object instanceof ResourceProxy) {
             result = ((ResourceProxy) object).getSelfUri();
         } else {
-            Repository repository = repositories.getByResourceClass(object.getClass());
+            Repository repository = repositories.getByResourceClass(object.getClass()).orElse(null);
             Object id = getId(object);
             if(id == null) {
                 return null;
@@ -251,7 +251,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return result;
     }
 
-    private Call link(Object parent, Object child, String fieldName) {
+    private Call associate(Object parent, Object child, String fieldName) {
         String parentUri;
         String childUri;
 
@@ -264,6 +264,8 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "text/uri-list");
 
+        //this call create request for associating parent and child
+        //PUT uses for adding new associations between resources
         return new HttpCall(new UriBuilder(childUri + "/" + fieldName).build(), HttpMethod.PUT, parentUri, header, String.class);
     }
 
@@ -275,6 +277,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         Object body = getRequestBody(object);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 
+        //POST uses for creating new entity
         return new HttpCall(new UriBuilder(repositoryUri).build(), HttpMethod.POST, body, header, object.getClass());
     }
 
@@ -282,6 +285,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         Object body = getRequestBody(resource);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 
+        //PUT uses for replacing values
         return new HttpCall(new UriBuilder(resource.getSelfUri()).build(), HttpMethod.PUT, body, header, resource.getObject().getClass());
     }
 
@@ -303,30 +307,58 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         throw new RestlerException("Can't get id.");
     }
 
-    private class ResourceTree {
-        private Object resource;
-        private List<ResourceTree> children = null;
-
-        ResourceTree(Object resource) {
-            this.resource = resource;
-        }
+    private class ResourceTree implements Iterable {
+        private final Object resource;
+        private final List<ResourceTree> children;
 
         ResourceTree(List<ResourceTree> children, Object resource) {
-            this(resource);
+            this.resource = resource;
             this.children = children;
         }
 
-        void forEach(Consumer<Object> consumer) {
-            if(children == null) {
-                consumer.accept(resource);
-                return;
+        ResourceTree(Object resource) {
+            this(new ArrayList<>(), resource);
+        }
+
+        @Override
+        public Iterator<Object> iterator() {
+            return new TreeIterator(this);
+        }
+
+        private class TreeIterator implements Iterator<Object> {
+
+            private final Stack<Pair<ResourceTree, Iterator<ResourceTree>>> greyNodes = new Stack<>();
+
+            public TreeIterator(ResourceTree firstNode) {
+                Iterator<ResourceTree> childrenIterator = firstNode.children.iterator();
+                greyNodes.push(new Pair<>(firstNode, childrenIterator));
             }
 
-            for(ResourceTree child : children) {
-                child.forEach(consumer);
+            @Override
+            public boolean hasNext() {
+                return !greyNodes.empty();
             }
 
-            consumer.accept(resource);
+            @Override
+            public Object next() {
+                Pair<ResourceTree, Iterator<ResourceTree>> pair = goToBottom(greyNodes.peek());
+                Object resource = pair.getFirstValue().resource;
+                greyNodes.pop();
+
+                return resource;
+            }
+
+            private Pair<ResourceTree, Iterator<ResourceTree>> goToBottom(Pair<ResourceTree, Iterator<ResourceTree>> node) {
+                Iterator<ResourceTree> childrenIterator = node.getSecondValue();
+
+                while(childrenIterator.hasNext()) {
+                    ResourceTree newNode = childrenIterator.next();
+                    childrenIterator = newNode.children.iterator();
+                    greyNodes.add(new Pair<>(newNode, childrenIterator));
+                }
+
+                return greyNodes.peek();
+            }
         }
     }
 }

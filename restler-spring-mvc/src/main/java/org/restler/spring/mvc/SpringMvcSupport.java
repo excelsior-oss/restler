@@ -2,6 +2,8 @@ package org.restler.spring.mvc;
 
 import com.fasterxml.jackson.databind.Module;
 import org.restler.RestlerConfig;
+import org.restler.client.CGLibClientFactory;
+import org.restler.client.CachingClientFactory;
 import org.restler.client.CallEnhancer;
 import org.restler.client.CoreModule;
 import org.restler.http.RequestExecutor;
@@ -30,7 +32,7 @@ public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
         totalEnhancers.addAll(config.getEnhancers());
         totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
 
-        return new SpringMvc(config.getClientFactory(), requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
+        return new SpringMvc(new CachingClientFactory(new CGLibClientFactory()), requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
     }
 
     public SpringMvcSupport addJacksonModule(Module module) {

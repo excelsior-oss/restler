@@ -1,4 +1,4 @@
-package org.restler.spring.data;
+package org.restler.spring.data.util;
 
 import org.restler.client.RestlerException;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;

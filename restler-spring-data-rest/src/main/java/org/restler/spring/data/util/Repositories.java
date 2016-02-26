@@ -1,4 +1,4 @@
-package org.restler.spring.data;
+package org.restler.spring.data.util;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -11,6 +11,7 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 public class Repositories {
@@ -29,24 +30,24 @@ public class Repositories {
                 });
     }
 
-    public Repository getByResourceClass(Class<?> resourceClass) {
-        Repository[] result = {null};
-        repositoriesList.forEach((clazz)->{
+    public Optional<Repository> getByResourceClass(Class<?> resourceClass) {
+
+        Class<?> resultClass = repositoriesList.stream().filter((Class<?> clazz)->{
             Type[] interfaces = clazz.getGenericInterfaces();
-
             Type[] genericTypes = ((ParameterizedTypeImpl)interfaces[0]).getActualTypeArguments();
-
             Class<?> genericId = TypeToken.of(genericTypes[0]).getRawType();
 
-            if(genericId.equals(resourceClass)) {
-                try {
-                    result[0] = cache.get(clazz);
-                } catch (ExecutionException e) {
-                    throw new RestlerException("Can't get repository by class " + clazz, e);
-                }
-            }
-        });
+            return genericId.equals(resourceClass);
+        }).findFirst().get();
 
-        return result[0];
+        if(resultClass != null) {
+            try {
+                return Optional.of(cache.get(resultClass));
+            } catch (ExecutionException e) {
+                throw new RestlerException("Can't get repository by class " + resultClass, e);
+            }
+        }
+
+        return Optional.empty();
     }
 }

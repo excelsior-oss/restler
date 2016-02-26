@@ -1,4 +1,4 @@
-package org.restler.spring.data;
+package org.restler.spring.data.util;
 
 import java.util.Objects;
 
@@ -20,9 +20,14 @@ public class Pair<T1, T2> {
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        return obj.hashCode() == this.hashCode();
+    public boolean equals(Object obj) {
+        if(obj instanceof Pair) {
+            Pair objPair = (Pair)obj;
+
+            return getFirstValue().equals(objPair.getFirstValue()) &&
+                    getSecondValue().equals(objPair.getSecondValue());
+        }
+        return false;
     }
 
     @Override

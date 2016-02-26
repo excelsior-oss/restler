@@ -2,12 +2,13 @@ package org.restler.spring.data;
 
 import com.fasterxml.jackson.databind.Module;
 import org.restler.RestlerConfig;
+import org.restler.client.CGLibClientFactory;
+import org.restler.client.CachingClientFactory;
 import org.restler.client.CallEnhancer;
 import org.restler.client.CoreModule;
 import org.restler.http.RequestExecutor;
 import org.restler.spring.data.chain.ChainCallEnhancer;
 import org.restler.spring.data.proxy.ProxyCallEnhancer;
-import org.restler.spring.data.proxy.ProxyCachingCallEnhancer;
 import org.restler.spring.mvc.SpringMvcRequestExecutor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -26,21 +27,22 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
 
     private final List<Class<?>> repositories;
 
-    public SpringDataSupport(List<Class<?>> repositories) {
-        this.repositories = repositories;
-    }
+    private long cacheSize;
 
+    public SpringDataSupport(List<Class<?>> repositories, long cacheSize) {
+        this.repositories = repositories;
+        this.cacheSize = cacheSize;
+    }
 
     @Override
     public CoreModule apply(RestlerConfig config) {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
         totalEnhancers.add(new ChainCallEnhancer());
-        totalEnhancers.add(new ProxyCallEnhancer());
-        totalEnhancers.add(new ProxyCachingCallEnhancer(1000));
+        totalEnhancers.add(new ProxyCallEnhancer(cacheSize));
         totalEnhancers.add(new SdrErrorMappingEnhancer());
         totalEnhancers.addAll(config.getEnhancers());
 
-        return new SpringData(config.getClientFactory(), config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers, repositories);
+        return new SpringData(new CachingClientFactory(new CGLibClientFactory()), config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers, repositories);
     }
 
     public SpringDataSupport addJacksonModule(Module module) {

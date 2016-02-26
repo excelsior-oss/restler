@@ -5,6 +5,8 @@ import org.restler.client.Call;
 import org.restler.client.MethodInvocationMapper;
 import org.restler.client.RestlerException;
 import org.restler.spring.data.methods.*;
+import org.restler.spring.data.util.Repositories;
+import org.restler.spring.data.util.RepositoryUtils;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.data.repository.query.Param;

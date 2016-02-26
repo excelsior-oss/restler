@@ -109,26 +109,26 @@ public class ResourceProxyMaker {
                 return null;
             }
 
-            if(executor != null) {
-                String uri = getHrefByMethod(method, hrefs);
-
-                if(uri != null) {
-                    String fieldName = BeanUtils.findPropertyForMethod(method).getName();
-                    Field field = object.getClass().getDeclaredField(fieldName);
-
-                    field.setAccessible(true);
-
-
-                    Call httpCall = new HttpCall(new UriBuilder(uri).build(), HttpMethod.GET, null, ImmutableMultimap.of(), method.getGenericReturnType());
-
-                    Object newValue = executor.execute(httpCall);
-                    field.set(object, newValue);
-                    field.set(o, newValue);
-
-                    return field.get(object);
-                }
-            } else {
+            if(executor == null) {
                 throw new InvalidStateException("Executor must be initialized. For initialize executor use ProxyCallEnhancer.");
+            }
+
+            String uri = getHrefByMethod(method, hrefs);
+
+            if(uri != null) {
+                String fieldName = BeanUtils.findPropertyForMethod(method).getName();
+                Field field = object.getClass().getDeclaredField(fieldName);
+
+                field.setAccessible(true);
+
+
+                Call httpCall = new HttpCall(new UriBuilder(uri).build(), HttpMethod.GET, null, ImmutableMultimap.of(), method.getGenericReturnType());
+
+                Object newValue = executor.execute(httpCall);
+                field.set(object, newValue);
+                field.set(o, newValue);
+
+                return field.get(object);
             }
 
             return method.invoke(object, args);

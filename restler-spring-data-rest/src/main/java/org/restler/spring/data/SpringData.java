@@ -4,6 +4,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.restler.client.*;
 import org.restler.http.HttpCallExecutor;
 import org.restler.http.RequestExecutor;
+import org.restler.spring.data.util.Repositories;
 import org.springframework.data.repository.Repository;
 
 import java.net.URI;
