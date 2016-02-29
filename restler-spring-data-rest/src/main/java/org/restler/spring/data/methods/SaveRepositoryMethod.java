@@ -3,17 +3,16 @@ package org.restler.spring.data.methods;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
+import org.restler.spring.data.chain.ChainCall;
+import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.spring.data.util.Pair;
 import org.restler.spring.data.util.Repositories;
 import org.restler.spring.data.util.RepositoryUtils;
-import org.restler.spring.data.chain.ChainCall;
-import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.util.UriBuilder;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
@@ -24,14 +23,21 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * CrudRepository save method implementation.
+ */
 public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     private final String baseUri;
     private final String repositoryUri;
     private final Repositories repositories;
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    static {
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
 
     public SaveRepositoryMethod(String baseUri, String repositoryUri, Repositories repositories) {
         this.baseUri = baseUri;
@@ -94,10 +100,6 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             arg = resourceProxy.getObject();
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
         String json;
         try {
             json = objectMapper.writeValueAsString(arg);
@@ -137,6 +139,12 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return result;
     }
 
+
+    /**
+     * Builds resource tree for some object.
+     * @param object that used for building resource tree.
+     * @param set it is set of references that had visited already.
+     */
     private ResourceTree makeTree(Object object, Set<Object> set) {
 
         List<Pair<Field, Object>> children = getChildren(object);
@@ -206,6 +214,9 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return null;
     }
 
+    /**
+     * Make associations between parent and children.
+     */
     private ChainCall makeAssociations(Object parent, List<Pair<Field, Object>> children) {
         List<Call> calls = new ArrayList<>();
 
@@ -264,7 +275,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "text/uri-list");
 
-        //this call create request for associating parent and child
+        //the call creates request for associating parent and child
         //PUT uses for adding new associations between resources
         return new HttpCall(new UriBuilder(childUri + "/" + fieldName).build(), HttpMethod.PUT, parentUri, header, String.class);
     }

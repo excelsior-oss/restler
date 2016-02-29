@@ -29,9 +29,9 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
 
     private long cacheSize;
 
-    public SpringDataSupport(List<Class<?>> repositories, long cacheSize) {
+    public SpringDataSupport(List<Class<?>> repositories, long maxCacheSize) {
         this.repositories = repositories;
-        this.cacheSize = cacheSize;
+        this.cacheSize = maxCacheSize;
     }
 
     @Override

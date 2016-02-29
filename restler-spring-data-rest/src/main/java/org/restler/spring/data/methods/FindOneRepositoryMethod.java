@@ -8,6 +8,10 @@ import org.restler.http.HttpMethod;
 import java.lang.reflect.Method;
 import java.net.URI;
 
+
+/**
+ * CrudRepository findOne method implementation.
+ */
 public class FindOneRepositoryMethod extends DefaultRepositoryMethod {
     @Override
     public boolean isRepositoryMethod(Method method) {

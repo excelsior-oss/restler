@@ -10,10 +10,12 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import java.lang.reflect.Method;
 import java.net.URI;
 
+/**
+ * Custom query method implementation.
+ */
 public class QueryRepositoryMethod extends DefaultRepositoryMethod {
 
     private final Method method;
-
 
     public QueryRepositoryMethod(Method method) {
         this.method = method;

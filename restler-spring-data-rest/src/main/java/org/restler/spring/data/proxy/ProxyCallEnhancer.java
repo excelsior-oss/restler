@@ -13,9 +13,9 @@ import java.util.List;
 public class ProxyCallEnhancer implements CallEnhancer {
     private final Cache<Pair<Class<?>, Object>, Object> cache;
 
-    public ProxyCallEnhancer(long maxSize) {
+    public ProxyCallEnhancer(long maxCacheSize) {
         cache = CacheBuilder.newBuilder().
-                maximumSize(maxSize).
+                maximumSize(maxCacheSize).
                 weakValues().
                 build();
     }

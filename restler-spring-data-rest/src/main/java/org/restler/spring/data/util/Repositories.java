@@ -32,13 +32,16 @@ public class Repositories {
 
     public Optional<Repository> getByResourceClass(Class<?> resourceClass) {
 
-        Class<?> resultClass = repositoriesList.stream().filter((Class<?> clazz)->{
-            Type[] interfaces = clazz.getGenericInterfaces();
-            Type[] genericTypes = ((ParameterizedTypeImpl)interfaces[0]).getActualTypeArguments();
-            Class<?> genericId = TypeToken.of(genericTypes[0]).getRawType();
+        Class<?> resultClass = repositoriesList.stream().
+                filter((Class<?> clazz)->{
+                    Type[] interfaces = clazz.getGenericInterfaces();
+                    Type[] genericTypes = ((ParameterizedTypeImpl)interfaces[0]).getActualTypeArguments();
+                    Class<?> genericId = TypeToken.of(genericTypes[0]).getRawType();
 
-            return genericId.equals(resourceClass);
-        }).findFirst().get();
+                    return genericId.equals(resourceClass);
+                }).
+                findFirst().
+                get();
 
         if(resultClass != null) {
             try {

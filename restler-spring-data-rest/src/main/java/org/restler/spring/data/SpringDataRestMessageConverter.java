@@ -24,6 +24,12 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
     private final ResourceProxyMaker resourceProxyMaker = new ResourceProxyMaker();
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    static {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
     @Override
     public boolean canRead(Type type, Class<?> aClass, MediaType mediaType) {
         if (!(type instanceof ParameterizedType)) {
@@ -35,8 +41,7 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
     @Override
     public Object read(Type type, Class<?> aClass, HttpInputMessage httpInputMessage) throws IOException, HttpMessageNotReadableException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         JsonNode rootNode = objectMapper.readTree(httpInputMessage.getBody());
         Class<?> resultClass = ((ParameterizedTypeImpl) type).getRawType();
         Class<?> elementClass;

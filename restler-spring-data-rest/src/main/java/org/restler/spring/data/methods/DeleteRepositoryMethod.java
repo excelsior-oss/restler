@@ -9,6 +9,9 @@ import org.restler.spring.data.proxy.ResourceProxy;
 import java.lang.reflect.Method;
 import java.net.URI;
 
+/**
+ * CrudRepository delete method implementation.
+ */
 public class DeleteRepositoryMethod extends DefaultRepositoryMethod {
     @Override
     public boolean isRepositoryMethod(Method method) {

@@ -12,6 +12,9 @@ import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * DefaultRepositoryMethod used for extracting getDescription method implementation.
+ */
 public abstract class DefaultRepositoryMethod implements RepositoryMethod {
     public Call getDescription(URI baseUrl, Class<?> declaringClass, ImmutableMultimap<String, String> requestParams, Map<String, Object> pathVariables, Set<Object> unmappedArgs) {
         String methodMappedUriString;
