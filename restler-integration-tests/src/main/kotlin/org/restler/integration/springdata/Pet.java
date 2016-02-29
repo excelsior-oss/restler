@@ -2,7 +2,6 @@ package org.restler.integration.springdata;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.List;
 
 @Entity(name = "pets")
 public class Pet implements Serializable {

@@ -1,6 +1,5 @@
 package org.restler
 
-import org.restler.http.HttpExecutionException
 import org.restler.integration.springdata.*
 import org.restler.spring.data.SpringDataSupport
 import org.restler.util.IntegrationSpec

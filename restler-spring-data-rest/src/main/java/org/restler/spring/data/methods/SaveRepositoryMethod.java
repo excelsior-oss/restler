@@ -10,6 +10,7 @@ import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.spring.data.chain.ChainCall;
 import org.restler.spring.data.proxy.ResourceProxy;
+import org.restler.spring.data.util.CloneMaker;
 import org.restler.spring.data.util.Pair;
 import org.restler.spring.data.util.Repositories;
 import org.restler.spring.data.util.RepositoryUtils;
@@ -52,12 +53,11 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
-
-        List<Pair<Field, Object>> children = getChildren(args[0]);
         ResourceTree resourceTree = makeTree(args[0], new HashSet<>());
+        Object currentObject = resourceTree.getTopResource();
 
         resourceTree.forEach(resource-> {
-            if(resource != args[0]) {
+            if(resource != currentObject) {
                 saveResource(resource);
             }
         });
@@ -69,13 +69,14 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         if(args[0] instanceof ResourceProxy) {
             ResourceProxy resourceProxy = (ResourceProxy) args[0];
             returnType = resourceProxy.getObject().getClass();
-            calls.add(update(resourceProxy));
+            calls.add(update(resourceProxy, currentObject));
         } else {
             Object object = args[0];
             returnType = object.getClass();
-            calls.add(add(object));
+            calls.add(add(currentObject));
         }
 
+        List<Pair<Field, Object>> children = getChildren(args[0]);
         calls.add(makeAssociations(args[0], children));
 
         return new ChainCall(calls, returnType);
@@ -139,7 +140,6 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return result;
     }
 
-
     /**
      * Builds resource tree for some object.
      * @param object that used for building resource tree.
@@ -147,9 +147,17 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
      */
     private ResourceTree makeTree(Object object, Set<Object> set) {
 
-        List<Pair<Field, Object>> children = getChildren(object);
+        Object oldObject = object;
 
-        set.add(object);
+        if(object instanceof ResourceProxy) {
+            object = CloneMaker.shallowClone(((ResourceProxy) object).getObject());
+        } else {
+            object = CloneMaker.shallowClone(object);
+        }
+
+        set.add(oldObject);
+
+        List<Pair<Field, Object>> children = getChildren(object);
 
         children = children.stream().filter(
                 item-> {
@@ -292,8 +300,8 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return new HttpCall(new UriBuilder(repositoryUri).build(), HttpMethod.POST, body, header, object.getClass());
     }
 
-    private Call update(ResourceProxy resource) {
-        Object body = getRequestBody(resource);
+    private Call update(ResourceProxy resource, Object objectWithoutCycle) {
+        Object body = getRequestBody(objectWithoutCycle);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 
         //PUT uses for replacing values
@@ -329,6 +337,10 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
         ResourceTree(Object resource) {
             this(new ArrayList<>(), resource);
+        }
+
+        public Object getTopResource() {
+            return resource;
         }
 
         @Override
