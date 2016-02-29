@@ -38,6 +38,7 @@ public class Repositories {
                     Type[] genericTypes = ((ParameterizedTypeImpl)interfaces[0]).getActualTypeArguments();
                     Class<?> genericId = TypeToken.of(genericTypes[0]).getRawType();
 
+                    //Repository and resourceClass must be loaded by one class loader
                     return genericId.equals(resourceClass);
                 }).
                 findFirst().
