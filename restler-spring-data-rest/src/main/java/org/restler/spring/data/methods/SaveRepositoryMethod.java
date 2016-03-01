@@ -76,8 +76,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             calls.add(add(currentObject));
         }
 
-        List<Pair<Field, Object>> children = getChildren(args[0]);
-        calls.add(makeAssociations(args[0], children));
+        calls.add(makeAssociations(args[0], getChildren(args[0])));
 
         return new ChainCall(calls, returnType);
     }
