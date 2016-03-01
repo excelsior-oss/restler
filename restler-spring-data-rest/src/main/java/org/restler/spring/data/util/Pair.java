@@ -1,7 +1,5 @@
 package org.restler.spring.data.util;
 
-import java.util.Objects;
-
 public class Pair<T1, T2> {
     private final T1 firstValue;
     private final T2 secondValue;
