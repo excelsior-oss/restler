@@ -13,6 +13,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 
 public class Repositories {
 
@@ -31,27 +32,28 @@ public class Repositories {
     }
 
     public Optional<Repository> getByResourceClass(Class<?> resourceClass) {
+        return repositoriesList.stream().
+                filter(classRepository(resourceClass)).
+                map(this::toRepository).
+                findFirst();
+    }
 
-        Class<?> resultClass = repositoriesList.stream().
-                filter((Class<?> clazz)->{
-                    Type[] interfaces = clazz.getGenericInterfaces();
-                    Type[] genericTypes = ((ParameterizedTypeImpl)interfaces[0]).getActualTypeArguments();
-                    Class<?> genericId = TypeToken.of(genericTypes[0]).getRawType();
-
-                    //Repository and resourceClass must be loaded by one class loader
-                    return genericId.equals(resourceClass);
-                }).
-                findFirst().
-                get();
-
-        if(resultClass != null) {
-            try {
-                return Optional.of(cache.get(resultClass));
-            } catch (ExecutionException e) {
-                throw new RestlerException("Can't get repository by class " + resultClass, e);
-            }
+    private Repository toRepository(Class<?> c) {
+        try {
+            return cache.get(c);
+        } catch (ExecutionException e) {
+            throw new RestlerException("Repository creation failed", e);
         }
+    }
 
-        return Optional.empty();
+    private Predicate<Class<?>> classRepository(Class<?> resourceClass) {
+        return (Class<?> clazz) -> {
+            Type[] interfaces = clazz.getGenericInterfaces();
+            Type[] genericTypes = ((ParameterizedTypeImpl) interfaces[0]).getActualTypeArguments();
+            Class<?> genericId = TypeToken.of(genericTypes[0]).getRawType();
+
+            //Repository and resourceClass must be loaded by one class loader
+            return genericId.equals(resourceClass);
+        };
     }
 }

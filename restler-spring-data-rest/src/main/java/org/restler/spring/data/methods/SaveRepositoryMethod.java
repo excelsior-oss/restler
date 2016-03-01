@@ -141,40 +141,28 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     /**
      * Builds resource tree for some object.
+     * It is recursive method that passes each resource and add it to ResourceTree.
+     * Also the method removes all references between resources, as result
+     * ResourceTree will contain resources without references to other resources.
      * @param object that used for building resource tree.
      * @param set it is set of references that had visited already.
      */
     private ResourceTree makeTree(Object object, Set<Object> set) {
 
-        Object oldObject = object;
+        set.add(object);
 
         if(object instanceof ResourceProxy) {
-            object = CloneMaker.shallowClone(((ResourceProxy) object).getObject());
-        } else {
-            object = CloneMaker.shallowClone(object);
+            object = ((ResourceProxy) object).getObject();
         }
 
-        set.add(oldObject);
+        object = CloneMaker.shallowClone(object);
 
-        List<Pair<Field, Object>> children = getChildren(object);
-
-        children = children.stream().filter(
-                item-> {
-                        Object value = item.getSecondValue();
-                        if(value instanceof ResourceProxy) {
-                            value = ((ResourceProxy)item.getSecondValue()).getObject();
-                        }
-                        return value.getClass().isAnnotationPresent(Entity.class) &&
-                                getId(value) != null ||
-                                value instanceof Collection;
-                }
-        ).collect(Collectors.toList());
+        List<Pair<Field, Object>> children = getChildren(object).
+                stream().
+                filter(this::isResourceOrCollection).
+                collect(Collectors.toList());
 
         List<ResourceTree> resourceChildren = new ArrayList<>();
-
-        if(children.isEmpty()) {
-            return new ResourceTree(object);
-        }
 
         try {
             for(Pair<Field, Object> child : children) {
@@ -190,17 +178,25 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                     }
                 }
 
-                if(object instanceof ResourceProxy) {
-                    child.getFirstValue().set(((ResourceProxy) object).getObject(), null);
-                } else {
-                    child.getFirstValue().set(object, null);
-                }
+                child.getFirstValue().set(object, null);
+
+                child.getFirstValue().setAccessible(false);
             }
         } catch (IllegalAccessException e) {
             throw new RestlerException("Can't set value to field.", e);
         }
 
         return new ResourceTree(resourceChildren, object);
+    }
+
+    private boolean isResourceOrCollection(Pair<Field, Object> item) {
+        Object value = item.getSecondValue();
+        if(value instanceof ResourceProxy) {
+            value = ((ResourceProxy)item.getSecondValue()).getObject();
+        }
+        return value.getClass().isAnnotationPresent(Entity.class) &&
+                getId(value) != null ||
+                value instanceof Collection;
     }
 
     private Object saveResource(Object resource) {
@@ -222,7 +218,8 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
     }
 
     /**
-     * Make associations between parent and children.
+     * Make calls that associated parent and children using OneToMany and ManyToOne associations.
+     * It uses OneToMany and ManyToOne annotations for building associations.
      */
     private ChainCall makeAssociations(Object parent, List<Pair<Field, Object>> children) {
         List<Call> calls = new ArrayList<>();
@@ -244,9 +241,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                     }
                 }
             } else if(child.getFirstValue().isAnnotationPresent(ManyToOne.class)) {
-
                 calls.add(associate(child.getSecondValue(), parent, child.getFirstValue().getName()));
-
             }
         }
 
@@ -282,8 +277,11 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "text/uri-list");
 
-        //the call creates request for associating parent and child
-        //PUT uses for adding new associations between resources
+        /**
+         * The call creates request for associating parent and child.
+         * PUT uses for adding new associations between resources
+         * {@link http://docs.spring.io/spring-data/rest/docs/current/reference/html/#_put_2}
+         * */
         return new HttpCall(new UriBuilder(childUri + "/" + fieldName).build(), HttpMethod.PUT, parentUri, header, String.class);
     }
 
@@ -315,7 +313,9 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                 field.setAccessible(true);
 
                 try {
-                    return field.get(object);
+                    Object id = field.get(object);
+                    field.setAccessible(false);
+                    return id;
                 } catch (IllegalAccessException e) {
                     throw new RestlerException("Can't get value from id field.", e);
                 }
