@@ -9,14 +9,10 @@ class CGLibClientFactorySpec extends Specification {
 
     def "CGLibClientFactory should be able to create proxies of classes without default constructors"() {
         given:
-        def module = Mock(CoreModule)
-        module.canHandle(_) >> true
-        module.createHandler(_) >> new InvocationHandlerStub()
-
-        def factory = new CGLibClientFactory(module)
+        def factory = new CGLibClientFactory()
 
         when:
-        def proxy = factory.produceClient(ControllerWithoutDefaultConstructor.class)
+        def proxy = factory.produceClient(ControllerWithoutDefaultConstructor.class, new InvocationHandlerStub())
 
         then:
         proxy != null
@@ -24,18 +20,14 @@ class CGLibClientFactorySpec extends Specification {
 
     def "CGLibClientFactory should create independent proxies of same class"() {
         given:
-        def module = Mock(CoreModule)
-        module.canHandle(_) >> true
-
         def invocationHandler1 = new InvocationHandlerStub()
         def invocationHandler2 = new InvocationHandlerStub()
-        module.createHandler(_) >>> [invocationHandler1, invocationHandler2]
 
-        def factory = new CGLibClientFactory(module)
+        def factory = new CGLibClientFactory()
 
         when:
-        def proxy1 = factory.produceClient(ControllerWithoutDefaultConstructor.class)
-        def proxy2 = factory.produceClient(ControllerWithoutDefaultConstructor.class)
+        def proxy1 = factory.produceClient(ControllerWithoutDefaultConstructor.class, invocationHandler1)
+        def proxy2 = factory.produceClient(ControllerWithoutDefaultConstructor.class, invocationHandler2)
 
         proxy1.someMethod("any")
         proxy2.someMethod("any")
