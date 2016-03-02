@@ -10,7 +10,6 @@ import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.util.UriBuilder;
 import org.springframework.beans.BeanUtils;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
@@ -110,7 +109,7 @@ public class ResourceProxyMaker {
             }
 
             if(executor == null) {
-                throw new InvalidStateException("Executor must be initialized. For initialize executor use ProxyCallEnhancer.");
+                throw new IllegalStateException("Executor must be initialized. For initialize executor use ProxyCallEnhancer.");
             }
 
             String uri = getHrefByMethod(method, hrefs);
