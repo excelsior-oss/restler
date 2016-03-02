@@ -2,9 +2,13 @@ package org.restler.spring.data;
 
 import com.fasterxml.jackson.databind.Module;
 import org.restler.RestlerConfig;
+import org.restler.client.CGLibClientFactory;
+import org.restler.client.CachingClientFactory;
 import org.restler.client.CallEnhancer;
 import org.restler.client.CoreModule;
 import org.restler.http.RequestExecutor;
+import org.restler.spring.data.chain.ChainCallEnhancer;
+import org.restler.spring.data.proxy.ProxyCallEnhancer;
 import org.restler.spring.mvc.SpringMvcRequestExecutor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -21,12 +25,24 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
 
     private Optional<RequestExecutor> requestExecutor = Optional.empty();
 
+    private final List<Class<?>> repositories;
+
+    private long cacheSize;
+
+    public SpringDataSupport(List<Class<?>> repositories, long maxCacheSize) {
+        this.repositories = repositories;
+        this.cacheSize = maxCacheSize;
+    }
+
     @Override
     public CoreModule apply(RestlerConfig config) {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
+        totalEnhancers.add(new ChainCallEnhancer());
+        totalEnhancers.add(new ProxyCallEnhancer(cacheSize));
+        totalEnhancers.add(new SdrErrorMappingEnhancer());
         totalEnhancers.addAll(config.getEnhancers());
 
-        return new SpringData(config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers);
+        return new SpringData(new CachingClientFactory(new CGLibClientFactory()), config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers, repositories);
     }
 
     public SpringDataSupport addJacksonModule(Module module) {

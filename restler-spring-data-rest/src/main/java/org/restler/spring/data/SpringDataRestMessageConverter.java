@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.restler.client.RestlerException;
-import org.springframework.beans.BeanUtils;
+import org.restler.spring.data.proxy.ResourceProxyMaker;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
@@ -21,10 +21,17 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Object> {
+
+    private final ResourceProxyMaker resourceProxyMaker = new ResourceProxyMaker();
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    static {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     @Override
     public boolean canRead(Type type, Class<?> aClass, MediaType mediaType) {
@@ -37,8 +44,7 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
     @Override
     public Object read(Type type, Class<?> aClass, HttpInputMessage httpInputMessage) throws IOException, HttpMessageNotReadableException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         JsonNode rootNode = objectMapper.readTree(httpInputMessage.getBody());
         Class<?> resultClass = ((ParameterizedTypeImpl) type).getRawType();
         Class<?> elementClass;
@@ -53,11 +59,16 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
             if (objects instanceof ArrayNode) {
                 ArrayNode arr = ((ArrayNode) objects);
                 List<Object> res = new ArrayList<>();
+
                 for (int i = 0; i < arr.size(); i++) {
-                    res.add(mapObject(elementClass, objectMapper, arr.get(i)));
+                    HashMap<String, String> hrefs = getObjectHrefs(arr.get(i));
+                    Object object = mapObject(elementClass, objectMapper, arr.get(i));
+                    res.add(resourceProxyMaker.make(elementClass, object, hrefs));
                 }
                 return res;
             }
+
+            return new ArrayList(); //if collection is empty
         }
         throw new HttpMessageNotReadableException("Unexpected response format");
     }
@@ -82,10 +93,14 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
     @Override
     public Object read(Class<?> aClass, HttpInputMessage httpInputMessage) throws IOException, HttpMessageNotReadableException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         JsonNode rootNode = objectMapper.readTree(httpInputMessage.getBody());
-        return mapObject(aClass, objectMapper, rootNode);
+
+        HashMap<String, String> hrefs = getObjectHrefs(rootNode);
+
+        Object object = mapObject(aClass, objectMapper, rootNode);
+
+        return resourceProxyMaker.make(aClass, object, hrefs);
     }
 
     private Object mapObject(Class<?> aClass, ObjectMapper objectMapper, JsonNode rootNode) throws com.fasterxml.jackson.core.JsonProcessingException {
@@ -97,6 +112,20 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
     @Override
     public void write(Object o, MediaType mediaType, HttpOutputMessage httpOutputMessage) throws IOException, HttpMessageNotWritableException {
 
+    }
+
+    private HashMap<String, String> getObjectHrefs(JsonNode objectNode) {
+        HashMap<String, String> result = new LinkedHashMap<>();
+
+        JsonNode linksNode = objectNode.get("_links");
+        Iterator<String> names = linksNode.fieldNames();
+
+        linksNode.forEach((JsonNode node)->{
+            String name = names.next();
+            result.put(name, node.get("href").toString().replace("\"", ""));
+        });
+
+       return result;
     }
 
     private Object getId(JsonNode objectNode) {
@@ -112,32 +141,26 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
         return selfLinkString.substring(leftOffset, rightOffset);
     }
 
+
+
     private void setId(Object object, Class<?> aClass, Object id) {
         Field[] fields = aClass.getDeclaredFields();
-        String idFieldName = "";
-        Class fieldClass = null;
+        Class fieldClass;
 
         for (Field field : fields) {
             if (field.getDeclaredAnnotation(Id.class) != null || field.getDeclaredAnnotation(EmbeddedId.class) != null) {
-                idFieldName = field.getName();
                 fieldClass = field.getType();
-            }
-        }
 
+                field.setAccessible(true);
 
-        if (!idFieldName.isEmpty() && fieldClass != null) {
-            try {
-                Object wrappedId = fieldClass.getConstructor(String.class).newInstance(id);
-                BeanUtils.getPropertyDescriptor(aClass, idFieldName).getWriteMethod().invoke(object, wrappedId);
-            } catch (IllegalAccessException e) {
-                throw new RestlerException("Access denied to id write method", e);
-            } catch (InvocationTargetException e) {
-                throw new RestlerException("Can't invoke id write method", e);
-            } catch (NoSuchMethodException | InstantiationException e) {
-                throw new RestlerException("Could not instantiate id object", e);
+                try {
+                    Object wrappedId = fieldClass.getConstructor(String.class).newInstance(id);
+                    field.set(object, wrappedId);
+                    field.setAccessible(false);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | InstantiationException e) {
+                    throw new RestlerException("Id setting failed", e);
+                }
             }
-        } else {
-            throw new RestlerException("Can't find id field");
         }
     }
 

@@ -4,33 +4,37 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.restler.client.*;
 import org.restler.http.HttpCallExecutor;
 import org.restler.http.RequestExecutor;
+import org.restler.spring.data.util.Repositories;
 import org.springframework.data.repository.Repository;
 
 import java.net.URI;
 import java.util.List;
 
-public class SpringData implements CoreModule {
+public class SpringData extends DefaultCoreModule {
 
     private final URI baseUrl;
-    private final RequestExecutor requestExecutor;
-    private final List<CallEnhancer> enhancers;
+    private final CallExecutionChain chain;
 
-    public SpringData(URI baseUrl, RequestExecutor requestExecutor, List<CallEnhancer> enhancers) {
+    private final Repositories repositories;
+
+    public SpringData(ClientFactory factory, URI baseUrl, RequestExecutor requestExecutor, List<CallEnhancer> enhancers, List<Class<?>> repositories) {
+        super(factory);
         this.baseUrl = baseUrl;
-        this.requestExecutor = requestExecutor;
-        this.enhancers = enhancers;
+        HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
+        chain = new CallExecutionChain(callExecutor, enhancers);
+
+        // this leak
+        this.repositories = new Repositories(repositories, this);
     }
 
     @Override
-    public boolean canHandle(ServiceDescriptor descriptor) {
+    protected boolean canHandle(ServiceDescriptor descriptor) {
         return descriptor instanceof ClassServiceDescriptor && isRepository(((ClassServiceDescriptor) descriptor).getServiceDescriptor());
     }
 
     @Override
-    public InvocationHandler createHandler(ServiceDescriptor descriptor) {
-        HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
-        CallExecutionChain chain = new CallExecutionChain(callExecutor, enhancers);
-        return new CallExecutorInvocationHandler(chain, new SpringDataMethodInvocationMapper(baseUrl));
+    protected InvocationHandler createHandler(ServiceDescriptor descriptor) {
+        return new CallExecutorInvocationHandler(chain, new SpringDataMethodInvocationMapper(baseUrl, repositories));
     }
 
     private boolean isRepository(Class<?> someClass) {

@@ -1,27 +1,19 @@
 package org.restler.spring.data;
 
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.reflect.TypeToken;
 import org.restler.client.Call;
 import org.restler.client.MethodInvocationMapper;
 import org.restler.client.RestlerException;
-import org.restler.http.HttpCall;
-import org.restler.http.HttpMethod;
-import org.restler.util.UriBuilder;
+import org.restler.spring.data.methods.*;
+import org.restler.spring.data.util.Repositories;
+import org.restler.spring.data.util.RepositoryUtils;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.util.StringUtils;
-import org.springframework.web.util.UriComponentsBuilder;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
 
@@ -31,8 +23,11 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
 
     private final URI baseUrl;
 
-    public SpringDataMethodInvocationMapper(URI baseUrl) {
+    private final Repositories repositories;
+
+    public SpringDataMethodInvocationMapper(URI baseUrl, Repositories repositories) {
         this.baseUrl = baseUrl;
+        this.repositories = repositories;
     }
 
     @Override
@@ -64,89 +59,29 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
     }
 
     private Call getDescription(Class<?> declaringClass, Method method, ImmutableMultimap<String, String> requestParams, Map<String, Object> pathVariables, Set<Object> unmappedArgs) {
+        String repositoryUri = RepositoryUtils.getRepositoryPath(declaringClass.getInterfaces()[0]);
 
-        RepositoryRestResource repositoryAnnotation = declaringClass.getInterfaces()[0].getDeclaredAnnotation(RepositoryRestResource.class);
-        RestResource methodAnnotation = method.getDeclaredAnnotation(RestResource.class);
+        RepositoryMethod repositoryMethod = getRepositoryMethod(method, baseUrl + "/" + repositoryUri);
 
-        String methodMappedUriString;
-        HttpMethod httpMethod;
-
-        Class repositoryType = (Class) declaringClass.getMethods()[0].getDeclaringClass().getGenericInterfaces()[0];
-        ParameterizedTypeImpl crudRepositoryType = (ParameterizedTypeImpl) repositoryType.getGenericInterfaces()[0];
-        Class<?> idClass = TypeToken.of(crudRepositoryType.getActualTypeArguments()[1]).getRawType();
-
-        Type genericReturnType;
-        if (isCrudMethod(method)) {
-            methodMappedUriString = getCrudMethodPath(method);
-            httpMethod = HttpMethod.GET;
-            genericReturnType = crudRepositoryType.getActualTypeArguments()[0];
-        } else {
-            methodMappedUriString = getQueryMethodUri(method, methodAnnotation);
-            httpMethod = HttpMethod.GET;
-            genericReturnType = method.getGenericReturnType();
-        }
-
-        String repositoryUri = getRepositoryUri(declaringClass, repositoryAnnotation);
-        String uriTemplate = UriComponentsBuilder.fromUriString("/").pathSegment(repositoryUri, methodMappedUriString).build().toUriString();
-
-        // TODO: implement more generic solution
-        unmappedArgs.stream().
-                filter(unmappedArg -> idClass.isAssignableFrom(unmappedArg.getClass())).
-                forEach(unmappedArg -> pathVariables.put("id", unmappedArg));
-
-        return new HttpCall(url(baseUrl, uriTemplate, requestParams, pathVariables), httpMethod, null, ImmutableMultimap.of(), genericReturnType);
+        return repositoryMethod.getDescription(baseUrl, declaringClass, requestParams, pathVariables, unmappedArgs);
     }
 
-    private URI url(URI baseUrl, String pathTemplate, ImmutableMultimap<String, String> queryParams, Map<String, Object> pathVariables) {
-        return new UriBuilder(baseUrl).
-                path(pathTemplate).
-                queryParams(queryParams).
-                pathVariables(pathVariables).build();
-    }
+    private RepositoryMethod getRepositoryMethod(Method method, String repositoryUri) {
+        RepositoryMethod[] repositoryMethods = {
+                new FindOneRepositoryMethod(),
+                new SaveRepositoryMethod(baseUrl.toString(), repositoryUri, repositories),
+                new DeleteRepositoryMethod(),
+                new QueryRepositoryMethod(method)
+        };
 
-    private String getRepositoryUri(Class<?> repositoryClass, RepositoryRestResource repositoryAnnotation) {
-
-        String repositoryUriString;
-        if (repositoryAnnotation == null || repositoryAnnotation.path().isEmpty()) {
-            Type entityType = ((ParameterizedType) repositoryClass.getClass().getInterfaces()[0].getGenericInterfaces()[0]).getActualTypeArguments()[0];
-            try {
-                repositoryUriString = Class.forName(entityType.getTypeName()).getSimpleName().toLowerCase() + "s";
-            } catch (ClassNotFoundException e) {
-                throw new RestlerException("Could not find class for repository's entity type", e);
+        for(RepositoryMethod repositoryMethod : repositoryMethods) {
+            if(repositoryMethod.isRepositoryMethod(method)) {
+                return repositoryMethod;
             }
-        } else {
-            repositoryUriString = repositoryAnnotation.path();
         }
 
-        return repositoryUriString;
-    }
-
-    private String getCrudMethodPath(Method method) {
-        if ("findOne".equals(method.getName())) {
-            return "{id}";
-        }
         throw new RestlerException("Method " + method + " is not supported");
     }
 
-    private String getQueryMethodUri(Method method, RestResource methodAnnotation) {
-        String methodName = method.getName();
 
-        if (methodAnnotation != null && !methodAnnotation.path().isEmpty()) {
-            methodName = methodAnnotation.path();
-        }
-
-        return "search/" + methodName;
-    }
-
-    private boolean isCrudMethod(Method method) {
-        Method[] crudMethods = CrudRepository.class.getMethods();
-
-        for (Method crudMethod : crudMethods) {
-            if (crudMethod.equals(method)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

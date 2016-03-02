@@ -146,9 +146,7 @@ public class Restler {
             enhancers.add(new AuthenticatingEnhancer(session));
         }
 
-        CachingClientFactory factory = new CachingClientFactory(new CGLibClientFactory(createCoreModule.apply(new RestlerConfig(uriBuilder.build(), enhancers, threadPool, session))));
-
-        return new Service(factory, session);
+        return new Service(createCoreModule.apply(config), session);
     }
 
 }

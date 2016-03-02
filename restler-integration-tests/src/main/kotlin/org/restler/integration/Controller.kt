@@ -58,6 +58,11 @@ public open class Controller {
         return name
     }
 
+    @RequestMapping("console")
+    open fun console(@RequestParam(value = "text") text: String) {
+        System.out.println(text);
+    }
+
     @RequestMapping("throwException")
     @Throws(Throwable::class)
     open fun throwException(@RequestParam exceptionClass: String): String {
