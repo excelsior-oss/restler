@@ -1,7 +1,7 @@
 package org.restler.client;
 
 /**
- * Implementations are responsible for executing {@link Call}
+ * Implementations are responsible for executing {@link Call}s.
  */
 public interface CallExecutor {
 

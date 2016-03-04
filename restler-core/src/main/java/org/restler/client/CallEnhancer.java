@@ -4,7 +4,7 @@ package org.restler.client;
 import java.util.function.BiFunction;
 
 /**
- * CallEnhancer is additionally extension point of the library, that provides not essential features.
+ * CallEnhancer is an additional extension point of the library that provides non-essential features.
  */
 public interface CallEnhancer extends BiFunction<Call, CallExecutor, Object> {
 

@@ -4,9 +4,10 @@ import org.restler.client.CoreModule;
 import org.restler.http.security.SecuritySession;
 
 /**
- * Service it is representation of remote service, which holds session information and able
- * to produce proxies of remote services from description of that services. Supported service descriptions
- * formats are depend {@code org.restler.client.CoreModule}, that was specified for {@code org.restler.Restler}.
+ * A {@code Service} is a representation of a remote service, which holds session information and is able
+ * to produce proxies for remote services from descriptions of those services. Supported service description
+ * formats depend on which {@code org.restler.client.CoreModule} was specified for the 
+ * {@code org.restler.Restler} that produced the given {@code Service}.
  */
 public class Service {
 

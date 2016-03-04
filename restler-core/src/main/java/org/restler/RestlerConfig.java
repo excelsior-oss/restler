@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
- * RestlerConfig is used to pass configuration to {@code org.restler.client.CoreModule} implementations
+ * {@code RestlerConfig} instances are used to pass configuration information to {@code org.restler.client.CoreModule} implementations
  */
 public class RestlerConfig {
 

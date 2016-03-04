@@ -5,20 +5,20 @@ Restler
 =======
  
 ### Overview
-*Restler* is a library that generates a client of a web service by its annotated Spring controller interface at runtime. *Restler* may help you to remove HTTP-specific boilerplate from your integration tests, microservices and [thirdparty HTTP API clients](https://github.com/excelsior-oss/restler/wiki/GitHub-client).
+*Restler* is a library that automatically generates a client for a web service at run time, by analyzing the respective annotated Spring controller interface. *Restler* may help you remove HTTP-specific boilerplate from your integration tests, microservices and [thirdparty HTTP API clients](https://github.com/excelsior-oss/restler/wiki/GitHub-client).
 
 **EPA warning: Restler currently is in early public access stage and it is neither feature complete, tested in production or backward compatible**
 
 ### Features
  * Easily extensible architecture
- * Custom authentication, authorization and errors mapping strategies.
- * Support of form-based, http basic, cookie-based and generic header-based authentication.
- * Support of async controllers through methods returning Future, DefferedResult or Callabe objects
- * Experemental Spring Data Rest support
+ * Custom authentication, authorization and errors mapping strategies
+ * Support of form-based, http basic, cookie-based and generic header-based authentication
+ * Support of async controllers through methods returning `Future`, `DefferedResult` or `Callable` objects
+ * Experemental Spring Data REST support
 
-### Simple usage example
+### Simple Usage Example
 
-Assuming, you have following interface on the server
+Suppose you have the following interface on the server:
 ```java
 /** 
   * An annotated Spring controller interface
@@ -28,14 +28,14 @@ Assuming, you have following interface on the server
 public interface Greeter {
 
 	@RequestMapping("greetings/{language}")	
-	String getGreeting(@PathVariable String language, @RequestParam(defaultValue = "Anonimous") String name); 
+	String getGreeting(@PathVariable String language, @RequestParam(defaultValue = "Anonymous") String name); 
 
 }
 ```
 
-Then from your client you can invoke getGreating method on remote service using following code snippet
+Then in your client you can invoke the `getGreeting` method of the remote service using the following code snippet:
 ```java
-Service service = new Restler("https://www.excelsior-usa.com/api", new SpringMvcSupport()).build();
+Service service = new Restler("https://www.example.com/api", new SpringMvcSupport()).build();
 Greeter greeter = service.produceClient(Greeter.class);
-String greeting = greeter.getGreeting("en","Boddy"); // the result of https://www.excelsior-usa.com/api/greeter/greetings/en?name=Boddy call
+String greeting = greeter.getGreeting("en","Buddy"); // the result of https://www.example.com/api/greeter/greetings/en?name=Buddy call
 ```

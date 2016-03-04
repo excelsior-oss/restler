@@ -9,13 +9,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Represent some repository method, it allows build call description for different methods.
+ * Represents some repository method, allowing building of call descriptions for different methods.
  */
 public interface RepositoryMethod {
     /**
      * Builds call description.
      * @param declaringClass class object whose method was called.
-     * @param unmappedArgs arguments that wasn't mapped into requestParams and pathVariables.
+     * @param unmappedArgs arguments that weren't mapped into {@code requestParams} and {@code pathVariables}.
      */
     Call getDescription(URI baseUrl, Class<?> declaringClass, ImmutableMultimap<String, String> requestParams, Map<String, Object> pathVariables, Set<Object> unmappedArgs);
 

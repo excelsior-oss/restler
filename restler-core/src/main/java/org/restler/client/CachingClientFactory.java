@@ -15,7 +15,7 @@ public class CachingClientFactory implements ClientFactory {
     /**
      * Creates a caching wrapper of a {@link ClientFactory} instance.
      *
-     * @param factory an instance used for production if there is no cached result for a given input.
+     * @param factory an instance used for production if there is no cached result for the given input.
      */
     public CachingClientFactory(ClientFactory factory) {
         this.factory = factory;
