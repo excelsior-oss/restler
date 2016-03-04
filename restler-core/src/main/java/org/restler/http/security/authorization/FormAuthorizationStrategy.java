@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * The implementation that performs an HTTP post request of a login form data to obtain a session id.
+ * The implementation that performs an HTTP POST request of login form data to obtain a session id.
  */
 public class FormAuthorizationStrategy implements AuthorizationStrategy {
 

@@ -1,8 +1,8 @@
 package org.restler.client;
 
 /**
- * CoreModule it is main extension point of the library.
- * It produces client by class.
+ * CoreModule is the main extension point of the library.
+ * It produces a client from a controller class.
  */
 public interface CoreModule {
 

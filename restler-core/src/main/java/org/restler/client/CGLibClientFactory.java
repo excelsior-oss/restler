@@ -6,7 +6,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.objenesis.ObjenesisStd;
 
 /**
- * A CGLib implementation of {@link ClientFactory} that uses {@link CallExecutor} for execution client methods.
+ * A CGLib implementation of {@link ClientFactory} that uses {@link CallExecutor} for execution of client methods.
  */
 @SuppressWarnings("unchecked")
 public class CGLibClientFactory implements ClientFactory {

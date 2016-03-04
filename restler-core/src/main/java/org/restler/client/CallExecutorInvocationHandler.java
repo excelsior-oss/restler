@@ -5,7 +5,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 import java.lang.reflect.Method;
 
 /**
- * Simple implemenation of {@code InvocationHandler} that connects provided {@code MethodInvocationMapper} and
+ * A simple implemenation of {@code InvocationHandler} that connects the provided {@code MethodInvocationMapper} and
  * {@code CallExecutor}. Core modules are encouraged to produce instances of this class parametrized with custom
  * call executor and method invocation mapper.
  *

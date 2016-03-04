@@ -17,7 +17,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
- * Simple RequestExecutor based on okhttp library designed to be used by custom modules
+ * Simple RequestExecutor based on the okhttp library designed to be used by custom modules
  */
 public class OkHttpRequestExecutor implements RequestExecutor {
 

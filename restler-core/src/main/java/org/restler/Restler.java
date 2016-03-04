@@ -21,15 +21,16 @@ import java.util.stream.Collectors;
 import static org.restler.http.security.authentication.CookieAuthenticationStrategy.JSESSIONID;
 
 /**
- * The entry point into library. Restler is actually builder for {@code Service} classes. Instances of
- * Restler can be reused to produces slightly different services - for example 2 services that differs only
- * in base url or 2 services that differs only in authorization settings.
- *
- * Restler could be extended in 3 main ways:
+ * The main entry point into the library. A {@code Restler} is actually a builder for {@code Service}s. Instances of
+ * {@code Restler} can be reused to produce slightly different services - for example, two services that differ only
+ * by their base URLs, or two services that differ only in authorization settings.
+ * <p>
+ * {@code Restler} could be extended in three main ways:
+ * </p>
  * <ul>
- *     <li>Every restler instance should be configured with {@code CoreModule}, which defines supported service description formats
+ *     <li>Each {@code Restler} is configured with {@code CoreModule} that defines supported service description formats
  *     and provides CgLib {@code net.sf.cglib.proxy.InvocationHandler} that will be used to proxy remote services</li>
- *     <li>List of {@code CallEnhancer} instances or/and suppliers may be provided to enable additional capabilities</li>
+ *     <li>A list of {@code CallEnhancer}s instances and/or suppliers may be provided to enable additional capabilities</li>
  *     <li>Custom {@code AuthenticationStrategy} and {@code AuthorizationStrategy} may be provided to support custom security mechanisms</li>
  * </ul>
  */
@@ -49,8 +50,8 @@ public class Restler {
     private Function<RestlerConfig, CoreModule> createCoreModule;
 
     /**
-     * Instantiates new Restler with specified base url and function, that able to produce {@code CoreModule} from {@code RestlerConfig}. Core module
-     * producing function should take into account all data provided by {@code RestlerConfig}, especially the list of provided {@code CallEnhancer} -
+     * Instantiates a new {@code Restler} with a given base URL and a function that is able to produce a {@code CoreModule} from a {@code RestlerConfig}. The core module
+     * producing function should take into account all data provided by {@code RestlerConfig}, especially the list of provided {@code CallEnhancer} instances -
      * all of them should be able to take part in request processing.
      */
     public Restler(String baseUrl, Function<RestlerConfig, CoreModule> coreModule) {
@@ -59,8 +60,8 @@ public class Restler {
     }
 
     /**
-     * Instantiates new Restler with specified base url and function, that able to produce {@code CoreModule} from {@code RestlerConfig}. Core module
-     * producing function should take into account all data provided by {@code RestlerConfig}, especially the list of provided {@code CallEnhancer} -
+     * Instantiates a new {@code Restler} with a given base URL and a function that is able to produce a {@code CoreModule} from a {@code RestlerConfig}. The core module
+     * producing function should take into account all data provided by {@code RestlerConfig}, especially the list of provided {@code CallEnhancer} instances -
      * all of them should be able to take part in request processing.
      */
     public Restler(URI baseUrl, Function<RestlerConfig, CoreModule> coreModule) {
