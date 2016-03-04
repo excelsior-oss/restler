@@ -4,11 +4,11 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Restler : Restler is a library that generates a client of a web service by its annotated Spring controller interface at runtime.">
+    <meta name="description" content="Restler : Library for automatic run-time generation of Web service clients from annotated Spring controller interfaces.">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Restler</title>
+    <title>Restler: Generate Web Service Clients Automatically at Run Time</title>
   </head>
 
   <body>
@@ -19,7 +19,7 @@
           <a id="forkme_banner" href="https://github.com/excelsior-oss/restler">View on GitHub</a>
 
           <h1 id="project_title">Restler</h1>
-          <h2 id="project_tagline">Restler is a library that generates a client of a web service by its annotated Spring controller interface at runtime.</h2>
+          <h2 id="project_tagline">Generate clients for Web services automatically at run time, using their annotated Spring controller interfaces as input.</h2>
 
             <section id="downloads">
               <a class="zip_download_link" href="https://github.com/excelsior-oss/restler/zipball/master">Download this project as a .zip file</a>
@@ -41,26 +41,28 @@
 public interface Greeter {
 
     @RequestMapping("greetings/{language}") 
-    String getGreeting(@PathVariable String language, @RequestParam(defaultValue = "Anonimous") String name); 
+    String getGreeting(@PathVariable String language, 
+                       @RequestParam(defaultValue = "Anonymous") String name); 
 
 }
 
 // Consuming code 
-Service service = new Service("https://www.excelsior-usa.com/api");
+Service service = new Service("https://www.example.com/api");
 Greeter greeter = service.getController(Greeter.class);
-String greeting = greeter.getGreeting("en","Boddy"); // the result of https://www.excelsior-usa.com/api/greeter/greetings/en?name=Boddy call
+String greeting = greeter.getGreeting("en","Buddy"); 
+// Result of https://www.example.com/api/greeter/greetings/en?name=Boddy call
 
 // Session support in consuming code
-Service service = new Service("https://www.excelsior-usa.com/api");
+Service service = new Service("https://www.example.com/api");
 AuthorizationStrategy authorizationStrategy = new LoginAuthorizationStrategy(...);
 Session session = service.startSession(authorizationStrategy);
 Greeter greeter = service.getController(Greeter.class);
-String greeting = greeter.getGreeting("en","Boddy");
+String greeting = greeter.getGreeting("en","Buddy");
 </code></pre>
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">Rester maintained by <a href="https://github.com/chcat">chcat</a>, <a href="https://github.com/aleksey-zhidkov">Aleksey Zhidkov</a></p>
+        <p class="copyright">Restler is maintained by <a href="https://github.com/chcat">chcat</a>, <a href="https://github.com/aleksey-zhidkov">Aleksey Zhidkov</a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
