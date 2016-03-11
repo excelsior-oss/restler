@@ -1,11 +1,12 @@
 package org.restler.spring.mvc;
-
+/*
 import org.restler.client.AbstractWrapperHandler;
 import org.restler.client.Call;
 import org.restler.client.CallExecutor;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.concurrent.Executor;
+
 
 public class DeferredResultHandler extends AbstractWrapperHandler<DeferredResult<Object>> {
 
@@ -27,3 +28,4 @@ public class DeferredResultHandler extends AbstractWrapperHandler<DeferredResult
         return deferredResult;
     }
 }
+*/

@@ -1,9 +1,10 @@
-package org.restler.spring.mvc;
+package org.restler.spring.data;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
 import org.restler.client.RestlerException;
 import org.restler.http.*;
+import org.restler.spring.data.util.SpringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
@@ -13,11 +14,11 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-public class SpringMvcRequestExecutor implements RequestExecutor {
+public class SpringDataRequestExecutor implements RequestExecutor {
 
     private final RestTemplate restTemplate;
 
-    public SpringMvcRequestExecutor(RestTemplate restTemplate) {
+    public SpringDataRequestExecutor(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

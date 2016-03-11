@@ -9,7 +9,6 @@ import org.restler.client.CoreModule;
 import org.restler.http.RequestExecutor;
 import org.restler.spring.data.chain.ChainCallEnhancer;
 import org.restler.spring.data.proxy.ProxyCallEnhancer;
-import org.restler.spring.mvc.SpringMvcRequestExecutor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
@@ -55,7 +54,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
         return this;
     }
 
-    private SpringMvcRequestExecutor createExecutor() {
+    private SpringDataRequestExecutor createExecutor() {
         RestTemplate restTemplate = new RestTemplate();
 
         List<MappingJackson2HttpMessageConverter> jacksonConverters = restTemplate.getMessageConverters().stream().
@@ -68,7 +67,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
                         converter.getObjectMapper().registerModule(module)));
 
         restTemplate.getMessageConverters().add(0, new SpringDataRestMessageConverter());
-        return new SpringMvcRequestExecutor(restTemplate);
+        return new SpringDataRequestExecutor(restTemplate);
     }
 
 }

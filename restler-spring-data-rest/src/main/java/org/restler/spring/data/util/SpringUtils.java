@@ -1,4 +1,4 @@
-package org.restler.spring.mvc;
+package org.restler.spring.data.util;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.http.HttpCall;
@@ -9,19 +9,14 @@ import org.springframework.util.MultiValueMap;
 import java.util.List;
 import java.util.Map;
 
-public final class SpringUtils {
-
-    private SpringUtils() {
-    }
-
+public class SpringUtils {
     public static <T> HttpCall prepareForSpringMvc(HttpCall call) {
         if (call.getRequestBody() instanceof HttpForm) {
-            return new HttpCall(call.getUrl(), call.getHttpMethod(), toMultiValueMap(((HttpForm) call.getRequestBody()).getFields()), call.getHeaders(), call.getReturnType());
+            return new HttpCall(call.getUrl(), call.getHttpMethod(), ((HttpForm) call.getRequestBody()).getFields(), call.getHeaders(), call.getReturnType());
         } else {
             return call;
         }
     }
-
     private static MultiValueMap toMultiValueMap(ImmutableMultimap<String, String> guavaMap) {
         MultiValueMap<String, String> res = new LinkedMultiValueMap<>();
         for (Map.Entry<String, String> field : guavaMap.entries()) {

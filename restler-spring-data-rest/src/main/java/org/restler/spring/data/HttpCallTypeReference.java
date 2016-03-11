@@ -1,4 +1,4 @@
-package org.restler.spring.mvc;
+package org.restler.spring.data;
 
 import org.restler.client.Call;
 import org.springframework.core.ParameterizedTypeReference;

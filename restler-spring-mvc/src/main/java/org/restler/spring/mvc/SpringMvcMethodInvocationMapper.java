@@ -6,12 +6,8 @@ import org.restler.client.MethodInvocationMapper;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
+import org.restler.spring.mvc.annotations.*;
 import org.restler.util.UriBuilder;
-import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.core.ParameterNameDiscoverer;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -26,7 +22,7 @@ import java.util.regex.Pattern;
  */
 public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
 
-    private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+    private static final ParameterNameDiscoverer parameterNameDiscoverer = new ParameterNameDiscoverer();
     private static final Pattern pathVariablesPattern = Pattern.compile("\\{([-a-zA-Z0-9@:%_\\+.~#?&/=]*)\\}");
 
     private final URI baseUrl;
@@ -39,10 +35,13 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
 
     @Override
     public Call map(Object receiver, Method method, Object[] args) {
-        ResponseBody receiverResponseBodyAnnotation = AnnotationUtils.findAnnotation(receiver.getClass(), ResponseBody.class);
-        ResponseBody methodResponseBodyAnnotation = AnnotationUtils.findAnnotation(method, ResponseBody.class);
-        ResponseBody classResponseBodyAnnotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), ResponseBody.class);
-        if (receiverResponseBodyAnnotation == null && methodResponseBodyAnnotation == null && classResponseBodyAnnotation == null) {
+
+
+        boolean receiverResponseBodyAnnotation = AnnotationUtils.isAnnotated(receiver.getClass(), ResponseBodyAnnotationProxy.className);
+        boolean methodResponseBodyAnnotation = AnnotationUtils.isAnnotated(method, ResponseBodyAnnotationProxy.className);
+        boolean classResponseBodyAnnotation = AnnotationUtils.isAnnotated(method.getDeclaringClass(), ResponseBodyAnnotationProxy.className);
+
+        if (!receiverResponseBodyAnnotation && !methodResponseBodyAnnotation && !classResponseBodyAnnotation) {
             throw new RuntimeException("The method " + method + " does not return response body");
         }
 
@@ -57,9 +56,9 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         for (int pi = 0; pi < parametersAnnotations.length; pi++) {
             for (int ai = 0; ai < parametersAnnotations[pi].length; ai++) {
                 Annotation annotation = parametersAnnotations[pi][ai];
-                if (annotation instanceof PathVariable) {
+                if (AnnotationUtils.instanceOf(annotation, PathVariableAnnotationProxy.className)) {
 
-                    String pathVariableName = ((PathVariable) annotation).value();
+                    String pathVariableName = AnnotationUtils.cast(annotation, PathVariableAnnotationProxy.class).value();
                     if (StringUtils.isEmpty(pathVariableName) && parameterNames != null)
                         pathVariableName = parameterNames[pi];
                     if (StringUtils.isEmpty(pathVariableName))
@@ -67,11 +66,12 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
 
                     pathVariables.put(pathVariableName, resolver.resolve(pi).orElseGet(() -> null));
 
-                } else if (annotation instanceof RequestParam) {
+                } else if (AnnotationUtils.instanceOf(annotation, RequestParamAnnotationProxy.className)) {
 
                     String parameterVariableName;
-                    if (!StringUtils.isEmpty(((RequestParam) annotation).value())) {
-                        parameterVariableName = ((RequestParam) annotation).value();
+                    RequestParamAnnotationProxy requestParam = AnnotationUtils.cast(annotation, RequestParamAnnotationProxy.class);
+                    if (!StringUtils.isEmpty(requestParam.value())) {
+                        parameterVariableName = requestParam.value();
                     } else if (parameterNames != null && parameterNames[pi] != null) {
                         parameterVariableName = parameterNames[pi];
                     } else {
@@ -81,14 +81,15 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
                     resolver.resolve(pi).
                             ifPresent(param -> requestParams.put(parameterVariableName, param));
 
-                } else if (annotation instanceof RequestBody) {
+                } else if (AnnotationUtils.instanceOf(annotation, RequestBodyAnnotationProxy.className)) {
                     requestBody = args[pi];
                 }
             }
         }
 
-        RequestMapping controllerMapping = AnnotationUtils.findAnnotation(receiver.getClass(), RequestMapping.class);
-        RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
+        RequestMappingAnnotationProxy controllerMapping = AnnotationUtils.getAnnotation(receiver.getClass(), RequestMappingAnnotationProxy.class);
+        RequestMappingAnnotationProxy methodMapping = AnnotationUtils.getAnnotation(method, RequestMappingAnnotationProxy.class);
+
         if (methodMapping == null) {
             throw new RuntimeException("The method " + method + " is not mapped");
         }
@@ -103,7 +104,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         return new HttpCall(url, getHttpMethod(methodMapping), requestBody, ImmutableMultimap.<String, String>of(), getReturnType(method));
     }
 
-    private String pathTemplate(RequestMapping controllerMapping, RequestMapping methodMapping) {
+    private String pathTemplate(RequestMappingAnnotationProxy controllerMapping, RequestMappingAnnotationProxy methodMapping) {
         String controllerPath = getMappedUriString(controllerMapping);
         String methodPath = getMappedUriString(methodMapping);
         if (!controllerPath.startsWith("/")) {
@@ -115,14 +116,14 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         return controllerPath + methodPath;
     }
 
-    private HttpMethod getHttpMethod(RequestMapping methodMapping) {
-        RequestMethod declaredMethod;
+    private HttpMethod getHttpMethod(RequestMappingAnnotationProxy methodMapping) {
+        HttpMethod declaredMethod;
         if (methodMapping.method() == null || methodMapping.method().length == 0) {
-            declaredMethod = RequestMethod.GET;
+            declaredMethod = HttpMethod.GET;
         } else {
             declaredMethod = methodMapping.method()[0];
         }
-        return HttpMethod.valueOf(declaredMethod.toString());
+        return declaredMethod;
     }
 
     private Type getReturnType(Method method) {
@@ -147,7 +148,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         return res;
     }
 
-    private String getMappedUriString(RequestMapping mapping) {
+    private String getMappedUriString(RequestMappingAnnotationProxy mapping) {
         if (mapping == null) {
             return "";
         } else {
