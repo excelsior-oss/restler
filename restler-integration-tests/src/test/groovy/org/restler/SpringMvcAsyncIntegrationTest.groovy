@@ -6,6 +6,7 @@ import org.restler.spring.data.SpringDataRequestExecutor
 import org.restler.spring.mvc.SpringMvcSupport
 import org.restler.util.IntegrationSpec
 import org.springframework.web.client.RestTemplate
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 
@@ -26,6 +27,7 @@ class SpringMvcAsyncIntegrationTest extends Specification implements Integration
 
     def controller = service.produceClient(Controller.class);
 
+    @Ignore
     def "test deferred get"() {
         def c = Class.forName("org.springframework.web.context.request.async.DeferredResult")
         def deferredResult = controller.deferredGet()
