@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static java.util.Collections.singletonList;
-
 public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
 
     private final List<Module> jacksonModules = new ArrayList<>();
@@ -28,6 +26,7 @@ public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
     public CoreModule apply(RestlerConfig config) {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
         totalEnhancers.addAll(config.getEnhancers());
+
         //totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
 
         return new SpringMvc(new CachingClientFactory(new CGLibClientFactory()), requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
