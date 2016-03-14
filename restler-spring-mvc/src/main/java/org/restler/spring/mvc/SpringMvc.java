@@ -4,8 +4,8 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.restler.client.*;
 import org.restler.http.HttpCallExecutor;
 import org.restler.http.RequestExecutor;
-import org.restler.spring.mvc.annotations.ControllerAnnotationProxy;
-import org.restler.spring.mvc.annotations.RestControllerAnnotationProxy;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
@@ -32,8 +32,8 @@ public class SpringMvc extends DefaultCoreModule {
 
         Class<?> controllerClass = ((ClassServiceDescriptor) descriptor).getServiceDescriptor();
 
-        return AnnotationUtils.isAnnotated(controllerClass, ControllerAnnotationProxy.className) ||
-                AnnotationUtils.isAnnotated(controllerClass, RestControllerAnnotationProxy.className);
+        return AnnotationUtils.isAnnotated(controllerClass, Controller.class) ||
+                AnnotationUtils.isAnnotated(controllerClass, RestController.class);
     }
 
     @Override
