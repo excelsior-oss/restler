@@ -99,23 +99,44 @@ public class LocalVariableTableVisitor extends MethodVisitor {
                 continue;
             } else if(desc.charAt(i) == ')') {
                 break;
+            } else if(desc.charAt(i) == '[') {
+                String typeName = getArrayClassName(desc, i);
+                result.add(typeName);
+                i += typeName.length();
+            } else if(desc.charAt(i) == 'L') {
+                String typeName = getObjectClassName(desc, i);
+                result.add(typeName);
+                i += typeName.length();
             } else if(ClassUtils.isPrimitiveType(""+desc.charAt(i))) {
                 result.add(""+desc.charAt(i));
-            } else if(desc.charAt(i) == 'L' || desc.charAt(i) == '[') {
-                String typeName = "";
-
-                for(; i < desc.length(); ++i) {
-                    if(desc.charAt(i) == ')' || desc.charAt(i) == ';') {
-                        break;
-                    }
-
-                    typeName += desc.charAt(i);
-                }
-
-                result.add(typeName);
+                i++;
             }
         }
 
         return result;
+    }
+
+    private String getArrayClassName(String desc, int i) {
+        i += 1;
+
+        if(i < desc.length() && ClassUtils.isPrimitiveType("" + desc.charAt(i))) {
+            return "[" + desc.charAt(i);
+        }
+
+        return "["+getObjectClassName(desc, i);
+    }
+
+    private String getObjectClassName(String desc, int i) {
+        String typeName = "";
+
+        for(; i < desc.length(); ++i) {
+            if(desc.charAt(i) == ')' || desc.charAt(i) == ';') {
+                break;
+            }
+
+            typeName += desc.charAt(i);
+        }
+
+        return typeName;
     }
 }
