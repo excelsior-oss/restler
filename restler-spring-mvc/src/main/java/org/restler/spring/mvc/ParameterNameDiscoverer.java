@@ -1,6 +1,6 @@
 package org.restler.spring.mvc;
 
-import jdk.internal.org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassReader;
 import org.restler.client.RestlerException;
 import org.restler.spring.mvc.asm.ClassUtils;
 import org.restler.spring.mvc.asm.ParameterNameDiscoveringVisitor;
