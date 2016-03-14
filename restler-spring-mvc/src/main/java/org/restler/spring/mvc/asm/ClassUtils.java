@@ -54,4 +54,9 @@ public class ClassUtils {
     public static boolean isPrimitiveType(String name) {
         return primitiveTypesMap.get(name) != null;
     }
+
+    public static String getClassFileName(Class<?> clazz) {
+        String name = clazz.getName();
+        return name.substring(name.lastIndexOf('.')+1) + ".class";
+    }
 }
