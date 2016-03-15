@@ -28,20 +28,13 @@ public class ParameterNameDiscoverer {
     private String[] getParameterNamesDefault(Method method) {
         Parameter[] parameters = method.getParameters();
         String[] parameterNames = new String[parameters.length];
-
-        for(int i = 0; i < parameters.length; ++i) {
-            Parameter parameter = parameters[i];
-            if(!parameter.isNamePresent()) {
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter param = parameters[i];
+            if (!param.isNamePresent()) {
                 return null;
             }
-
-            parameterNames[i] = parameter.getName();
+            parameterNames[i] = param.getName();
         }
-
-        if(parameterNames.length == 0) {
-            return getParameterNamesFromLocalVariableTable(method);
-        }
-
         return parameterNames;
     }
 
