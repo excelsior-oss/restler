@@ -5,7 +5,6 @@ import org.restler.client.CallEnhancer;
 import org.restler.client.CallExecutor;
 import org.restler.http.HttpExecutionException;
 import org.restler.http.security.SecuritySession;
-import org.springframework.http.HttpStatus;
 
 public class ReauthorizingEnhancer implements CallEnhancer {
 
@@ -17,10 +16,11 @@ public class ReauthorizingEnhancer implements CallEnhancer {
 
     @Override
     public Object apply(Call call, CallExecutor callExecutor) {
+        int httpStatusForbidden = 403;
         try {
             return callExecutor.execute(call);
         } catch (HttpExecutionException e) {
-            if (e.getStatus().code == HttpStatus.FORBIDDEN.value()) {
+            if (e.getStatus().code == httpStatusForbidden) {
                 session.authorize();
                 return callExecutor.execute(call);
             } else {

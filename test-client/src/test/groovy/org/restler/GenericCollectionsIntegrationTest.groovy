@@ -1,19 +1,18 @@
 package org.restler
 
 import com.fasterxml.jackson.module.paranamer.ParanamerModule
-import org.restler.integration.Controller
+import org.restler.integration.ControllerApi
 import org.restler.integration.SimpleDto
 import org.restler.spring.mvc.SpringMvcSupport
-import org.restler.util.IntegrationSpec
 import spock.lang.Specification
 
-class GenericCollectionsIntegrationTest extends Specification implements IntegrationSpec {
+class GenericCollectionsIntegrationTest extends Specification /* implements IntegrationSpec */ {
 
     SpringMvcSupport spring = new SpringMvcSupport().
             addJacksonModule(new ParanamerModule())
     Service serviceWithFormAuth = new Restler("http://localhost:8080", spring).build();
 
-    Controller controller = serviceWithFormAuth.produceClient(Controller.class)
+    ControllerApi controller = serviceWithFormAuth.produceClient(ControllerApi.class)
 
     def "List of strings should be mapped correctly"() {
         when:

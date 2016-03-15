@@ -10,34 +10,34 @@ import java.util.concurrent.Future
 import kotlin.concurrent.thread
 
 @RestController
-public open class Controller {
+open class Controller : ControllerApi {
 
     @RequestMapping("get")
-    open fun publicGet() = "OK"
+    override fun publicGet() = "OK"
 
     @RequestMapping("secured/get")
-    open fun securedGet() = "Secure OK"
+    override fun securedGet() = "Secure OK"
 
     @RequestMapping("forceLogout")
-    open fun logout(): String {
+    override fun logout(): String {
         SecurityContextHolder.getContext().authentication.isAuthenticated = false
         return "OK"
     }
 
-    @RequestMapping("getDeferred")
-    open fun deferredGet(): DeferredResult<String> {
-        var deferredResult = DeferredResult<String>()
-
-        thread {
-            Thread.sleep(1000)
-            deferredResult.setResult("Deferred OK")
-        }
-
-        return deferredResult
-    }
+//    @RequestMapping("getDeferred")
+//    override fun deferredGet(): DeferredResult<String> {
+//        var deferredResult = DeferredResult<String>()
+//
+//        thread {
+//            Thread.sleep(1000)
+//            deferredResult.setResult("Deferred OK")
+//        }
+//
+//        return deferredResult
+//    }
 
     @RequestMapping("getCallable")
-    open fun callableGet(): Callable<String> {
+    override fun callableGet(): Callable<String> {
         return Callable (
                 fun(): String {
                     Thread.sleep(1000)
@@ -48,56 +48,56 @@ public open class Controller {
 
     @Async
     @RequestMapping("getFuture")
-    open fun futureGet(): Future<String> {
+    override fun futureGet(): Future<String> {
         Thread.sleep(1000)
         return AsyncResult<String>("Future OK")
     }
 
     @RequestMapping("getWithVariable/{title}")
-    open fun getWithVariable(@PathVariable(value = "title") title: String, @RequestParam(value = "name") name: String): String {
+    override fun getWithVariable(@PathVariable(value = "title") title: String, @RequestParam(value = "name") name: String): String {
         return name
     }
 
     @RequestMapping("console")
-    open fun console(@RequestParam(value = "text") text: String) {
+    override fun console(@RequestParam(value = "text") text: String) {
         System.out.println(text);
     }
 
     @RequestMapping("throwException")
     @Throws(Throwable::class)
-    open fun throwException(@RequestParam exceptionClass: String): String {
+    override fun throwException(@RequestParam exceptionClass: String): String {
         throw Class.forName(exceptionClass).asSubclass(Throwable::class.java).newInstance()
     }
 
     @RequestMapping("listOfStrings")
-    open fun getListOfStrings() = listOf("item1", "item2")
+    override fun getListOfStrings() = listOf("item1", "item2")
 
     private val simpleDto1 = SimpleDto("1", "dto1")
 
     private val simpleDto2 = SimpleDto("2", "dto2")
 
     @RequestMapping("listOfDtos")
-    open fun getListOfDtos() = listOf(simpleDto1, simpleDto2)
+    override fun getListOfDtos() = listOf(simpleDto1, simpleDto2)
 
     @RequestMapping("setOfDtos")
-    open fun getSetOfDtos() = setOf(simpleDto1, simpleDto2)
+    override fun getSetOfDtos() = setOf(simpleDto1, simpleDto2)
 
     @RequestMapping("mapOfDtos")
-    open fun getMapOfDtos() = mapOf("1" to simpleDto1, "2" to simpleDto2)
+    override fun getMapOfDtos() = mapOf("1" to simpleDto1, "2" to simpleDto2)
 
     @RequestMapping("isNull")
-    open fun isNull(@RequestParam(required = false) str: String?) = str === null
+    override fun isNull(@RequestParam(value = "str", required = false) str: String?) = str === null
 
     @RequestMapping("valueOf")
-    open fun valueOf(@RequestParam(required = false) str: String?) = when (str) {
+    override fun valueOf(@RequestParam(value = "str", required = false) str: String?) = when (str) {
         null -> "The Null"
         "" -> "Empty string object"
         else -> "String object with value: $str"
     }
 
     @RequestMapping("void")
-    open fun returnVoid() {}
+    override fun returnVoid() {}
 
     @RequestMapping("postBody", method = arrayOf(RequestMethod.POST))
-    open fun postBody(@RequestBody body: Any) = body
+    override fun postBody(@RequestBody body: Any) = body
 }

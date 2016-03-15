@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>restler</artifactId>
+        <groupId>org.restler</groupId>
+        <version>0.4.3-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>restler-test-client</artifactId>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.4.0</version>
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.restler.integration.ServerStarter</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Executes integrations tests. Replaces Maven-Fail-Safe as we consider integration tests result critical -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18.1</version>
+                <configuration>
+                    <!-- Excludes integration tests from the unit test phase -->
+                    <excludes>
+                        <exclude>**/*IntegrationTest*</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <phase>integration-test</phase>
+                        <configuration>
+                            <failIfNoTests>true</failIfNoTests>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/*IntegrationTest*</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <!-- required for logback groovy config -->
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>2.4.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>restler-spring-mvc</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.restler</groupId>
+            <artifactId>restler-test-api</artifactId>
+            <version>0.4.3-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+</project>

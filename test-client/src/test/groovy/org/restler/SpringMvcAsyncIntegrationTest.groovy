@@ -1,21 +1,20 @@
 package org.restler
 
+import com.fasterxml.jackson.databind.Module
 import org.restler.async.AsyncSupport
-import org.restler.integration.Controller
-import org.restler.spring.data.SpringDataRequestExecutor
+import org.restler.http.OkHttpRequestExecutor
+import org.restler.integration.ControllerApi
 import org.restler.spring.mvc.SpringMvcSupport
-import org.restler.util.IntegrationSpec
-import org.springframework.web.client.RestTemplate
 import spock.lang.Ignore
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 
-import static org.restler.Tests.login
-import static org.restler.Tests.password
+import static Tests.login
+import static Tests.password
 
-class SpringMvcAsyncIntegrationTest extends Specification implements IntegrationSpec {
+class SpringMvcAsyncIntegrationTest extends Specification /* implements IntegrationSpec */ {
 
-    def spySimpleHttpRequestExecutor = Spy(SpringDataRequestExecutor, constructorArgs: [new RestTemplate()])
+    def spySimpleHttpRequestExecutor = Spy(OkHttpRequestExecutor, constructorArgs: [new ArrayList<Module>()])
 
     SpringMvcSupport springMvcSupport = new SpringMvcSupport().
             requestExecutor(spySimpleHttpRequestExecutor)
@@ -25,7 +24,7 @@ class SpringMvcAsyncIntegrationTest extends Specification implements Integration
             httpBasicAuthentication(login, password).
             build();
 
-    def controller = service.produceClient(Controller.class);
+    def controller = service.produceClient(ControllerApi.class);
 
     @Ignore
     def "test deferred get"() {

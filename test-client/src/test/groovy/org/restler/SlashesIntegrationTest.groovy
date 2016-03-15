@@ -5,10 +5,9 @@ import org.restler.integration.LeftSlashController
 import org.restler.integration.NoSlashedController
 import org.restler.integration.RightSlashController
 import org.restler.spring.mvc.SpringMvcSupport
-import org.restler.util.IntegrationSpec
 import spock.lang.Specification
 
-class SlashesIntegrationTest extends Specification implements IntegrationSpec {
+class SlashesIntegrationTest extends Specification /* implements IntegrationSpec */ {
 
     static def controllers = [NoSlashedController, BothSlashesController, LeftSlashController, RightSlashController]
     static def methods = ["noSlashes", "bothSlashes", "leftSlash", "rightSlash"]
