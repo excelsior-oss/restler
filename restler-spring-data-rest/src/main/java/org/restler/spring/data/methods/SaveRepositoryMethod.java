@@ -254,6 +254,11 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             result = ((ResourceProxy) object).getSelfUri();
         } else {
             Repository repository = repositories.getByResourceClass(object.getClass()).orElse(null);
+
+            if(repository == null) {
+                throw new RestlerException("Can't find repository " + object.getClass() + ".");
+            }
+
             Object id = getId(object);
             if(id == null) {
                 return null;
