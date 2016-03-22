@@ -54,8 +54,20 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
             throw new RestlerException(e);
         }
         if (isList(resultClass)) {
-            String containerName = elementClass.getSimpleName().toLowerCase() + "s";
-            JsonNode objects = rootNode.get("_embedded").get(containerName);
+            String containerName = elementClass.getSimpleName().toLowerCase();
+            JsonNode embedded = rootNode.get("_embedded");
+
+            Iterator<String> fieldNamesIterator = embedded.fieldNames();
+            String fieldName;
+            for(; fieldNamesIterator.hasNext();) {
+                fieldName = fieldNamesIterator.next();
+
+                if(fieldName.startsWith(containerName)) {
+                    containerName = fieldName;
+                }
+            }
+
+            JsonNode objects = embedded.get(containerName);
             if (objects instanceof ArrayNode) {
                 ArrayNode arr = ((ArrayNode) objects);
                 List<Object> res = new ArrayList<>();
