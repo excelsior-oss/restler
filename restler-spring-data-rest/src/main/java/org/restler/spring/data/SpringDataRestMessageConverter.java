@@ -54,27 +54,29 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
             throw new RestlerException(e);
         }
         if (isList(resultClass)) {
-            String containerName = elementClass.getSimpleName().toLowerCase();
+
             JsonNode embedded = rootNode.get("_embedded");
 
-            Iterator<String> fieldNamesIterator = embedded.fieldNames();
-            String fieldName;
-            for(; fieldNamesIterator.hasNext();) {
-                fieldName = fieldNamesIterator.next();
+            Iterator<JsonNode> elements = embedded.elements();
+            ArrayNode objects = null;
 
-                if(fieldName.startsWith(containerName)) {
-                    containerName = fieldName;
+            JsonNode element;
+            for(; elements.hasNext();) {
+                element = elements.next();
+
+                if(element instanceof ArrayNode) {
+                    objects = (ArrayNode) element;
+                    break;
                 }
             }
 
-            JsonNode objects = embedded.get(containerName);
-            if (objects instanceof ArrayNode) {
-                ArrayNode arr = ((ArrayNode) objects);
+
+            if (objects != null) {
                 List<Object> res = new ArrayList<>();
 
-                for (int i = 0; i < arr.size(); i++) {
-                    HashMap<String, String> hrefs = getObjectHrefs(arr.get(i));
-                    Object object = mapObject(elementClass, objectMapper, arr.get(i));
+                for (int i = 0; i < objects.size(); i++) {
+                    HashMap<String, String> hrefs = getObjectHrefs(objects.get(i));
+                    Object object = mapObject(elementClass, objectMapper, objects.get(i));
                     res.add(resourceProxyMaker.make(elementClass, object, hrefs));
                 }
                 return res;
