@@ -88,7 +88,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
     def "test add new resource that part of other resource"() {
         when: "New pet was added to person that exist already"
 
-        def pet = new Pet(10, "test pet 10", personRepository.findOne(1L))
+        def pet = new Pet(10, "test pet 10", personRepository.findOne(2L))
         petRepository.save(pet);
 
         def pet1 = petRepository.findOne(10L);
@@ -97,8 +97,8 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         then: "Pet was added to person"
         pet1.getId() == 10L
         pet1.getName() == "test pet 10"
-        person1.getId() == 1L
-        person1.getName() == "person1"
+        person1.getId() == 2L
+        person1.getName() == "person2"
 
     }
 
@@ -113,6 +113,10 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def person1 = personRepository.findOne(1L)
         then: "Person was changed successfully"
         person1.getName() == "New person name"
+
+        cleanup:
+        person1.setName("person1")
+        personRepository.save(person1)
     }
 
     def "test add new resources to list from composite resource"() {
@@ -121,9 +125,9 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def pets = person.getPets()
 
         when: "Add new pets and associate to person"
-        pets.add(new Pet(2, "pet2", null))
-        pets.add(new Pet(3, "pet3", null))
         pets.add(new Pet(4, "pet4", null))
+        pets.add(new Pet(5, "pet5", null))
+        pets.add(new Pet(6, "pet6", null))
 
         personRepository.save(person)
 
@@ -133,18 +137,37 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         then: "Pets was added to person successfully"
         person1.getId() == 3L
         person1.getName() == "person3"
-        pets1[0].getName() == "pet2"
-        pets1[1].getName() == "pet3"
-        pets1[2].getName() == "pet4"
+        pets1[0].getName() == "pet4"
+        pets1[1].getName() == "pet5"
+        pets1[2].getName() == "pet6"
+
+        cleanup:
+        petRepository.delete(pets1[0])
+        petRepository.delete(pets1[1])
+        petRepository.delete(pets1[2])
+
+        personRepository.delete(person1)
+
     }
 
 
     def "test delete resource from repository"() {
         given: "Person that exist already"
-        def person = personRepository.findOne(2L)
+        personRepository.save(new Person(5L, "temp"))
+        def person = personRepository.findOne(5L)
         when: "Delete person from repository"
         personRepository.delete(person)
-        def person1 = personRepository.findOne(2L)
+        def person1 = personRepository.findOne(5L)
+        then: "Person was deleted successfully"
+        person1 == null
+    }
+
+    def "test delete resource from repository by id"() {
+        given: "Person that exist already"
+        personRepository.save(new Person(5L, "temp"))
+        when: "Delete person from repository"
+        personRepository.delete(5L)
+        def person1 = personRepository.findOne(5L)
         then: "Person was deleted successfully"
         person1 == null
     }
