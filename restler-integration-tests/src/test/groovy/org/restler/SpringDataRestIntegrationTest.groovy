@@ -149,6 +149,14 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         person1 == null
     }
 
+    def "test findAll"() {
+        when:
+        def persons = personRepository.findAll()
+
+        then:
+        persons.size() == 3
+    }
+
     @Ignore
     def "test change address at repository"() {
         when:
