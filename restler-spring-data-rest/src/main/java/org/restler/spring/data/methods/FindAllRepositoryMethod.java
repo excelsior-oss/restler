@@ -2,8 +2,10 @@ package org.restler.spring.data.methods;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
+import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
+import org.springframework.data.repository.CrudRepository;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -26,7 +28,11 @@ public class FindAllRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public boolean isRepositoryMethod(Method method) {
-        return "findAll".equals(method.getName());
+        try {
+            return CrudRepository.class.getMethod("findAll").equals(method);
+        } catch (NoSuchMethodException e) {
+            throw new RestlerException("Can't find CrudRepositoryMethod.findAll method.", e);
+        }
     }
 
     private class ArrayListType implements ParameterizedType {

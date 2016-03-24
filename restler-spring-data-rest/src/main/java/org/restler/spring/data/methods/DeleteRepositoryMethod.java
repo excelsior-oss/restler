@@ -2,10 +2,13 @@ package org.restler.spring.data.methods;
 
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
+import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.spring.data.proxy.ResourceProxy;
+import org.springframework.data.repository.CrudRepository;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URI;
 
@@ -15,7 +18,12 @@ import java.net.URI;
 public class DeleteRepositoryMethod extends DefaultRepositoryMethod {
     @Override
     public boolean isRepositoryMethod(Method method) {
-        return "delete".equals(method.getName());
+        try {
+            return CrudRepository.class.getMethod("delete", Object.class).equals(method) ||
+                    CrudRepository.class.getMethod("delete", Serializable.class).equals(method);
+        } catch (NoSuchMethodException e) {
+            throw new RestlerException("Can't find CrudRepositoryMethod.delete method.", e);
+        }
     }
 
     @Override

@@ -48,7 +48,11 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public boolean isRepositoryMethod(Method method) {
-        return "save".equals(method.getName());
+        try {
+            return CrudRepository.class.getMethod("save", Object.class).equals(method);
+        } catch (NoSuchMethodException e) {
+            throw new RestlerException("Can't find CrudRepositoryMethod.save method.", e);
+        }
     }
 
     @Override
