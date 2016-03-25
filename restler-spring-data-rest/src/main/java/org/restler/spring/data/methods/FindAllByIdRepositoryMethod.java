@@ -50,7 +50,9 @@ public class FindAllByIdRepositoryMethod extends DefaultRepositoryMethod {
     }
 
     private Object addToList(Object item, List<Object> list) {
-        list.add(item);
+        if(item != null) {
+            list.add(item);
+        }
         return list;
     }
 }

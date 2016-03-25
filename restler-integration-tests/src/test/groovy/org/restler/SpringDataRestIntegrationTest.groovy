@@ -212,6 +212,32 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         }
     }
 
+    def "test delete several resources from repository"() {
+        given:
+        def ids = new ArrayList<Long>()
+
+        ids.add(0L)
+        ids.add(2L)
+
+        def petsForDelete = petRepository.findAll(ids)
+
+        //need for saving association to persons
+        for(Pet pet : petsForDelete) {
+            pet.getPerson()
+        }
+
+        when:
+        petRepository.delete(petsForDelete)
+        then:
+        def pets = petRepository.findAll(ids)
+        pets.size() == 0
+
+        cleanup:
+        for(Pet pet : petsForDelete) {
+            petRepository.save(pet)
+        }
+    }
+
     @Ignore
     def "test change address at repository"() {
         when:
