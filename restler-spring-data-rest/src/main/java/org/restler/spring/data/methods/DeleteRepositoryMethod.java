@@ -28,7 +28,7 @@ public class DeleteRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
-        return new HttpCall(uri, HttpMethod.DELETE, null, ImmutableMultimap.of("Content-Type", "application/json"), getRepositoryType(declaringClass).getActualTypeArguments()[0]);
+        return new HttpCall(uri, HttpMethod.DELETE, null);
     }
 
     @Override
