@@ -82,7 +82,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
         calls.add(makeAssociations(args[0], getChildren(args[0])));
 
-        return new ChainCall(calls, returnType);
+        return new ChainCall((new FilterNullResults())::filter, calls, returnType);
     }
 
     @Override
@@ -95,6 +95,18 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         }
 
         return getId(arg).toString();
+    }
+
+    //need for filter result that return associate call
+    private class FilterNullResults {
+        private Object temp = null;
+
+        Object filter(Object object) {
+            if(object != null) {
+                temp = object;
+            }
+            return temp;
+        }
     }
 
 

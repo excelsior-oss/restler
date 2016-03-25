@@ -83,6 +83,10 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def newName = person2.getPets().get(0).getName()
         then: "Pet name was changed and saved on remote server"
         newName=="New value"
+
+        cleanup:
+        pets[0].setName("pet2")
+        petRepository.save(pets[0])
     }
 
     def "test add new resource that part of other resource"() {
@@ -100,6 +104,8 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         person1.getId() == 2L
         person1.getName() == "person2"
 
+        cleanup:
+        petRepository.delete(10L);
     }
 
     def "test change resource from resource that have reference to it"() {
@@ -207,9 +213,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def pets = petRepository.findAll()
         pets.size() == 0
         cleanup:
-        for(Pet pet : oldPets) {
-            petRepository.save(pet)
-        }
+        petRepository.save(oldPets)
     }
 
     def "test delete several resources from repository"() {
@@ -233,9 +237,28 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         pets.size() == 0
 
         cleanup:
-        for(Pet pet : petsForDelete) {
-            petRepository.save(pet)
-        }
+        petRepository.save(petsForDelete)
+    }
+
+    def "test save several elements to repository"() {
+        given:
+        def elements = new ArrayList()
+        elements.add(new Pet(100L, "test", null))
+        elements.add(new Pet(101L, "test", null))
+        elements.add(new Pet(102L, "test", null))
+        elements.add(new Pet(103L, "test", null))
+
+        when:
+        elements = petRepository.save(elements)
+
+        then:
+        petRepository.findOne(100L) != null
+        petRepository.findOne(101L) != null
+        petRepository.findOne(102L) != null
+        petRepository.findOne(103L) != null
+
+        cleanup:
+        petRepository.delete(elements)
     }
 
     @Ignore
