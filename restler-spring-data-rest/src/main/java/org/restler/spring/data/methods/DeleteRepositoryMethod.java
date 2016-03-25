@@ -38,8 +38,7 @@ public class DeleteRepositoryMethod extends DefaultRepositoryMethod {
             List<Call> calls = new ArrayList<>();
 
             for(Object objectForDelete : objectsForDelete) {
-                Object id = ((ResourceProxy)objectForDelete).getResourceId();
-                calls.add(new HttpCall(new UriBuilder(uri.toString() + "/" + id).build(), HttpMethod.DELETE, null));
+                calls.add(new HttpCall(new UriBuilder(((ResourceProxy)objectForDelete).getSelfUri()).build(), HttpMethod.DELETE, null));
             }
 
             return new ChainCall(calls, void.class);

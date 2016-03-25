@@ -24,7 +24,6 @@ public class FindAllByIdRepositoryMethod extends DefaultRepositoryMethod {
 
         Iterable ids = (Iterable) args[0];
 
-
         List<Call> calls = new ArrayList<>();
 
         for(Object id : ids) {
