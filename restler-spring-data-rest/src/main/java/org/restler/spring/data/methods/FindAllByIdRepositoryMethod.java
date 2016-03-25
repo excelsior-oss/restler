@@ -6,11 +6,11 @@ import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.spring.data.chain.ChainCall;
+import org.restler.spring.data.util.ArrayListType;
 import org.restler.util.UriBuilder;
 import org.springframework.data.repository.CrudRepository;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
@@ -52,29 +52,5 @@ public class FindAllByIdRepositoryMethod extends DefaultRepositoryMethod {
     private Object addToList(Object item, List<Object> list) {
         list.add(item);
         return list;
-    }
-
-    private class ArrayListType implements ParameterizedType {
-
-        private final Type itemType;
-
-        public ArrayListType(Type itemType) {
-            this.itemType = itemType;
-        }
-
-        @Override
-        public Type[] getActualTypeArguments() {
-            return new Type[] {itemType};
-        }
-
-        @Override
-        public Type getRawType() {
-            return ArrayList.class;
-        }
-
-        @Override
-        public Type getOwnerType() {
-            return null;
-        }
     }
 }
