@@ -193,6 +193,25 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         persons[1].getId() == 2L
     }
 
+    def "test delete all resources from repository"() {
+        given:
+        def oldPets = petRepository.findAll()
+
+        //need for saving association to person
+        for(Pet pet : oldPets) {
+            pet.getPerson()
+        }
+        when:
+        petRepository.deleteAll()
+        then:
+        def pets = petRepository.findAll()
+        pets.size() == 0
+        cleanup:
+        for(Pet pet : oldPets) {
+            petRepository.save(pet)
+        }
+    }
+
     @Ignore
     def "test change address at repository"() {
         when:
