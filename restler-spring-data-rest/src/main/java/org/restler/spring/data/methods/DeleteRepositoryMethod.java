@@ -22,7 +22,7 @@ public class DeleteRepositoryMethod extends DefaultRepositoryMethod {
             return CrudRepository.class.getMethod("delete", Object.class).equals(method) ||
                     CrudRepository.class.getMethod("delete", Serializable.class).equals(method);
         } catch (NoSuchMethodException e) {
-            throw new RestlerException("Can't find CrudRepositoryMethod.delete method.", e);
+            throw new RestlerException("Can't find CrudRepository.delete method.", e);
         }
     }
 

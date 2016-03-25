@@ -21,7 +21,7 @@ public class FindOneRepositoryMethod extends DefaultRepositoryMethod {
         try {
             return CrudRepository.class.getMethod("findOne", Serializable.class).equals(method);
         } catch (NoSuchMethodException e) {
-            throw new RestlerException("Can't find CrudRepositoryMethod.findOne method.", e);
+            throw new RestlerException("Can't find CrudRepository.findOne method.", e);
         }
     }
 

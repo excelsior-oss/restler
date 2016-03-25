@@ -51,7 +51,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         try {
             return CrudRepository.class.getMethod("save", Object.class).equals(method);
         } catch (NoSuchMethodException e) {
-            throw new RestlerException("Can't find CrudRepositoryMethod.save method.", e);
+            throw new RestlerException("Can't find CrudRepository.save method.", e);
         }
     }
 

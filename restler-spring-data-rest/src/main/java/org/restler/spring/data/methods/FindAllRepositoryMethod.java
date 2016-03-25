@@ -31,7 +31,7 @@ public class FindAllRepositoryMethod extends DefaultRepositoryMethod {
         try {
             return CrudRepository.class.getMethod("findAll").equals(method);
         } catch (NoSuchMethodException e) {
-            throw new RestlerException("Can't find CrudRepositoryMethod.findAll method.", e);
+            throw new RestlerException("Can't find CrudRepository.findAll method.", e);
         }
     }
 
