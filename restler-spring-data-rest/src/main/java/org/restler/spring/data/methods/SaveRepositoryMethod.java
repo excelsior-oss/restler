@@ -334,7 +334,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         throw new RestlerException("Can't get id.");
     }
 
-    private class ResourceTree implements Iterable {
+    private class ResourceTree implements Iterable<Object> {
         private final Object resource;
         private final List<ResourceTree> children;
 
