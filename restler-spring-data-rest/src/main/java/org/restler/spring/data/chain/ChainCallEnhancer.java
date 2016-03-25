@@ -22,7 +22,7 @@ public class ChainCallEnhancer implements CallEnhancer {
             Object result = null;
 
             for(Call callFromChain : chainCall) {
-                result = chain.execute(callFromChain);
+                result = chainCall.apply(chain.execute(callFromChain));
             }
 
             return result;

@@ -180,6 +180,19 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         persons.size() == 3
     }
 
+    def "test findAll by ids"() {
+        given:
+        def ids = new ArrayList();
+        ids.add(0)
+        ids.add(2)
+        when:
+        def persons = personRepository.findAll(ids)
+        then:
+        persons.size() == 2
+        persons[0].getId() == 0L
+        persons[1].getId() == 2L
+    }
+
     @Ignore
     def "test change address at repository"() {
         when:
