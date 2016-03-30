@@ -3,17 +3,20 @@ package org.restler
 import org.restler.integration.springdata.*
 import org.restler.spring.data.SpringDataSupport
 import org.restler.util.IntegrationSpec
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import spock.lang.Ignore
 import spock.lang.Specification
 
 class SpringDataRestIntegrationTest extends Specification implements IntegrationSpec {
     Service serviceWithBasicAuth = new Restler("http://localhost:8080",
-            new SpringDataSupport([PersonsRepository.class, PetsRepository.class], 1000)).
+            new SpringDataSupport([PersonsRepository.class, PetsRepository.class, PostsRepository.class], 1000)).
             httpBasicAuthentication("user", "password").
             build();
 
     PersonsRepository personRepository = serviceWithBasicAuth.produceClient(PersonsRepository.class)
     PetsRepository petRepository = serviceWithBasicAuth.produceClient(PetsRepository.class)
+    PostsRepository postRepository = serviceWithBasicAuth.produceClient(PostsRepository.class)
 
     def "test PersonRepository findOne"() {
         expect:
@@ -259,6 +262,42 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
         cleanup:
         petRepository.delete(elements)
+    }
+
+    def "test get sorted page"() {
+        given:
+        def sort = new Sort(Sort.Direction.DESC, "author")
+        when:
+        def posts = postRepository.findAll(sort)
+        then:
+        posts.size() == 3
+        posts[0].getAuthor().getId() == 2L
+        posts[1].getAuthor().getId() == 1L
+        posts[2].getAuthor().getId() == 0L
+    }
+
+    def "test paging"() {
+        given:
+        def posts = new ArrayList<Post>()
+        Iterable<Person> persons = personRepository.findAll([0L, 1L, 2L])
+        for(Long id = 3; id < 20; ++id) {
+            posts.add(new Post(id, "Hello!", persons[(int)id%3]))
+        }
+        posts = postRepository.save(posts)
+
+        when:
+        def resultPage = postRepository.findAll(new PageRequest(3, 5, Sort.Direction.ASC, "id"))
+        def resultPosts = resultPage.content
+        then:
+        resultPosts.size() == 5
+        resultPosts[0].getId() == 15L
+        resultPosts[1].getId() == 16L
+        resultPosts[2].getId() == 17L
+        resultPosts[3].getId() == 18L
+        resultPosts[4].getId() == 19L
+
+        cleanup:
+        postRepository.delete(posts)
     }
 
     @Ignore

@@ -75,7 +75,9 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
                 new QueryRepositoryMethod(method),
                 new FindAllRepositoryMethod(),
                 new FindAllByIdRepositoryMethod(),
-                new DeleteAllRepositoryMethod(repositories)
+                new DeleteAllRepositoryMethod(repositories),
+                new FindAllSortingRepositoryMethod(),
+                new FindAllPageableRepositoryMethod()
         };
 
         for(RepositoryMethod repositoryMethod : repositoryMethods) {
