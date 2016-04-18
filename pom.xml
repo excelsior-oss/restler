@@ -6,11 +6,6 @@
     <groupId>org.restler</groupId>
     <artifactId>restler</artifactId>
     <version>0.4.3-SNAPSHOT</version>
-    <modules>
-        <module>test-api</module>
-        <module>test-client</module>
-        <module>jar-executor-plugin</module>
-    </modules>
     <packaging>pom</packaging>
 
     <!--
@@ -88,10 +83,13 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <modules>
+                <module>jar-executor-plugin</module>
                 <module>restler-core</module>
                 <module>restler-spring-mvc</module>
                 <module>restler-spring-data-rest</module>
+                <module>test-api</module>
                 <module>restler-integration-tests</module>
+                <module>test-client</module>
             </modules>
         </profile>
         <profile>
