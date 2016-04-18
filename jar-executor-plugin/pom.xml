@@ -10,7 +10,7 @@
     <packaging>maven-plugin</packaging>
     <name>jar-executor-plugin Maven Mojo</name>
     <url>http://maven.apache.org</url>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -21,6 +21,14 @@
                     <goalPrefix>jar-executor-plugin</goalPrefix>
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>mojo-descriptor</id>
+                        <goals>
+                            <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

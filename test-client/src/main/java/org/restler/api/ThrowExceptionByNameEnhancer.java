@@ -5,7 +5,6 @@ import org.restler.client.CallEnhancer;
 import org.restler.client.CallExecutor;
 import org.restler.http.HttpExecutionException;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +29,7 @@ public class ThrowExceptionByNameEnhancer implements CallEnhancer {
         }
     }
 
-    private <T> ResponseEntity<T> doThrow(RuntimeException e, Throwable ex) {
+    private <T> Object doThrow(RuntimeException e, Throwable ex) {
         if (ex != null) {
             ThrowExceptionByNameEnhancer.<RuntimeException>doThrow(ex);
         }

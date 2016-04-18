@@ -25,8 +25,8 @@
                             <goal>start</goal>
                         </goals>
                         <configuration>
-                            <jar>restler-integration-tests\target\test-server-${project.parent.version}.jar</jar>
-                            <delay>20000</delay>
+                            <jar>restler-integration-tests/target/test-server-${project.parent.version}.jar</jar>
+                            <delay>4000</delay>
                         </configuration>
                     </execution>
                     <execution>
@@ -92,11 +92,6 @@
             <version>0.4.3-SNAPSHOT</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.restler</groupId>
-            <artifactId>test-server</artifactId>
-            <version>0.4.3-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
 </project>
