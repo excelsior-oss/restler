@@ -10,7 +10,7 @@ import spock.lang.Specification
 import static Tests.login
 import static Tests.password
 
-class SpringMvcIntegrationTest extends Specification /* implements IntegrationSpec */ {
+class SpringMvcIntegrationTest extends Specification {
 
     Service serviceWithFormAuth = new Restler("http://localhost:8080", new SpringMvcSupport()).
             formAuthentication(new URI("http://localhost:8080/login"), login, password).

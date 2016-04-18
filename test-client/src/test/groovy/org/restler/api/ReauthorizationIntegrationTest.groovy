@@ -8,7 +8,7 @@ import spock.lang.Specification
 import static org.restler.Tests.login
 import static org.restler.Tests.password
 
-class ReauthorizationIntegrationTest extends Specification /* implements IntegrationSpec */ {
+class ReauthorizationIntegrationTest extends Specification {
 
     def service = new Restler("http://localhost:8080", new SpringMvcSupport()).
             add({ [new ReauthorizingEnhancer(it.securitySession)] }).

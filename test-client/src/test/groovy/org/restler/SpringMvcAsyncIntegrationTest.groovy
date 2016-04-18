@@ -12,7 +12,7 @@ import spock.util.concurrent.AsyncConditions
 import static Tests.login
 import static Tests.password
 
-class SpringMvcAsyncIntegrationTest extends Specification /* implements IntegrationSpec */ {
+class SpringMvcAsyncIntegrationTest extends Specification {
 
     def spySimpleHttpRequestExecutor = Spy(OkHttpRequestExecutor, constructorArgs: [new ArrayList<Module>()])
 

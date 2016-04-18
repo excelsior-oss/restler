@@ -6,7 +6,7 @@ import org.restler.integration.SimpleDto
 import org.restler.spring.mvc.SpringMvcSupport
 import spock.lang.Specification
 
-class GenericCollectionsIntegrationTest extends Specification /* implements IntegrationSpec */ {
+class GenericCollectionsIntegrationTest extends Specification {
 
     SpringMvcSupport spring = new SpringMvcSupport().
             addJacksonModule(new ParanamerModule())

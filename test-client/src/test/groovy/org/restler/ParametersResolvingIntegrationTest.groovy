@@ -4,7 +4,7 @@ import org.restler.integration.ControllerApi
 import org.restler.spring.mvc.SpringMvcSupport
 import spock.lang.Specification
 
-class ParametersResolvingIntegrationTest extends Specification /* implements IntegrationSpec */ {
+class ParametersResolvingIntegrationTest extends Specification {
 
     def service = new Restler("http://localhost:8080", new SpringMvcSupport()).build()
     def controller = service.produceClient(ControllerApi.class)

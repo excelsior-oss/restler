@@ -8,7 +8,7 @@ import spock.lang.Specification
 
 import java.sql.SQLException
 
-class ClassNameErrorMapperIntegrationTest extends Specification /* implements IntegrationSpec */ {
+class ClassNameErrorMapperIntegrationTest extends Specification {
 
     Service service = new Restler("http://localhost:8080", new SpringMvcSupport()).
             addEnhancer(new ThrowExceptionByNameEnhancer()).
