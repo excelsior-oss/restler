@@ -13,22 +13,32 @@
 
     <build>
         <plugins>
-            <!--<plugin>-->
-                <!--<groupId>org.codehaus.mojo</groupId>-->
-                <!--<artifactId>exec-maven-plugin</artifactId>-->
-                <!--<version>1.4.0</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>test</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>java</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<mainClass>org.restler.integration.ServerStarter</mainClass>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
+            <plugin>
+                <groupId>org.restler</groupId>
+                <artifactId>jar-executor-plugin</artifactId>
+                <version>0.4.3-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <id>start-test-server</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                            <jar>restler-integration-tests\target\test-server-${project.parent.version}.jar</jar>
+                            <delay>20000</delay>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>stop-test-server</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
 
             <!-- Executes integrations tests. Replaces Maven-Fail-Safe as we consider integration tests result critical -->
             <plugin>
@@ -79,6 +89,12 @@
         <dependency>
             <groupId>org.restler</groupId>
             <artifactId>restler-test-api</artifactId>
+            <version>0.4.3-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.restler</groupId>
+            <artifactId>test-server</artifactId>
             <version>0.4.3-SNAPSHOT</version>
         </dependency>
     </dependencies>
