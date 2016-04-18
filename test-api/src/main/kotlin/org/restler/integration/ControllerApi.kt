@@ -2,7 +2,6 @@ package org.restler.integration
 
 import org.springframework.scheduling.annotation.Async
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.context.request.async.DeferredResult
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 
@@ -39,7 +38,7 @@ interface ControllerApi {
     open fun throwException(@RequestParam(value = "exceptionClass") exceptionClass: String): String
 
     @RequestMapping("listOfStrings")
-    open fun getListOfStrings() = listOf("item1", "item2")
+    open fun getListOfStrings(): List<String>
 
     @RequestMapping("listOfDtos")
     open fun getListOfDtos(): List<SimpleDto>

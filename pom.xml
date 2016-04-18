@@ -9,6 +9,7 @@
     <modules>
         <module>test-api</module>
         <module>test-client</module>
+        <module>jar-executor-plugin</module>
     </modules>
     <packaging>pom</packaging>
 
