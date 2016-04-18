@@ -34,17 +34,6 @@ open class WebConfig : WebMvcConfigurerAdapter() {
     }
 
     @Bean open fun controller() = Controller()
-
-}
-
-
-open class TestServer {
-    open fun runServer(args: Array<String>) {
-        val server = server()
-
-        server.start()
-        server.join()
-    }
 }
 
 fun main(args: Array<String>) {
