@@ -1,5 +1,6 @@
 package org.restler.spring.data;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.StreamSupport;
 
 class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Object> {
 
@@ -57,32 +59,13 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
             JsonNode embedded = rootNode.get("_embedded");
 
-            Iterator<JsonNode> elements = embedded.elements();
-            ArrayNode objects = null;
+            Optional<ArrayNode> first = StreamSupport.stream(embedded.spliterator(), false).
+                    filter(e -> e instanceof ArrayNode).
+                    map(e -> (ArrayNode) e).
+                    findFirst();
 
-            JsonNode element;
-            for(; elements.hasNext();) {
-                element = elements.next();
-
-                if(element instanceof ArrayNode) {
-                    objects = (ArrayNode) element;
-                    break;
-                }
-            }
-
-
-            if (objects != null) {
-                List<Object> res = new ArrayList<>();
-
-                for (int i = 0; i < objects.size(); i++) {
-                    HashMap<String, String> hrefs = getObjectHrefs(objects.get(i));
-                    Object object = mapObject(elementClass, objectMapper, objects.get(i));
-                    res.add(resourceProxyMaker.make(elementClass, object, hrefs));
-                }
-                return res;
-            }
-
-            return new ArrayList(); //if collection is empty
+            return first.map(objects -> mapToProxies(objects, elementClass)).
+                    orElse(new ArrayList());
         }
         throw new HttpMessageNotReadableException("Unexpected response format");
     }
@@ -126,6 +109,22 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
     @Override
     public void write(Object o, MediaType mediaType, HttpOutputMessage httpOutputMessage) throws IOException, HttpMessageNotWritableException {
 
+    }
+
+    private List<Object> mapToProxies(JsonNode objects, Class<?> elementClass) {
+        List<Object> res = new ArrayList<>();
+
+        try {
+            for (int i = 0; i < objects.size(); i++) {
+                HashMap<String, String> hrefs = getObjectHrefs(objects.get(i));
+                Object object;
+                object = mapObject(elementClass, objectMapper, objects.get(i));
+                res.add(resourceProxyMaker.make(elementClass, object, hrefs));
+            }
+        } catch (JsonProcessingException e) {
+            throw new RestlerException("Can't parse json to object.", e);
+        }
+        return res;
     }
 
     private HashMap<String, String> getObjectHrefs(JsonNode objectNode) {
