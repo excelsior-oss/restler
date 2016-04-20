@@ -17,9 +17,6 @@ interface ControllerApi {
     @RequestMapping("forceLogout")
     open fun logout(): String
 
-//    @RequestMapping("getDeferred")
-//    open fun deferredGet(): DeferredResult<String>
-
     @RequestMapping("getCallable")
     open fun callableGet(): Callable<String>
 
