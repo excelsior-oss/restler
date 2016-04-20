@@ -10,8 +10,8 @@ import java.io.InputStream;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ParameterNameDiscoverer {
 
@@ -50,13 +50,13 @@ public class ParameterNameDiscoverer {
     }
 
     private Map<Member, String[]> inspectClass(Class<?> clazz) {
-        InputStream inputStream = clazz.getResourceAsStream(ClassUtils.getClassFileName(clazz));
-        if (inputStream == null) {
-            return null;
-        }
-        try {
+        try(InputStream inputStream = clazz.getResourceAsStream(ClassUtils.getClassFileName(clazz))) {
+            if (inputStream == null) {
+                return null;
+            }
+
             ClassReader classReader = new ClassReader(inputStream);
-            Map<Member, String[]> map = new ConcurrentHashMap<>(32);
+            Map<Member, String[]> map = new HashMap<>(32);
             classReader.accept(new ParameterNameDiscoveringVisitor(clazz, map), 0);
             return map;
         }
@@ -65,14 +65,6 @@ public class ParameterNameDiscoverer {
         }
         catch(IllegalArgumentException e) {
             throw new RestlerException("Illegal argument.", e);
-        }
-        finally {
-            try {
-                inputStream.close();
-            }
-            catch (IOException ex) {
-                // ignore
-            }
         }
     }
 }
