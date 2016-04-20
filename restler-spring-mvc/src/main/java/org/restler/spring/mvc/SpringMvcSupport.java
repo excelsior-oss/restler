@@ -8,13 +8,21 @@ import org.restler.client.CallEnhancer;
 import org.restler.client.CoreModule;
 import org.restler.http.OkHttpRequestExecutor;
 import org.restler.http.RequestExecutor;
+import org.restler.spring.mvc.spring.DeferredResultHandler;
+import org.restler.spring.mvc.spring.SpringMvcRequestExecutor;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
+import static java.util.Collections.singletonList;
+
+public class
+SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
 
     private final List<Module> jacksonModules = new ArrayList<>();
 
@@ -27,7 +35,12 @@ public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
         totalEnhancers.addAll(config.getEnhancers());
 
-        //totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
+        try {
+            Class.forName("org.springframework.web.context.request.async.DeferredResult");
+            totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
+        } catch (ClassNotFoundException e) {
+            //nothing
+        }
 
         return new SpringMvc(new CachingClientFactory(new CGLibClientFactory()), requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
     }
@@ -47,16 +60,26 @@ public class SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
         return this;
     }
 
-    private OkHttpRequestExecutor createExecutor() {
-//        List<MappingJackson2HttpMessageConverter> jacksonConverters = restTemplate.getMessageConverters().stream().
-//                filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).
-//                map(converter -> (MappingJackson2HttpMessageConverter) converter).
-//                collect(Collectors.toList());
-//
-//        jacksonModules.stream().forEach(module ->
-//                jacksonConverters.forEach(converter ->
-//                        converter.getObjectMapper().registerModule(module)));
+    private RequestExecutor createExecutor() {
 
-        return new OkHttpRequestExecutor(jacksonModules);
+        try {
+            Class.forName("org.springframework.web.client.RestTemplate");
+            Class.forName("org.springframework.http.converter.json.MappingJackson2HttpMessageConverter");
+
+            RestTemplate restTemplate = new RestTemplate();
+            List<MappingJackson2HttpMessageConverter> jacksonConverters = restTemplate.getMessageConverters().stream().
+                    filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).
+                    map(converter -> (MappingJackson2HttpMessageConverter) converter).
+                    collect(Collectors.toList());
+
+            jacksonModules.stream().forEach(module ->
+                    jacksonConverters.forEach(converter ->
+                            converter.getObjectMapper().registerModule(module)));
+
+
+            return new SpringMvcRequestExecutor(restTemplate);
+        } catch (ClassNotFoundException e) {
+            return new OkHttpRequestExecutor(jacksonModules);
+        }
     }
 }

@@ -1,5 +1,5 @@
-package org.restler.spring.mvc;
-/*
+package org.restler.spring.mvc.spring;
+
 import org.restler.client.AbstractWrapperHandler;
 import org.restler.client.Call;
 import org.restler.client.CallExecutor;
@@ -28,4 +28,3 @@ public class DeferredResultHandler extends AbstractWrapperHandler<DeferredResult
         return deferredResult;
     }
 }
-*/
