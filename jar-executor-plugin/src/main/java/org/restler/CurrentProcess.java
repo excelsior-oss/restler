@@ -11,10 +11,6 @@ public class CurrentProcess {
         process = newProcess;
     }
 
-    public static Process getProcess() {
-        return process;
-    }
-
     public static void killProcess() {
         if(process != null && process.isAlive()) {
             process.destroy();
