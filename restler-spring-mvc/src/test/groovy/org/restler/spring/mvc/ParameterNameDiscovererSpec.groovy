@@ -47,4 +47,13 @@ class ParameterNameDiscovererSpec extends Specification {
         names[2] == "shortArray"
         names[3] == "intParameter"
     }
+
+    def "Test discover parameter names for method with vararg"() {
+        given:
+        Method method = TestMethods.getMethod("methodWithVararg", int[].class);
+        when:
+        def names = parameterNameDiscoverer.getParameterNames(method)
+        then:
+        names[0] == "integerArgs"
+    }
 }
