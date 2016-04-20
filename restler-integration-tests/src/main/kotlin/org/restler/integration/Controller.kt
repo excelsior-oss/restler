@@ -24,17 +24,17 @@ open class Controller : ControllerApi {
         return "OK"
     }
 
-//    @RequestMapping("getDeferred")
-//    override fun deferredGet(): DeferredResult<String> {
-//        var deferredResult = DeferredResult<String>()
-//
-//        thread {
-//            Thread.sleep(1000)
-//            deferredResult.setResult("Deferred OK")
-//        }
-//
-//        return deferredResult
-//    }
+    @RequestMapping("getDeferred")
+    fun deferredGet(): DeferredResult<String> {
+        var deferredResult = DeferredResult<String>()
+
+        thread {
+            Thread.sleep(1000)
+            deferredResult.setResult("Deferred OK")
+        }
+
+        return deferredResult
+    }
 
     @RequestMapping("getCallable")
     override fun callableGet(): Callable<String> {
