@@ -42,6 +42,11 @@ public class ThrowExceptionByNameEnhancer implements CallEnhancer {
             String exceptionClassName = null;
             try {
                 exceptionClassName = matcher.group(1);
+
+                if(exceptionClassName.equals("org.springframework.web.util.NestedServletException")) {
+                    continue;
+                }
+               
                 return (Throwable) Class.forName(exceptionClassName).newInstance();
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | ClassCastException ignore) {
                 log.debug("Could not create instance of " + exceptionClassName);
