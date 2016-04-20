@@ -26,7 +26,7 @@ class SpringMvcAsyncIntegrationTest extends Specification {
 
     def controller = service.produceClient(ControllerApi.class);
 
-    @Ignore
+    @Ignore // eneable in some @spring-test-* module...
     def "test deferred get"() {
         def c = Class.forName("org.springframework.web.context.request.async.DeferredResult")
         def deferredResult = controller.deferredGet()

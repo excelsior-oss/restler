@@ -6,6 +6,8 @@ import org.restler.client.CallExecutor;
 import org.restler.http.HttpExecutionException;
 import org.restler.http.security.SecuritySession;
 
+import java.net.HttpURLConnection;
+
 public class ReauthorizingEnhancer implements CallEnhancer {
 
     private final SecuritySession session;
@@ -16,7 +18,7 @@ public class ReauthorizingEnhancer implements CallEnhancer {
 
     @Override
     public Object apply(Call call, CallExecutor callExecutor) {
-        int httpStatusForbidden = 403;
+        int httpStatusForbidden = HttpURLConnection.HTTP_FORBIDDEN;
         try {
             return callExecutor.execute(call);
         } catch (HttpExecutionException e) {

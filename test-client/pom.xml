@@ -9,6 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <properties>
+        <spring.version>4.1.6.RELEASE</spring.version>
+    </properties>
+
     <artifactId>restler-test-client</artifactId>
 
     <build>
@@ -70,6 +74,25 @@
                     </execution>
                 </executions>
             </plugin>
+
+
+            <!-- Compiles Groovy tests -->
+            <plugin>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 
@@ -90,6 +113,14 @@
             <groupId>org.restler</groupId>
             <artifactId>restler-test-api</artifactId>
             <version>0.4.3-SNAPSHOT</version>
+        </dependency>
+
+        <!-- required to complite tests -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring.version}</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
