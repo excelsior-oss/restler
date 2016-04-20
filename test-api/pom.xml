@@ -35,7 +35,7 @@
     </build>
 
     <properties>
-        <kotlin.version>1.0.0-rc-1036</kotlin.version>
+        <kotlin.version>1.0.1-2</kotlin.version>
         <spring.version>4.1.6.RELEASE</spring.version>
         <jackson.version>2.6.0</jackson.version>
     </properties>
