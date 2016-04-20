@@ -2,6 +2,9 @@ package org.restler.spring.mvc;
 
 public class TestMethods {
 
+    public void methodWithVararg(int ...integerArgs) {
+    }
+
     public void methodWithPrimitiveArguments(int intParameter, double doubleParameter, short shortParameter,
                                             byte byteParameter, boolean booleanParameter, float floatParameter, char charParameter) {
     }
