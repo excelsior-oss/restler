@@ -18,11 +18,10 @@ public class ReauthorizingEnhancer implements CallEnhancer {
 
     @Override
     public Object apply(Call call, CallExecutor callExecutor) {
-        int httpStatusForbidden = HttpURLConnection.HTTP_FORBIDDEN;
         try {
             return callExecutor.execute(call);
         } catch (HttpExecutionException e) {
-            if (e.getStatus().code == httpStatusForbidden) {
+            if (e.getStatus().code == HttpURLConnection.HTTP_FORBIDDEN) {
                 session.authorize();
                 return callExecutor.execute(call);
             } else {
