@@ -10,6 +10,7 @@ import org.restler.http.OkHttpRequestExecutor;
 import org.restler.http.RequestExecutor;
 import org.restler.spring.mvc.spring.DeferredResultHandler;
 import org.restler.spring.mvc.spring.SpringMvcRequestExecutor;
+import org.restler.spring.mvc.spring.SpringUtils;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
@@ -35,11 +36,8 @@ SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
         totalEnhancers.addAll(config.getEnhancers());
 
-        try {
-            Class.forName("org.springframework.web.context.request.async.DeferredResult");
+        if (SpringUtils.isSpringAvailable()) {
             totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
-        } catch (ClassNotFoundException e) {
-            //nothing
         }
 
         return new SpringMvc(new CachingClientFactory(new CGLibClientFactory()), requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
@@ -62,10 +60,7 @@ SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
 
     private RequestExecutor createExecutor() {
 
-        try {
-            Class.forName("org.springframework.web.client.RestTemplate");
-            Class.forName("org.springframework.http.converter.json.MappingJackson2HttpMessageConverter");
-
+        if(SpringUtils.isSpringAvailable()) {
             RestTemplate restTemplate = new RestTemplate();
             List<MappingJackson2HttpMessageConverter> jacksonConverters = restTemplate.getMessageConverters().stream().
                     filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).
@@ -78,8 +73,8 @@ SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
 
 
             return new SpringMvcRequestExecutor(restTemplate);
-        } catch (ClassNotFoundException e) {
-            return new OkHttpRequestExecutor(jacksonModules);
         }
+
+        return new OkHttpRequestExecutor(jacksonModules);
     }
 }
