@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Object> {
@@ -90,41 +91,31 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
     @Override
     public Object read(Class<?> aClass, HttpInputMessage httpInputMessage) throws IOException, HttpMessageNotReadableException {
-
         JsonNode rootNode = objectMapper.readTree(httpInputMessage.getBody());
-
-        HashMap<String, String> hrefs = getObjectHrefs(rootNode);
-
-        Object object = mapObject(aClass, objectMapper, rootNode);
-
-        return resourceProxyMaker.make(aClass, object, hrefs);
+        return makeObject(aClass, rootNode);
     }
 
-    private Object mapObject(Class<?> aClass, ObjectMapper objectMapper, JsonNode rootNode) throws com.fasterxml.jackson.core.JsonProcessingException {
-        Object entity = objectMapper.treeToValue(rootNode, aClass);
-        setId(entity, aClass, getId(rootNode));
-        return entity;
+    private Object makeObject(Class<?> aClass, JsonNode rootNode) {
+        try {
+            HashMap<String, String> hrefs = getObjectHrefs(rootNode);
+            Object entity = objectMapper.treeToValue(rootNode, aClass);
+            setId(entity, aClass, getId(rootNode));
+
+            return resourceProxyMaker.make(aClass, entity, hrefs);
+        }
+        catch(JsonProcessingException e) {
+            throw new RestlerException("Can't parse json to object.", e);
+        }
     }
 
     @Override
     public void write(Object o, MediaType mediaType, HttpOutputMessage httpOutputMessage) throws IOException, HttpMessageNotWritableException {
-
     }
 
     private List<Object> mapToProxies(JsonNode objects, Class<?> elementClass) {
-        List<Object> res = new ArrayList<>();
-
-        try {
-            for (int i = 0; i < objects.size(); i++) {
-                HashMap<String, String> hrefs = getObjectHrefs(objects.get(i));
-                Object object;
-                object = mapObject(elementClass, objectMapper, objects.get(i));
-                res.add(resourceProxyMaker.make(elementClass, object, hrefs));
-            }
-        } catch (JsonProcessingException e) {
-            throw new RestlerException("Can't parse json to object.", e);
-        }
-        return res;
+        return StreamSupport.stream(objects.spliterator(), false).
+                map(o -> makeObject(elementClass, o)).
+                collect(Collectors.toList());
     }
 
     private HashMap<String, String> getObjectHrefs(JsonNode objectNode) {
