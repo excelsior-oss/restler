@@ -11,6 +11,7 @@
 
     <properties>
         <spring.version>4.1.6.RELEASE</spring.version>
+        <jackson.version>2.6.0</jackson.version>
     </properties>
 
     <artifactId>restler-test-client</artifactId>
@@ -97,13 +98,6 @@
     </build>
 
     <dependencies>
-        <!-- required for logback groovy config -->
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>2.4.3</version>
-        </dependency>
-
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>restler-spring-mvc</artifactId>
@@ -115,7 +109,13 @@
             <version>0.4.3-SNAPSHOT</version>
         </dependency>
 
-        <!-- required to complite tests -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-paranamer</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- required to compile tests -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>

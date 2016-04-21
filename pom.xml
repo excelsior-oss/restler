@@ -59,11 +59,15 @@
         <developer>
             <name>Pavel Salimov</name>
         </developer>
+        <developer>
+            <name>Oleg Rudenko</name>
+        </developer>
     </developers>
 
     <properties>
         <jdk.version>1.8</jdk.version>
         <slf4j.version>1.7.5</slf4j.version>
+        <kotlin.version>1.0.1-2</kotlin.version>
 
         <github-repo-owner>excelsior-oss</github-repo-owner>
         <github-repo>restler</github-repo>
