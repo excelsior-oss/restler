@@ -11,17 +11,14 @@ import java.util.Map;
 
 public class SpringUtils {
 
-    private static boolean alreadyChecked = false;
-    private static boolean isSpringAvailableFlag = false;
+    private static volatile Boolean isSpringAvailable = null;
 
     public static boolean isSpringAvailable() {
-
-        if(!alreadyChecked) {
-            isSpringAvailableFlag = checkSpring();
-            alreadyChecked = true;
+        if (isSpringAvailable == null) {
+            isSpringAvailable = checkSpring();
         }
 
-        return isSpringAvailableFlag;
+        return isSpringAvailable;
     }
 
     public static <T> HttpCall prepareForSpringMvc(HttpCall call) {
@@ -31,6 +28,7 @@ public class SpringUtils {
             return call;
         }
     }
+
     private static MultiValueMap toMultiValueMap(ImmutableMultimap<String, String> guavaMap) {
         MultiValueMap<String, String> res = new LinkedMultiValueMap<>();
         for (Map.Entry<String, String> field : guavaMap.entries()) {
@@ -66,8 +64,7 @@ public class SpringUtils {
             Class.forName("org.springframework.web.client.RestTemplate");
 
             Class.forName("org.springframework.core.ParameterizedTypeReference");
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             return false;
         }
 

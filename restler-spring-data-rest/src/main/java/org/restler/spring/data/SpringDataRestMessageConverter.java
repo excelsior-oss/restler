@@ -124,10 +124,8 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
         JsonNode linksNode = objectNode.get("_links");
         Iterator<String> names = linksNode.fieldNames();
 
-        linksNode.forEach((JsonNode node)->{
-            String name = names.next();
-            result.put(name, node.get("href").toString().replace("\"", ""));
-        });
+        linksNode.forEach(node ->
+                result.put(names.next(), node.get("href").toString().replace("\"", "")));
 
        return result;
     }
