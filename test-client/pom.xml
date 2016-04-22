@@ -31,7 +31,7 @@
                         </goals>
                         <configuration>
                             <jar>restler-integration-tests/target/test-server-${project.parent.version}.jar</jar>
-                            <delay>4000</delay>
+                            <delay>8000</delay>
                         </configuration>
                     </execution>
                     <execution>
