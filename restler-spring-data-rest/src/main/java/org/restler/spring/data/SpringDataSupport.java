@@ -15,7 +15,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
 
     private final List<Module> jacksonModules = new ArrayList<>();
 
-    private Optional<RequestExecutor> requestExecutor = Optional.empty();
+    private RequestExecutor requestExecutor = null;
 
     private final List<Class<?>> repositories;
 
@@ -42,7 +41,11 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
         totalEnhancers.add(new SdrErrorMappingEnhancer());
         totalEnhancers.addAll(config.getEnhancers());
 
-        return new SpringData(new CachingClientFactory(new CGLibClientFactory()), config.getBaseUri(), requestExecutor.orElseGet(this::createExecutor),  totalEnhancers, repositories);
+        if(requestExecutor == null) {
+            requestExecutor = createExecutor();
+        }
+
+        return new SpringData(new CachingClientFactory(new CGLibClientFactory()), config.getBaseUri(), requestExecutor,  totalEnhancers, repositories);
     }
 
     public SpringDataSupport addJacksonModule(Module module) {
@@ -51,7 +54,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
     }
 
     public SpringDataSupport requestExecutor(RequestExecutor requestExecutor) {
-        this.requestExecutor = Optional.of(requestExecutor);
+        this.requestExecutor = requestExecutor;
         return this;
     }
 
