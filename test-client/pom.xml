@@ -30,8 +30,8 @@
                             <goal>start</goal>
                         </goals>
                         <configuration>
+                            <waitingLine>.*Initializing Spring FrameworkServlet 'org\.springframework\.web\.servlet\.DispatcherServlet.*</waitingLine>
                             <jar>restler-integration-tests/target/test-server-${project.parent.version}.jar</jar>
-                            <delay>12000</delay>
                         </configuration>
                     </execution>
                     <execution>
