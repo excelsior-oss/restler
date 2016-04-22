@@ -22,6 +22,5 @@ public abstract class DefaultCoreModule implements CoreModule {
         return factory.produceClient(controllerClass, handler);
     }
 
-    protected abstract boolean canHandle(ServiceDescriptor descriptor);
     protected abstract InvocationHandler createHandler(ServiceDescriptor descriptor);
 }

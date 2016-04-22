@@ -3,7 +3,7 @@ package org.restler.spring.data.proxy;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.restler.client.*;
-import org.restler.spring.data.util.Pair;
+import org.restler.util.Pair;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -77,7 +77,7 @@ public class ProxyCallEnhancer implements CallEnhancer {
             if (value != null) {
                 return value;
             } else {
-                cache.put(new Pair<Class<?>, Object>(clazz, id), resource);
+                cache.put(new Pair<>(clazz, id), resource);
                 return resource;
             }
         }

@@ -28,7 +28,7 @@ public class SpringData extends DefaultCoreModule {
     }
 
     @Override
-    protected boolean canHandle(ServiceDescriptor descriptor) {
+    public boolean canHandle(ServiceDescriptor descriptor) {
         return descriptor instanceof ClassServiceDescriptor && isRepository(((ClassServiceDescriptor) descriptor).getServiceDescriptor());
     }
 

@@ -16,7 +16,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,7 +28,7 @@ SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
 
     private ParameterResolver parameterResolver = ParameterResolver.valueOfParamResolver();
 
-    private Optional<RequestExecutor> requestExecutor = Optional.empty();
+    private RequestExecutor requestExecutor = null;
 
     @Override
     public CoreModule apply(RestlerConfig config) {
@@ -40,7 +39,11 @@ SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
             totalEnhancers.addAll(singletonList(new DeferredResultHandler(config.getRestlerThreadPool())));
         }
 
-        return new SpringMvc(new CachingClientFactory(new CGLibClientFactory()), requestExecutor.orElseGet(this::createExecutor), totalEnhancers, config.getBaseUri(), parameterResolver);
+        if(requestExecutor == null) {
+            requestExecutor = createExecutor();
+        }
+
+        return new SpringMvc(new CachingClientFactory(new CGLibClientFactory()), requestExecutor, totalEnhancers, config.getBaseUri(), parameterResolver);
     }
 
     public SpringMvcSupport addJacksonModule(Module module) {
@@ -49,7 +52,7 @@ SpringMvcSupport implements Function<RestlerConfig, CoreModule> {
     }
 
     public SpringMvcSupport requestExecutor(RequestExecutor requestExecutor) {
-        this.requestExecutor = Optional.of(requestExecutor);
+        this.requestExecutor = requestExecutor;
         return this;
     }
 
