@@ -1,4 +1,4 @@
-package org.restler.spring.data.util;
+package org.restler.util;
 
 public class Pair<T1, T2> {
     private final T1 firstValue;

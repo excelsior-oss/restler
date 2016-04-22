@@ -11,7 +11,7 @@ import org.restler.http.HttpMethod;
 import org.restler.spring.data.chain.ChainCall;
 import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.spring.data.util.CloneMaker;
-import org.restler.spring.data.util.Pair;
+import org.restler.util.Pair;
 import org.restler.spring.data.util.Repositories;
 import org.restler.spring.data.util.RepositoryUtils;
 import org.restler.util.UriBuilder;
