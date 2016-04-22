@@ -7,5 +7,5 @@ package org.restler.client;
 public interface CoreModule {
 
     <C> C produceClient(Class<C> controllerClass) throws IllegalArgumentException;
-
+    boolean canHandle(ServiceDescriptor descriptor);
 }

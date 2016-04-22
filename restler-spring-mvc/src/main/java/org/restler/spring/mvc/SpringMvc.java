@@ -25,7 +25,7 @@ public class SpringMvc extends DefaultCoreModule {
     }
 
     @Override
-    protected boolean canHandle(ServiceDescriptor descriptor) {
+    public boolean canHandle(ServiceDescriptor descriptor) {
         if (!(descriptor instanceof ClassServiceDescriptor)) {
             return false;
         }
