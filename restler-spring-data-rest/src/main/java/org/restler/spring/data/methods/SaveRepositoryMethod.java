@@ -106,9 +106,10 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
     //need for filtering results are returned by associate call
     private Object filterNullResults(Object prevResult, Object object) {
         if(object != null) {
-            prevResult = object;
+            return object;
+        } else {
+            return null;
         }
-        return prevResult;
     }
 
     private Object getRequestBody(Object arg) {
@@ -356,11 +357,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             this.children = children;
         }
 
-        ResourceTree(Object resource) {
-            this(new ArrayList<>(), resource);
-        }
-
-        public Object getTopResource() {
+        Object getTopResource() {
             return resource;
         }
 
@@ -373,7 +370,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
             private final Stack<Pair<ResourceTree, Iterator<ResourceTree>>> greyNodes = new Stack<>();
 
-            public TreeIterator(ResourceTree firstNode) {
+            TreeIterator(ResourceTree firstNode) {
                 Iterator<ResourceTree> childrenIterator = firstNode.children.iterator();
                 greyNodes.push(new Pair<>(firstNode, childrenIterator));
             }

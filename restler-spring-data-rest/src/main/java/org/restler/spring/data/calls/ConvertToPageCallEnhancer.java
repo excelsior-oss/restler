@@ -1,24 +1,21 @@
 package org.restler.spring.data.calls;
 
 import org.restler.client.Call;
-import org.restler.client.CallEnhancer;
 import org.restler.client.CallExecutor;
 import org.springframework.data.domain.PageImpl;
 
 import java.lang.reflect.Type;
 import java.util.List;
 
-public class ConvertToPageCallEnhancer implements CallEnhancer {
-    @Override
-    public Object apply(Call call, CallExecutor callExecutor) {
-        if(call instanceof ConvertToPageCall) {
-            Object list = callExecutor.execute(((ConvertToPageCall) call).getCall());
-            if(list instanceof List) {
-                return new PageImpl<>((List<?>) list);
-            }
-        }
+public class ConvertToPageCallEnhancer extends CustomCallEnhancer<ConvertToPageCallEnhancer.ConvertToPageCall> {
 
-        return callExecutor.execute(call);
+    public ConvertToPageCallEnhancer() {
+        super(ConvertToPageCall.class);
+    }
+
+    @Override
+    protected Object enhance(ConvertToPageCall call, CallExecutor callExecutor) {
+        return new PageImpl<>((List<Object>) callExecutor.execute(call.getCall()));
     }
 
     public static class ConvertToPageCall implements Call {

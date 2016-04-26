@@ -3,6 +3,7 @@ package org.restler.spring.data.calls;
 import org.restler.client.Call;
 import org.restler.client.CallEnhancer;
 import org.restler.client.CallExecutor;
+import org.restler.client.RestlerException;
 import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.spring.data.util.Repositories;
 import org.springframework.data.repository.CrudRepository;
@@ -12,37 +13,35 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SaveSeveralCallEnhancer implements CallEnhancer {
+public class SaveSeveralCallEnhancer extends CustomCallEnhancer<SaveSeveralCallEnhancer.SaveSeveralCall> {
     private final Repositories repositories;
 
     public SaveSeveralCallEnhancer(Repositories repositories) {
+        super(SaveSeveralCall.class);
         this.repositories = repositories;
     }
 
     @Override
-    public Object apply(Call call, CallExecutor callExecutor) {
-        if(call instanceof SaveSeveralCall) {
-            Iterable<Object> objectsForSave = ((SaveSeveralCall) call).getObjectsForSave();
+    protected Object enhance(SaveSeveralCall call, CallExecutor callExecutor) {
+        Iterable<Object> objectsForSave = call.getObjectsForSave();
 
-            List<Object> result = new ArrayList<>();
-            for(Object objectForSave : objectsForSave) {
-                Repository repository;
+        List<Object> result = new ArrayList<>();
+        for(Object objectForSave : objectsForSave) {
+            Repository repository;
 
-                if(objectForSave instanceof ResourceProxy) {
-                    repository = repositories.getByResourceClass(((ResourceProxy)objectForSave).getObject().getClass()).orElse(null);
-                } else {
-                    repository = repositories.getByResourceClass(objectForSave.getClass()).orElse(null);
-                }
-
-                if(repository != null && repository instanceof CrudRepository) {
-                    result.add(((CrudRepository)repository).save(objectForSave));
-                }
+            if(objectForSave instanceof ResourceProxy) {
+                repository = repositories.getByResourceClass(((ResourceProxy)objectForSave).getObject().getClass()).orElse(null);
+            } else {
+                repository = repositories.getByResourceClass(objectForSave.getClass()).orElse(null);
             }
 
-            return result;
+            if (repository == null || !(repository instanceof CrudRepository)) {
+                throw new RestlerException("Could not find repository for " + objectForSave);
+            }
+            result.add(((CrudRepository)repository).save(objectForSave));
         }
 
-        return callExecutor.execute(call);
+        return result;
     }
 
     public static class SaveSeveralCall implements Call {
