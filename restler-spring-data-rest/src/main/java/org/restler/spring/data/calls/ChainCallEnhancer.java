@@ -17,6 +17,7 @@ public class ChainCallEnhancer implements CallEnhancer {
         if(call instanceof ChainCall) {
             List<CallEnhancer> chainEnhancer = new ArrayList<>();
             chainEnhancer.add(this);
+            //recursion for processing included chain calls
             CallExecutionChain chain = new CallExecutionChain(callExecutor, chainEnhancer);
             return ((ChainCall)call).apply(chain);
         } else {

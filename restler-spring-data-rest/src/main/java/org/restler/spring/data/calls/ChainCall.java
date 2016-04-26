@@ -4,14 +4,13 @@ import org.restler.client.Call;
 import org.restler.client.CallExecutor;
 
 import java.lang.reflect.Type;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.BiFunction;
 
 /**
  * Call is used for executing chain of calls.
  */
-public class ChainCall implements Call, Iterable<Call> {
+public class ChainCall implements Call {
     private final BiFunction<Object, Object, Object> modifierFunction;
     private final List<Call> calls;
     private final Type returnType;
@@ -38,11 +37,6 @@ public class ChainCall implements Call, Iterable<Call> {
     @Override
     public Call withReturnType(Type type) {
         return new ChainCall(calls, type);
-    }
-
-    @Override
-    public Iterator<Call> iterator() {
-        return calls.iterator();
     }
 
     /**
