@@ -14,6 +14,17 @@ import java.lang.reflect.Type;
 import java.net.URI;
 
 public class FindAllSortingRepositoryMethod extends DefaultRepositoryMethod {
+
+    private static final Method findAllMethod;
+
+    static {
+        try {
+            findAllMethod = PagingAndSortingRepository.class.getMethod("findAll", Sort.class);
+        } catch (NoSuchMethodException e) {
+            throw new RestlerException("Can't find CrudRepository.findAll method.", e);
+        }
+    }
+
     @Override
     protected Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
         Type itemType = getRepositoryType(declaringClass).getActualTypeArguments()[0];
@@ -28,10 +39,6 @@ public class FindAllSortingRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public boolean isRepositoryMethod(Method method) {
-        try {
-            return PagingAndSortingRepository.class.getMethod("findAll", Sort.class).equals(method);
-        } catch (NoSuchMethodException e) {
-            throw new RestlerException("Can't find CrudRepository.findAll method.", e);
-        }
+        return findAllMethod.equals(method);
     }
 }

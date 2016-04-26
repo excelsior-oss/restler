@@ -4,6 +4,8 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.restler.client.*;
 import org.restler.http.HttpCallExecutor;
 import org.restler.http.RequestExecutor;
+import org.restler.spring.data.calls.DeleteAllCallEnhancer;
+import org.restler.spring.data.calls.SaveSeveralCallEnhancer;
 import org.restler.spring.data.util.Repositories;
 import org.springframework.data.repository.Repository;
 
@@ -20,11 +22,15 @@ public class SpringData extends DefaultCoreModule {
     public SpringData(ClientFactory factory, URI baseUrl, RequestExecutor requestExecutor, List<CallEnhancer> enhancers, List<Class<?>> repositories) {
         super(factory);
         this.baseUrl = baseUrl;
-        HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
-        chain = new CallExecutionChain(callExecutor, enhancers);
 
         // this leak
         this.repositories = new Repositories(repositories, this);
+
+        enhancers.add(1, new DeleteAllCallEnhancer(this.repositories));
+        enhancers.add(1, new SaveSeveralCallEnhancer(this.repositories));
+
+        HttpCallExecutor callExecutor = new HttpCallExecutor(requestExecutor);
+        chain = new CallExecutionChain(callExecutor, enhancers);
     }
 
     @Override

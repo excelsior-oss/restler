@@ -8,7 +8,7 @@ import org.restler.client.Call;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
-import org.restler.spring.data.chain.ChainCall;
+import org.restler.spring.data.calls.ChainCall;
 import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.spring.data.util.CloneMaker;
 import org.restler.util.Pair;
@@ -31,6 +31,16 @@ import java.util.stream.Collectors;
  */
 public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
+    private static final Method saveMethod;
+
+    static {
+        try {
+            saveMethod = CrudRepository.class.getMethod("save", Object.class);
+        } catch (NoSuchMethodException e) {
+            throw new RestlerException("Can't find CrudRepository.save method.", e);
+        }
+    }
+
     private final String baseUri;
     private final String repositoryUri;
     private final Repositories repositories;
@@ -48,11 +58,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public boolean isRepositoryMethod(Method method) {
-        try {
-            return CrudRepository.class.getMethod("save", Object.class).equals(method);
-        } catch (NoSuchMethodException e) {
-            throw new RestlerException("Can't find CrudRepository.save method.", e);
-        }
+        return saveMethod.equals(method);
     }
 
     @Override
@@ -82,7 +88,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
         calls.add(makeAssociations(args[0], getChildren(args[0])));
 
-        return new ChainCall((new FilterNullResults())::filter, calls, returnType);
+        return new ChainCall(this::filterNullResults, calls, returnType);
     }
 
     @Override
@@ -97,18 +103,13 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return getId(arg).toString();
     }
 
-    //need for filter result that return associate call
-    private class FilterNullResults {
-        private Object temp = null;
-
-        Object filter(Object object) {
-            if(object != null) {
-                temp = object;
-            }
-            return temp;
+    //need for filtering results are returned by associate call
+    private Object filterNullResults(Object prevResult, Object object) {
+        if(object != null) {
+            prevResult = object;
         }
+        return prevResult;
     }
-
 
     private Object getRequestBody(Object arg) {
         if(arg instanceof ResourceProxy) {

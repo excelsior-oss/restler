@@ -16,13 +16,20 @@ import java.net.URI;
  * CrudRepository findOne method implementation.
  */
 public class FindOneRepositoryMethod extends DefaultRepositoryMethod {
-    @Override
-    public boolean isRepositoryMethod(Method method) {
+
+    private static final Method findOneMethod;
+
+    static {
         try {
-            return CrudRepository.class.getMethod("findOne", Serializable.class).equals(method);
+            findOneMethod = CrudRepository.class.getMethod("findOne", Serializable.class);
         } catch (NoSuchMethodException e) {
             throw new RestlerException("Can't find CrudRepository.findOne method.", e);
         }
+    }
+
+    @Override
+    public boolean isRepositoryMethod(Method method) {
+        return findOneMethod.equals(method);
     }
 
     @Override

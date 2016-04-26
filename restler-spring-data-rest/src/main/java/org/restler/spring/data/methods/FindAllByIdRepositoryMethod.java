@@ -5,7 +5,7 @@ import org.restler.client.Call;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
-import org.restler.spring.data.chain.ChainCall;
+import org.restler.spring.data.calls.ChainCall;
 import org.restler.spring.data.util.ArrayListType;
 import org.restler.util.UriBuilder;
 import org.springframework.data.repository.CrudRepository;
@@ -17,6 +17,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FindAllByIdRepositoryMethod extends DefaultRepositoryMethod {
+
+    private static final Method findAllMethod;
+
+    static {
+        try {
+            findAllMethod = CrudRepository.class.getMethod("findAll", Iterable.class);
+        } catch (NoSuchMethodException e) {
+            throw new RestlerException("Can't find CrudRepository.findAll method.", e);
+        }
+    }
 
     @Override
     protected Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
@@ -30,8 +40,7 @@ public class FindAllByIdRepositoryMethod extends DefaultRepositoryMethod {
             calls.add(new HttpCall( new UriBuilder(uri.toString() + "/" + id).build(), HttpMethod.GET, null, ImmutableMultimap.of("Content-Type", "application/json"), itemType));
         }
 
-        List<Object> list = new ArrayList<>();
-        return new ChainCall((Object o)->addToList(o, list), calls, new ArrayListType(itemType));
+        return new ChainCall((prevResult, object)->addToList((List<Object>)prevResult, object), calls, new ArrayListType(itemType));
     }
 
     @Override
@@ -41,17 +50,15 @@ public class FindAllByIdRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public boolean isRepositoryMethod(Method method) {
-        try {
-            return CrudRepository.class.getMethod("findAll", Iterable.class).equals(method);
-        } catch (NoSuchMethodException e) {
-            throw new RestlerException("Can't find CrudRepository.findAll method.", e);
-        }
+        return findAllMethod.equals(method);
     }
 
-    private Object addToList(Object item, List<Object> list) {
-        if(item != null) {
-            list.add(item);
+    private Object addToList(List<Object> list, Object item) {
+        if(list == null) {
+            list = new ArrayList<Object>();
         }
+
+        list.add(item);
         return list;
     }
 }

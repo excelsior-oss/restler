@@ -14,6 +14,16 @@ import java.net.URI;
 
 public class FindAllRepositoryMethod extends DefaultRepositoryMethod {
 
+    private static final Method findAllMethod;
+
+    static {
+        try {
+            findAllMethod = CrudRepository.class.getMethod("findAll");
+        } catch (NoSuchMethodException e) {
+            throw new RestlerException("Can't find CrudRepository.findAll method.", e);
+        }
+    }
+
     @Override
     protected Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
         Type itemType = getRepositoryType(declaringClass).getActualTypeArguments()[0];
@@ -27,10 +37,6 @@ public class FindAllRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public boolean isRepositoryMethod(Method method) {
-        try {
-            return CrudRepository.class.getMethod("findAll").equals(method);
-        } catch (NoSuchMethodException e) {
-            throw new RestlerException("Can't find CrudRepository.findAll method.", e);
-        }
+        return findAllMethod.equals(method);
     }
 }
