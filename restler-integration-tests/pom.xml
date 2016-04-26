@@ -81,7 +81,7 @@
                 <configuration>
                     <!-- Excludes integration tests from the unit test phase -->
                     <excludes>
-                        <exclude>**/*IntegrationTest*</exclude>
+                        <exclude>**/*Test*</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -97,7 +97,7 @@
                                 <exclude>none</exclude>
                             </excludes>
                             <includes>
-                                <include>**/*IntegrationTest*</include>
+                                <include>**/*Test*</include>
                             </includes>
                         </configuration>
                     </execution>

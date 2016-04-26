@@ -8,6 +8,8 @@ import org.springframework.data.domain.Sort
 import spock.lang.Ignore
 import spock.lang.Specification
 
+import java.util.stream.StreamSupport
+
 class SpringDataRestIntegrationTest extends Specification implements IntegrationSpec {
     Service serviceWithBasicAuth = new Restler("http://localhost:8080",
             new SpringDataSupport([PersonsRepository.class, PetsRepository.class, PostsRepository.class], 1000)).
@@ -187,6 +189,10 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
         then:
         persons.size() == 3
+
+        persons[0].getId() == 0L
+        persons[1].getId() == 1L
+        persons[2].getId() == 2L
     }
 
     def "test findAll by ids"() {
@@ -237,7 +243,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         petRepository.delete(petsForDelete)
         then:
         def pets = petRepository.findAll(ids)
-        pets.size() == 0
+        StreamSupport.stream(pets.spliterator(), false).allMatch({it == null})
 
         cleanup:
         petRepository.save(petsForDelete)
