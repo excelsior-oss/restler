@@ -16,11 +16,13 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.context.ContextLoaderListener
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext
 import org.springframework.web.filter.DelegatingFilterProxy
+import org.springframework.web.multipart.support.StandardServletMultipartResolver
 import org.springframework.web.servlet.DispatcherServlet
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 import java.util.EnumSet
 import javax.servlet.DispatcherType
+import javax.servlet.MultipartConfigElement
 
 @EnableWebMvc
 @Import(SecurityConfig::class, SpringDataRestConfig::class, SlashesConfig::class)
@@ -31,6 +33,11 @@ open class WebConfig : WebMvcConfigurerAdapter() {
         converters.filterIsInstance(MappingJackson2HttpMessageConverter::class.java).forEach {
             it.objectMapper.registerModule(paranamerModule)
         }
+    }
+
+    @Bean
+    fun multipartResolver(): StandardServletMultipartResolver {
+        return StandardServletMultipartResolver();
     }
 
     @Bean open fun controller() = Controller()
@@ -48,6 +55,9 @@ fun server(): Server {
     applicationContext.register(WebConfig::class.java)
 
     val servletHolder = ServletHolder(DispatcherServlet(applicationContext))
+
+    servletHolder.registration.setMultipartConfig(MultipartConfigElement("data/tmp"));
+
     val context = ServletContextHandler()
     context.sessionHandler = SessionHandler(HashSessionManager())
     context.contextPath = "/"

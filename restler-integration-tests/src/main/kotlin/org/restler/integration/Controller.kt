@@ -3,10 +3,19 @@ package org.restler.integration
 import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.AsyncResult
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.ui.Model
+import org.springframework.util.FileCopyUtils
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.context.request.async.DeferredResult
+import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.servlet.mvc.support.RedirectAttributes
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
+import java.util.stream.Collectors
 import kotlin.concurrent.thread
 
 @RestController
@@ -100,4 +109,47 @@ open class Controller : ControllerApi {
 
     @RequestMapping("postBody", method = arrayOf(RequestMethod.POST))
     override fun postBody(@RequestBody body: Any) = body
+
+    @RequestMapping(method = arrayOf(RequestMethod.GET), value = "/upload")
+    fun provideUploadInfo(): List<String> {
+        var root = File("").canonicalPath
+        var filesFolder = File("$root/files/");
+        var fileNames = Arrays.stream(filesFolder.listFiles())
+                .map({ it.name })
+                .collect(Collectors.toList<String>())
+
+        return fileNames;
+    }
+
+    @RequestMapping(method = arrayOf(RequestMethod.POST), value = "/upload")
+    fun handleFileUpload(@RequestParam("name") name: String, @RequestParam("file") file: MultipartFile,
+                         redirectAttributes: RedirectAttributes): String {
+        if (name.contains("/")) {
+            redirectAttributes.addFlashAttribute("message", "Folder separators not allowed");
+            return "redirect:/";
+        }
+        if (name.contains("/")) {
+            redirectAttributes.addFlashAttribute("message", "Relative path names not allowed");
+            return "redirect:/";
+        }
+
+        if (!file.isEmpty) {
+            try {
+                var root = File("").canonicalPath
+                var stream = BufferedOutputStream(FileOutputStream(File("$root/files/$name")));
+                FileCopyUtils.copy(file.inputStream, stream);
+                stream.close();
+                redirectAttributes.addFlashAttribute("message", "You successfully uploaded $name!");
+            }
+            catch (e: Exception) {
+                redirectAttributes.addFlashAttribute("message", "You failed to upload $name => " + e.message);
+            }
+        }
+        else {
+            redirectAttributes.addFlashAttribute("message",
+                    "You failed to upload $name because the file was empty");
+        }
+
+        return "redirect:/";
+    }
 }
