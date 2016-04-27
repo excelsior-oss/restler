@@ -7,7 +7,8 @@ import org.restler.client.CachingClientFactory;
 import org.restler.client.CallEnhancer;
 import org.restler.client.CoreModule;
 import org.restler.http.RequestExecutor;
-import org.restler.spring.data.chain.ChainCallEnhancer;
+import org.restler.spring.data.calls.ChainCallEnhancer;
+import org.restler.spring.data.calls.ConvertToPageCallEnhancer;
 import org.restler.spring.data.proxy.ProxyCallEnhancer;
 import org.restler.spring.mvc.spring.SpringMvcRequestExecutor;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -37,6 +38,7 @@ public class SpringDataSupport implements Function<RestlerConfig, CoreModule> {
     public CoreModule apply(RestlerConfig config) {
         List<CallEnhancer> totalEnhancers = new ArrayList<>();
         totalEnhancers.add(new ChainCallEnhancer());
+        totalEnhancers.add(new ConvertToPageCallEnhancer());
         totalEnhancers.add(new ProxyCallEnhancer(cacheSize));
         totalEnhancers.add(new SdrErrorMappingEnhancer());
         totalEnhancers.addAll(config.getEnhancers());

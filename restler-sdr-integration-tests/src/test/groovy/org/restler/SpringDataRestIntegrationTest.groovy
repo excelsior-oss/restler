@@ -3,17 +3,22 @@ package org.restler
 import org.restler.integration.springdata.*
 import org.restler.spring.data.SpringDataSupport
 import org.restler.util.IntegrationSpec
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import spock.lang.Ignore
 import spock.lang.Specification
 
+import java.util.stream.StreamSupport
+
 class SpringDataRestIntegrationTest extends Specification implements IntegrationSpec {
     Service serviceWithBasicAuth = new Restler("http://localhost:8080",
-            new SpringDataSupport([PersonsRepository.class, PetsRepository.class], 1000)).
+            new SpringDataSupport([PersonsRepository.class, PetsRepository.class, PostsRepository.class], 1000)).
             httpBasicAuthentication("user", "password").
             build();
 
     PersonsRepository personRepository = serviceWithBasicAuth.produceClient(PersonsRepository.class)
     PetsRepository petRepository = serviceWithBasicAuth.produceClient(PetsRepository.class)
+    PostsRepository postRepository = serviceWithBasicAuth.produceClient(PostsRepository.class)
 
     def "test PersonRepository findOne"() {
         expect:
@@ -83,12 +88,16 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def newName = person2.getPets().get(0).getName()
         then: "Pet name was changed and saved on remote server"
         newName=="New value"
+
+        cleanup:
+        pets[0].setName("pet2")
+        petRepository.save(pets[0])
     }
 
     def "test add new resource that part of other resource"() {
         when: "New pet was added to person that exist already"
 
-        def pet = new Pet(10, "test pet 10", personRepository.findOne(1L))
+        def pet = new Pet(10, "test pet 10", personRepository.findOne(2L))
         petRepository.save(pet);
 
         def pet1 = petRepository.findOne(10L);
@@ -97,9 +106,11 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         then: "Pet was added to person"
         pet1.getId() == 10L
         pet1.getName() == "test pet 10"
-        person1.getId() == 1L
-        person1.getName() == "person1"
+        person1.getId() == 2L
+        person1.getName() == "person2"
 
+        cleanup:
+        petRepository.delete(10L);
     }
 
     def "test change resource from resource that have reference to it"() {
@@ -113,6 +124,10 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def person1 = personRepository.findOne(1L)
         then: "Person was changed successfully"
         person1.getName() == "New person name"
+
+        cleanup:
+        person1.setName("person1")
+        personRepository.save(person1)
     }
 
     def "test add new resources to list from composite resource"() {
@@ -121,9 +136,9 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def pets = person.getPets()
 
         when: "Add new pets and associate to person"
-        pets.add(new Pet(2, "pet2", null))
-        pets.add(new Pet(3, "pet3", null))
         pets.add(new Pet(4, "pet4", null))
+        pets.add(new Pet(5, "pet5", null))
+        pets.add(new Pet(6, "pet6", null))
 
         personRepository.save(person)
 
@@ -133,20 +148,162 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         then: "Pets was added to person successfully"
         person1.getId() == 3L
         person1.getName() == "person3"
-        pets1[0].getName() == "pet2"
-        pets1[1].getName() == "pet3"
-        pets1[2].getName() == "pet4"
+        pets1[0].getName() == "pet4"
+        pets1[1].getName() == "pet5"
+        pets1[2].getName() == "pet6"
+
+        cleanup:
+        petRepository.delete(pets1[0])
+        petRepository.delete(pets1[1])
+        petRepository.delete(pets1[2])
+
+        personRepository.delete(person1)
+
     }
 
 
     def "test delete resource from repository"() {
         given: "Person that exist already"
-        def person = personRepository.findOne(2L)
+        personRepository.save(new Person(5L, "temp"))
+        def person = personRepository.findOne(5L)
         when: "Delete person from repository"
         personRepository.delete(person)
-        def person1 = personRepository.findOne(2L)
+        def person1 = personRepository.findOne(5L)
         then: "Person was deleted successfully"
         person1 == null
+    }
+
+    def "test delete resource from repository by id"() {
+        given: "Person that exist already"
+        personRepository.save(new Person(5L, "temp"))
+        when: "Delete person from repository"
+        personRepository.delete(5L)
+        def person1 = personRepository.findOne(5L)
+        then: "Person was deleted successfully"
+        person1 == null
+    }
+
+    def "test findAll"() {
+        when:
+        def persons = personRepository.findAll()
+
+        then:
+        persons.size() == 3
+
+        persons[0].getId() == 0L
+        persons[1].getId() == 1L
+        persons[2].getId() == 2L
+    }
+
+    def "test findAll by ids"() {
+        given:
+        def ids = new ArrayList();
+        ids.add(0)
+        ids.add(2)
+        when:
+        def persons = personRepository.findAll(ids)
+        then:
+        persons.size() == 2
+        persons[0].getId() == 0L
+        persons[1].getId() == 2L
+    }
+
+    def "test delete all resources from repository"() {
+        given:
+        def oldPets = petRepository.findAll()
+
+        //need for saving association to person
+        for(Pet pet : oldPets) {
+            pet.getPerson()
+        }
+        when:
+        petRepository.deleteAll()
+        then:
+        def pets = petRepository.findAll()
+        pets.size() == 0
+        cleanup:
+        petRepository.save(oldPets)
+    }
+
+    def "test delete several resources from repository"() {
+        given:
+        def ids = new ArrayList<Long>()
+
+        ids.add(0L)
+        ids.add(2L)
+
+        def petsForDelete = petRepository.findAll(ids)
+
+        //need for saving association to persons
+        for(Pet pet : petsForDelete) {
+            pet.getPerson()
+        }
+
+        when:
+        petRepository.delete(petsForDelete)
+        then:
+        def pets = petRepository.findAll(ids)
+        StreamSupport.stream(pets.spliterator(), false).allMatch({it == null})
+
+        cleanup:
+        petRepository.save(petsForDelete)
+    }
+
+    def "test save several elements to repository"() {
+        given:
+        def elements = new ArrayList()
+        elements.add(new Pet(100L, "test", null))
+        elements.add(new Pet(101L, "test", null))
+        elements.add(new Pet(102L, "test", null))
+        elements.add(new Pet(103L, "test", null))
+
+        when:
+        elements = petRepository.save(elements)
+
+        then:
+        petRepository.findOne(100L) != null
+        petRepository.findOne(101L) != null
+        petRepository.findOne(102L) != null
+        petRepository.findOne(103L) != null
+
+        cleanup:
+        petRepository.delete(elements)
+    }
+
+    def "test get sorted page"() {
+        given:
+        def sort = new Sort(Sort.Direction.DESC, "author")
+        when:
+        def posts = postRepository.findAll(sort)
+        then:
+        posts.size() == 3
+        posts[0].getAuthor().getId() == 2L
+        posts[1].getAuthor().getId() == 1L
+        posts[2].getAuthor().getId() == 0L
+    }
+
+    def "test paging"() {
+        given:
+        def posts = new ArrayList<Post>()
+        Iterable<Person> persons = personRepository.findAll([0L, 1L, 2L])
+        for(Long id = 3; id < 20; ++id) {
+            posts.add(new Post(id, "Hello!", persons[(int)id%3]))
+        }
+        posts = postRepository.save(posts)
+
+        when:
+        def resultPage = postRepository.findAll(new PageRequest(3, 5, Sort.Direction.ASC, "id"))
+        def resultPosts = resultPage.content
+        then:
+        resultPosts.size() == 5
+        resultPosts[0].getId() == 15L
+        resultPosts[1].getId() == 16L
+        resultPosts[2].getId() == 17L
+        resultPosts[3].getId() == 18L
+        resultPosts[4].getId() == 19L
+
+        cleanup:
+        postRepository.delete(posts)
     }
 
     @Ignore

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.common.reflect.TypeToken;
 import org.restler.client.RestlerException;
 import org.restler.spring.data.proxy.ResourceProxyMaker;
 import org.springframework.http.HttpInputMessage;
@@ -13,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
@@ -41,7 +41,7 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
         if (!(type instanceof ParameterizedType)) {
             return false;
         }
-        Class<?> resultClass = ((ParameterizedTypeImpl) type).getRawType();
+        Class<?> resultClass = TypeToken.of( ((ParameterizedType) type).getRawType() ).getRawType();
         return isList(resultClass);
     }
 
@@ -49,10 +49,12 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
     public Object read(Type type, Class<?> aClass, HttpInputMessage httpInputMessage) throws IOException, HttpMessageNotReadableException {
 
         JsonNode rootNode = objectMapper.readTree(httpInputMessage.getBody());
-        Class<?> resultClass = ((ParameterizedTypeImpl) type).getRawType();
+
+        Class<?> resultClass = TypeToken.of( ((ParameterizedType) type).getRawType() ).getRawType();
+
         Class<?> elementClass;
         try {
-            elementClass = Class.forName(((ParameterizedTypeImpl) type).getActualTypeArguments()[0].getTypeName());
+            elementClass = Class.forName(((ParameterizedType) type).getActualTypeArguments()[0].getTypeName());
         } catch (ClassNotFoundException e) {
             throw new RestlerException(e);
         }

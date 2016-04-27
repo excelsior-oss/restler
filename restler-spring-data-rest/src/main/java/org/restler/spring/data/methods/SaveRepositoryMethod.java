@@ -8,7 +8,7 @@ import org.restler.client.Call;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
-import org.restler.spring.data.chain.ChainCall;
+import org.restler.spring.data.calls.ChainCall;
 import org.restler.spring.data.proxy.ResourceProxy;
 import org.restler.spring.data.util.CloneMaker;
 import org.restler.util.Pair;
@@ -31,6 +31,16 @@ import java.util.stream.Collectors;
  */
 public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
+    private static final Method saveMethod;
+
+    static {
+        try {
+            saveMethod = CrudRepository.class.getMethod("save", Object.class);
+        } catch (NoSuchMethodException e) {
+            throw new RestlerException("Can't find CrudRepository.save method.", e);
+        }
+    }
+
     private final String baseUri;
     private final String repositoryUri;
     private final Repositories repositories;
@@ -48,7 +58,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public boolean isRepositoryMethod(Method method) {
-        return "save".equals(method.getName());
+        return saveMethod.equals(method);
     }
 
     @Override
@@ -78,7 +88,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
         calls.add(makeAssociations(args[0], getChildren(args[0])));
 
-        return new ChainCall(calls, returnType);
+        return new ChainCall(this::filterNullResults, calls, returnType);
     }
 
     @Override
@@ -93,6 +103,14 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return getId(arg).toString();
     }
 
+    //need for filtering results are returned by associate call
+    private Object filterNullResults(Object prevResult, Object object) {
+        if(object != null) {
+            return object;
+        } else {
+            return null;
+        }
+    }
 
     private Object getRequestBody(Object arg) {
         if(arg instanceof ResourceProxy) {
@@ -330,7 +348,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         throw new RestlerException("Can't get id.");
     }
 
-    private class ResourceTree implements Iterable {
+    private class ResourceTree implements Iterable<Object> {
         private final Object resource;
         private final List<ResourceTree> children;
 
@@ -339,11 +357,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             this.children = children;
         }
 
-        ResourceTree(Object resource) {
-            this(new ArrayList<>(), resource);
-        }
-
-        public Object getTopResource() {
+        Object getTopResource() {
             return resource;
         }
 
@@ -356,7 +370,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
             private final Stack<Pair<ResourceTree, Iterator<ResourceTree>>> greyNodes = new Stack<>();
 
-            public TreeIterator(ResourceTree firstNode) {
+            TreeIterator(ResourceTree firstNode) {
                 Iterator<ResourceTree> childrenIterator = firstNode.children.iterator();
                 greyNodes.push(new Pair<>(firstNode, childrenIterator));
             }

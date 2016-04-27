@@ -93,6 +93,7 @@
                 <module>restler-spring-data-rest</module>
                 <module>test-api</module>
                 <module>restler-integration-tests</module>
+                <module>restler-sdr-integration-tests</module>
                 <module>test-client</module>
             </modules>
         </profile>
