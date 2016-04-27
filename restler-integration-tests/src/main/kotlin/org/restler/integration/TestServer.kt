@@ -35,10 +35,7 @@ open class WebConfig : WebMvcConfigurerAdapter() {
         }
     }
 
-    @Bean
-    fun multipartResolver(): StandardServletMultipartResolver {
-        return StandardServletMultipartResolver();
-    }
+    @Bean open fun multipartResolver() = StandardServletMultipartResolver()
 
     @Bean open fun controller() = Controller()
 }

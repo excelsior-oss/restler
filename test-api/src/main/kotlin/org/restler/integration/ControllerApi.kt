@@ -2,6 +2,7 @@ package org.restler.integration
 
 import org.springframework.scheduling.annotation.Async
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 
@@ -57,4 +58,7 @@ interface ControllerApi {
 
     @RequestMapping("postBody", method = arrayOf(RequestMethod.POST))
     open fun postBody(@RequestBody() body: Any): Any
+
+    @RequestMapping(method = arrayOf(RequestMethod.POST), value = "/upload")
+    fun fileUpload(@RequestParam("name") name: String, @RequestParam("file") file: MultipartFile): String
 }
