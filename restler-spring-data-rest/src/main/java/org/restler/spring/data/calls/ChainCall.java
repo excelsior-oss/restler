@@ -5,28 +5,46 @@ import org.restler.client.CallExecutor;
 
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 /**
  * Call is used for executing chain of calls.
  */
 public class ChainCall implements Call {
-    private final BiFunction<Object, Object, Object> modifierFunction;
+
+    /**
+     * {@code} accumulator is used to combine multiple results of nested calls into single result of chain call.
+     * Probably it's should be replaced by full-blown reduce framework (with identity, accumulator and combiner)
+     */
+    private final BinaryOperator<Object> accumulator;
     private final List<Call> calls;
     private final Type returnType;
 
-    /**
-     * @param modifierFunction provides control results that returns from call execution. It receive previous result and execution call result
-     * and returns modified result.
-     */
-    public ChainCall(BiFunction<Object, Object, Object> modifierFunction, List<Call> calls, Type returnType) {
-        this.modifierFunction = modifierFunction;
+    public ChainCall(BinaryOperator<Object> modifierFunction, List<Call> calls, Type returnType) {
+        this.accumulator = modifierFunction;
         this.calls = calls;
         this.returnType = returnType;
     }
 
     public ChainCall(List<Call> calls, Type returnType) {
         this(null, calls, returnType);
+    }
+
+    /**
+     * Executes chain of calls using {@link CallExecutor}.
+     */
+    Object execute(CallExecutor executor) {
+        Object result = null;
+
+        if (accumulator != null) {
+            result = calls.stream().
+                    map(executor::execute).
+                    reduce(null, accumulator);
+        } else {
+            calls.forEach(executor::execute);
+        }
+
+        return result;
     }
 
     @Override
@@ -37,26 +55,5 @@ public class ChainCall implements Call {
     @Override
     public Call withReturnType(Type type) {
         return new ChainCall(calls, type);
-    }
-
-    /**
-     * Executes chain of calls using {@link CallExecutor}.
-     */
-    public Object apply(CallExecutor executor) {
-        Object result = null;
-
-        for(Call callFromChain : calls) {
-            Object object = null;
-
-            if(callFromChain != null) {
-                object = executor.execute(callFromChain);
-            }
-
-            if(modifierFunction != null) {
-                result = modifierFunction.apply(result, object);
-            }
-        }
-
-        return result;
     }
 }
