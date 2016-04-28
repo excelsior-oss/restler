@@ -25,6 +25,7 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * CrudRepository save method implementation.
@@ -108,7 +109,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         if(object != null) {
             return object;
         } else {
-            return null;
+            return prevResult;
         }
     }
 
@@ -245,21 +246,44 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         String fieldName;
 
         for(Pair<Field, Object> child : children) {
-            if(child.getFirstValue().isAnnotationPresent(OneToMany.class)) {
+            if(child.getFirstValue().isAnnotationPresent(ManyToMany.class)) {
+                ManyToMany annotation = child.getFirstValue().getAnnotation(ManyToMany.class);
+                fieldName = annotation.mappedBy();
+
+                if(fieldName.isEmpty()) {
+                    fieldName = child.getFirstValue().getName();
+                }
+
+                if(!fieldName.isEmpty()) {
+                    if (child.getSecondValue() instanceof Collection) {
+                        Collection<Object> collection = (Collection<Object>) child.getSecondValue();
+                        if(!collection.isEmpty()) {
+                            calls.add(associate(parent, collection, fieldName));
+                        }
+                    }
+                }
+
+            } else if(child.getFirstValue().isAnnotationPresent(OneToMany.class)) {
                 OneToMany annotation = child.getFirstValue().getAnnotation(OneToMany.class);
                 fieldName = annotation.mappedBy();
 
                 if(!fieldName.isEmpty()) {
                     if (child.getSecondValue() instanceof Collection) {
                         for (Object item : (Collection) child.getSecondValue()) {
-                            calls.add(associate(parent, item, fieldName));
+                            List<Object> parentList = new ArrayList<>();
+                            parentList.add(parent);
+                            calls.add(associate(item, parentList, fieldName));
                         }
                     } else {
-                        calls.add(associate(parent, child.getSecondValue(), fieldName));
+                        List<Object> parentList = new ArrayList<>();
+                        parentList.add(parent);
+                        calls.add(associate(child.getSecondValue(), parentList, fieldName));
                     }
                 }
             } else if(child.getFirstValue().isAnnotationPresent(ManyToOne.class)) {
-                calls.add(associate(child.getSecondValue(), parent, child.getFirstValue().getName()));
+                List<Object> childList = new ArrayList<>();
+                childList.add(child.getSecondValue());
+                calls.add(associate(parent, childList, child.getFirstValue().getName()));
             }
         }
 
@@ -279,7 +303,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
             Object id = getId(object);
             if(id == null) {
-                return null;
+                throw new RestlerException("Id can't be null.");
             }
             result = baseUri + "/" + RepositoryUtils.getRepositoryPath(repository.getClass().getInterfaces()[0]) + "/" + id;
         }
@@ -287,16 +311,18 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return result;
     }
 
-    private Call associate(Object parent, Object child, String fieldName) {
+    private Call associate(Object parent, Collection<Object> children, String fieldName) {
         String parentUri;
-        String childUri;
 
         parentUri = getUri(parent);
-        childUri = getUri(child);
 
-        if(parentUri == null || childUri == null) {
-            return null;
-        }
+        StringBuilder requestBody = new StringBuilder();
+
+        StreamSupport.stream(children.spliterator(), false).
+                map(this::getUri).
+                forEach(uri -> requestBody.append(uri).append("\n"));
+
+        requestBody.deleteCharAt(requestBody.length()-1);
 
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "text/uri-list");
 
@@ -305,7 +331,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
          * PUT uses for adding new associations between resources
          * {@link http://docs.spring.io/spring-data/rest/docs/current/reference/html/#_put_2}
          * */
-        return new HttpCall(new UriBuilder(childUri + "/" + fieldName).build(), HttpMethod.PUT, parentUri, header, String.class);
+        return new HttpCall(new UriBuilder(parentUri + "/" + fieldName).build(), HttpMethod.PUT, requestBody.toString(), header, String.class);
     }
 
     private Call add(Object object) {
