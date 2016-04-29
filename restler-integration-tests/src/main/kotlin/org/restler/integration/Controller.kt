@@ -3,14 +3,33 @@ package org.restler.integration
 import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.AsyncResult
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.util.FileCopyUtils
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.context.request.async.DeferredResult
+import org.springframework.web.multipart.MultipartFile
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
+import java.util.stream.Collectors
 import kotlin.concurrent.thread
 
 @RestController
 open class Controller : ControllerApi {
+
+    var filesDirectory: String;
+
+    init {
+        var root = File("").canonicalPath
+        filesDirectory = "$root/files";
+        var directory = File(filesDirectory)
+
+        if(!(directory.exists() && directory.isDirectory)) {
+            directory.mkdir()
+        }
+    }
 
     @RequestMapping("get")
     override fun publicGet() = "OK"
@@ -100,4 +119,31 @@ open class Controller : ControllerApi {
 
     @RequestMapping("postBody", method = arrayOf(RequestMethod.POST))
     override fun postBody(@RequestBody body: Any) = body
+
+    @RequestMapping(method = arrayOf(RequestMethod.GET), value = "/upload")
+    fun provideUploadInfo(): List<String> {
+        var filesFolder = File("$filesDirectory/");
+        var fileNames = Arrays.stream(filesFolder.listFiles())
+                .map({ it.name })
+                .collect(Collectors.toList<String>())
+
+        return fileNames;
+    }
+
+    @RequestMapping(method = arrayOf(RequestMethod.POST), value = "/upload")
+    override fun fileUpload(@RequestParam("name") name: String, @RequestParam("file") file: MultipartFile): String {
+        if (!file.isEmpty) {
+            try {
+                var stream = BufferedOutputStream(FileOutputStream(File("$filesDirectory/$name")));
+                FileCopyUtils.copy(file.inputStream, stream);
+                stream.close();
+                return "Success"
+            }
+            catch (e: Exception) {
+                return "Failed to upload $name => " + e.message;
+            }
+        }
+
+        return "File is empty."
+    }
 }

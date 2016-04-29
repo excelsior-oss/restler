@@ -8,7 +8,9 @@ import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.util.UriBuilder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -16,6 +18,8 @@ import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static javafx.scene.input.KeyCode.M;
 
 /**
  * Maps a properly annotated Java method invocation to invocation of a service method.
@@ -95,8 +99,55 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
             throw new RestlerException("You should introduce method parameter with @PathVariable annotation for each url template variable. Unbound variables: " + unboundPathVariables);
         }
 
+        ImmutableMultimap<String, String> headers = ImmutableMultimap.of();
+
+        if (Arrays.stream(args).anyMatch(o -> o instanceof MultipartFile)) {
+            String boundary = "--" + UUID.randomUUID().toString();
+            String multipartBody = "";
+            for (int i = 0; i < args.length; ++i) {
+                if (args[i] instanceof MultipartFile) {
+                    RequestParam requestParam = findAnnotation(parametersAnnotations[i], RequestParam.class);
+                    if (requestParam != null) {
+                        multipartBody += partBodyForMultipart(requestParam.value(), (MultipartFile) args[i], boundary);
+                    }
+                }
+            }
+
+            multipartBody += "--" + boundary + "--\r\n";
+
+            headers = ImmutableMultimap.of("Content-Type", "multipart/form-data; boundary=" + boundary);
+            requestBody = multipartBody;
+        }
+
         URI url = url(baseUrl, pathTemplate, requestParams.build(), pathVariables);
-        return new HttpCall(url, getHttpMethod(methodMapping), requestBody, ImmutableMultimap.of(), getReturnType(method));
+
+        return new HttpCall(url, getHttpMethod(methodMapping), requestBody, headers, getReturnType(method));
+    }
+
+    private <T extends Annotation> T findAnnotation(Annotation[] annotations, Class<T> annotation) {
+        return Arrays.stream(annotations).
+                filter(a -> a.annotationType().equals(annotation)).
+                map(a -> (T) a).
+                findFirst().
+                orElse(null);
+    }
+
+    private String partBodyForMultipart(String name, MultipartFile multipartFile, String boundary) {
+        String resultBody = "--" + boundary + "\r\n";
+
+        resultBody += "Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + multipartFile.getOriginalFilename() + "\"\r\n";
+        resultBody += "Content-Type: " + multipartFile.getContentType() + "\r\n\r\n";
+
+        byte[] fileData;
+        try {
+            fileData = multipartFile.getBytes();
+        } catch (IOException e) {
+            throw new RestlerException("Can't get bytes from multipart file.", e);
+        }
+
+        resultBody += new String(fileData) + "\r\n";
+
+        return resultBody;
     }
 
     private String pathTemplate(RequestMapping controllerMapping, RequestMapping methodMapping) {
@@ -148,7 +199,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
             return "";
         } else {
             String uriString = getFirstOrEmpty(mapping.value());
-            return uriString.startsWith("/") ?  uriString : "/" + uriString;
+            return uriString.startsWith("/") ? uriString : "/" + uriString;
         }
     }
 
@@ -178,6 +229,9 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         }
 
         public Optional<String> resolve(int paramIdx) {
+            if (args[paramIdx] instanceof MultipartFile) {
+                return Optional.empty();
+            }
             return paramResolver.resolve(method, args, annotations, paramNames, paramIdx);
         }
     }

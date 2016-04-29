@@ -5,6 +5,7 @@ import org.restler.client.RestlerException
 import org.restler.http.security.authentication.CookieAuthenticationStrategy
 import org.restler.integration.ControllerApi
 import org.restler.spring.mvc.SpringMvcSupport
+import org.restler.spring.mvc.files.RestlerMultipartFile
 import spock.lang.Specification
 
 import static Tests.login
@@ -62,5 +63,12 @@ class SpringMvcIntegrationTest extends Specification {
         controller.returnVoid()
         then:
         true
+    }
+
+    def "file upload"() {
+        when:
+        def result = controller.fileUpload("testFile.txt", new RestlerMultipartFile("file", new File("resources/testFile.txt"), "text/plain"))
+        then:
+        result == "Success"
     }
 }
