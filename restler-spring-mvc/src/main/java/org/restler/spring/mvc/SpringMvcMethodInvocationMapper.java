@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static javafx.scene.input.KeyCode.M;
+
 /**
  * Maps a properly annotated Java method invocation to invocation of a service method.
  */
@@ -99,10 +101,9 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
 
         ImmutableMultimap<String, String> headers = ImmutableMultimap.of();
 
-        if(Arrays.stream(args).filter(o -> o instanceof MultipartFile).count() > 0) {
-            String boundary = "--------Asrf456BGe4h";
+        if (Arrays.stream(args).anyMatch(o -> o instanceof MultipartFile)) {
+            String boundary = "--" + UUID.randomUUID().toString();
             String multipartBody = "";
-
             for (int i = 0; i < args.length; ++i) {
                 if (args[i] instanceof MultipartFile) {
                     RequestParam requestParam = findAnnotation(parametersAnnotations[i], RequestParam.class);
@@ -126,7 +127,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
     private <T extends Annotation> T findAnnotation(Annotation[] annotations, Class<T> annotation) {
         return Arrays.stream(annotations).
                 filter(a -> a.annotationType().equals(annotation)).
-                map(a -> (T)a).
+                map(a -> (T) a).
                 findFirst().
                 orElse(null);
     }
@@ -198,7 +199,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
             return "";
         } else {
             String uriString = getFirstOrEmpty(mapping.value());
-            return uriString.startsWith("/") ?  uriString : "/" + uriString;
+            return uriString.startsWith("/") ? uriString : "/" + uriString;
         }
     }
 
@@ -228,7 +229,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         }
 
         public Optional<String> resolve(int paramIdx) {
-            if(args[paramIdx] instanceof MultipartFile) {
+            if (args[paramIdx] instanceof MultipartFile) {
                 return Optional.empty();
             }
             return paramResolver.resolve(method, args, annotations, paramNames, paramIdx);
