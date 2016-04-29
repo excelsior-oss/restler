@@ -24,21 +24,6 @@ import java.lang.annotation.Target;
 
 //import org.springframework.http.converter.HttpMessageConverter;
 
-/**
- * Annotation indicating a method parameter should be bound to the body of the web request.
- * The body of the request is passed through an {@link HttpMessageConverter} to resolve the
- * method argument depending on the content type of the request. Optionally, automatic
- * validation can be applied by annotating the argument with {@code @Valid}.
- *
- * <p>Supported for annotated handler methods in Servlet environments.
- *
- * @author Arjen Poutsma
- * @since 3.0
- * @see RequestHeader
- * @see ResponseBody
- * @see org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
- * @see org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter
- */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
