@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.restler</groupId>
         <artifactId>restler</artifactId>
-        <version>0.5.0</version>
+        <version>0.5.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -15,7 +15,7 @@
         <jackson.version>2.6.0</jackson.version>
     </properties>
     <artifactId>restler-spring-data-rest</artifactId>
-    <version>0.5.0</version>
+    <version>0.5.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <build>
