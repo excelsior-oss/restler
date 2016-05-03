@@ -10,7 +10,7 @@ import spock.lang.Specification
 
 import java.util.stream.StreamSupport
 
-class SpringDataRestIntegrationTest extends Specification implements IntegrationSpec {
+class SpringDataRestIntegrationTest extends Specification /*implements IntegrationSpec*/ {
     Service serviceWithBasicAuth = new Restler("http://localhost:8080",
             new SpringDataSupport([PersonsRepository.class, PetsRepository.class, PostsRepository.class], 1000)).
             httpBasicAuthentication("user", "password").
@@ -90,7 +90,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     def "test composite objects retrieving that contain resource without repository"() {
         given: "Person that associated list of addresses without repository"
-        def person = personRepository.findOne(0L)
+        def person = personRepository.findOne(35L)
 
         when: "List of associated addresses are accessed"
         def addresses = person.getAddresses()
@@ -220,11 +220,12 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def persons = personRepository.findAll()
 
         then:
-        persons.size() == 3
+        persons.size() == 4
 
         persons[0].getId() == 0L
         persons[1].getId() == 1L
         persons[2].getId() == 2L
+        persons[3].getId() == 35L
     }
 
     def "test findAll by ids"() {
