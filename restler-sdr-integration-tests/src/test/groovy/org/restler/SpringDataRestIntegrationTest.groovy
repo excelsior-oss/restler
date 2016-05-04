@@ -10,7 +10,7 @@ import spock.lang.Specification
 
 import java.util.stream.StreamSupport
 
-class SpringDataRestIntegrationTest extends Specification /*implements IntegrationSpec*/ {
+class SpringDataRestIntegrationTest extends Specification implements IntegrationSpec {
     Service serviceWithBasicAuth = new Restler("http://localhost:8080",
             new SpringDataSupport([PersonsRepository.class, PetsRepository.class, PostsRepository.class], 1000)).
             httpBasicAuthentication("user", "password").
