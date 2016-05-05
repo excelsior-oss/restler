@@ -303,7 +303,32 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         petRepository.delete(elements)
     }
 
-    def "test get sorted page"() {
+    def "test save changes several elements to repository"() {
+        given:
+        def oldPets = petRepository.findAll();
+        def newPets = petRepository.findAll();
+
+        int i = 0
+        for(Pet pet : newPets) {
+            oldPets[i].getPerson() //need for saving association to person
+            pet.name = (i++).toString()
+        }
+
+        when:
+        petRepository.save(newPets)
+        newPets = petRepository.findAll()
+
+        then:
+        int j = 0
+        for(Pet pet : newPets) {
+            pet.name == (j++).toString()
+        }
+
+        cleanup:
+        petRepository.save(oldPets)
+    }
+
+    def "test get desc order sorted page"() {
         given:
         def sort = new Sort(Sort.Direction.DESC, "id")
         when:
@@ -313,6 +338,18 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         posts[0].getId() == 2L
         posts[1].getId() == 1L
         posts[2].getId() == 0L
+    }
+
+    def "test get asc order sorted page"() {
+        given:
+        def sort = new Sort(Sort.Direction.ASC, "id")
+        when:
+        def posts = postRepository.findAll(sort)
+        then:
+        posts.size() == 3
+        posts[0].getId() == 0L
+        posts[1].getId() == 1L
+        posts[2].getId() == 2L
     }
 
     def "test paging"() {
