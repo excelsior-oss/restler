@@ -127,8 +127,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                 List<Association> associationsForCurrentResource = resourcesAndAssociations.getAssociationsByResource(resource);
 
                 associationsForCurrentResource.stream().
-                        filter(a -> resolveAssociationCreate(associations, a)).
-                        forEach(Association::markAsResolved);
+                        forEach(a -> resolveAssociationCreate(associations, a));
 
                 List<Association> resolvedManyToOne = associationsForCurrentResource.stream().
                         filter(a -> a.getAssociationType().equals(AssociationType.ManyToOne) && a.isResolved()).
@@ -174,11 +173,11 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             }
         }
 
-        associateCalls.forEach(calls::add);
-
         resources.stream().
                 filter(r -> r.getState().equals(AssociatedResourceState.Create)).
                 forEach(r -> calls.add(add(r.getResource(), r.getObjectNode())));
+
+        associateCalls.forEach(calls::add);
 
         return calls;
     }
@@ -188,7 +187,11 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             return false;
         }
         if(association.getAssociationType().equals(AssociationType.ManyToOne)) {
-            return !association.getSecondResource().getState().equals(AssociatedResourceState.Create);
+            boolean resolved = !association.getSecondResource().getState().equals(AssociatedResourceState.Create);
+            if(resolved) {
+                association.markAsResolved();
+            }
+            return resolved;
         }
 
         if(association.getAssociationType().equals(AssociationType.OneToMany)) {
@@ -219,10 +222,12 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                     objectNode.putArray(fieldName).add(fieldValue);
                 }
 
+                association.markAsResolved();
                 return true;
 
             case ManyToOne:
                 objectNode.put(fieldName, fieldValue);
+                association.markAsResolved();
                 return true;
 
             case OneToOne:
@@ -247,8 +252,10 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                     collect(Collectors.toList());
 
             associationsForCurrentResource.stream().
-                    filter(this::resolveAssociation).
-                    forEach(a->calls.add(update((ResourceProxy) resource.getResource(), resource.getObjectNode())));
+                    forEach(this::resolveAssociation);
+
+            calls.add(update((ResourceProxy) resource.getResource(), resource.getObjectNode()));
+            resource.changeState(AssociatedResourceState.Done);
         }
 
         return calls;
