@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 public class ResourcesAndAssociations {
 
+    //class for creating filter
     @JsonFilter("filter properties by name")
     private class PropertyFilterMixIn {}
 
@@ -65,6 +66,7 @@ public class ResourcesAndAssociations {
         return new ArrayList<>();
     }
 
+    //recursive method, get child resources for some resource and associations between them
     private AssociatedResource fillResourcesAndAssociations(Object object, Set<Object> set) {
         Object objectAtStart = object;
         set.add(object);
@@ -114,11 +116,13 @@ public class ResourcesAndAssociations {
             child.getFirstValue().setAccessible(false);
         }
 
+        //filtering associations fields
         FilterProvider filters = new SimpleFilterProvider()
                 .addFilter("filter properties by name", SimpleBeanPropertyFilter.serializeAllExcept(ignorableFields.toArray(new String[ignorableFields.size()])));
         ObjectWriter writer = objectMapper.writer(filters);
 
         try {
+            //creates base json body without associations
             ObjectNode node = (ObjectNode) objectMapper.readTree(writer.writeValueAsString(object));
             currentResource.getObjectNode().setAll(node);
         } catch (IOException e) {
@@ -128,6 +132,7 @@ public class ResourcesAndAssociations {
         return currentResource;
     }
 
+    //create associations for parent and child resources
     private List<Association> associate(AssociatedResource parent, Field childField, AssociatedResource resource) {
 
         Object parentResource = parent.getResource();

@@ -31,8 +31,11 @@ import java.util.stream.Collectors;
 public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     private static final Method saveMethod;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     static {
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
         try {
             saveMethod = CrudRepository.class.getMethod("save", Object.class);
         } catch (NoSuchMethodException e) {
@@ -42,11 +45,6 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     private final String baseUri;
     private final Repositories repositories;
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    static {
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    }
 
     public SaveRepositoryMethod(String baseUri, Repositories repositories) {
         this.baseUri = baseUri;
@@ -108,17 +106,22 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return json;
     }
 
+    //create calls for creating resources
     private List<Call> createResources(ResourcesAndAssociations resourcesAndAssociations) {
         List<Call> calls = new ArrayList<>();
         List<Call> associateCalls = new ArrayList<>();
 
+        //get resources that must be created
         List<AssociatedResource> resources = resourcesAndAssociations.getResources().stream().
                 filter(r -> r.getState().equals(AssociatedResourceState.Create)).
                 collect(Collectors.toList());
+
+        //get all associations
         List<Association> associations = resourcesAndAssociations.getAssociations();
 
 
-        while(resources.size() > 0 && associations.stream().
+        //while unresolved associations for creating resources not empty
+        while(!resources.isEmpty() && associations.stream().
                 filter(a->a.getFirstResource().getState().equals(AssociatedResourceState.Create)
                 && !a.isResolved()).count() > 0) {
             long resourcesCreated = 0;
@@ -126,19 +129,23 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             for (AssociatedResource resource : resources) {
                 List<Association> associationsForCurrentResource = resourcesAndAssociations.getAssociationsByResource(resource);
 
+                //resolve associations for current resource
                 associationsForCurrentResource.stream().
                         forEach(a -> resolveAssociationCreate(associations, a));
 
+                //get resolved manyToOne associations
                 List<Association> resolvedManyToOne = associationsForCurrentResource.stream().
                         filter(a -> a.getAssociationType().equals(AssociationType.ManyToOne) && a.isResolved()).
                         collect(Collectors.toList());
 
+                //get count of manyToOne unresolved associations
                 long manyToOneCount =
                         associationsForCurrentResource.stream().
                                 filter(a -> a.getAssociationType().equals(AssociationType.ManyToOne) &&
                                         a.getSecondResource().getState().equals(AssociatedResourceState.Create) && !a.isResolved()).
                                 count();
 
+                //if count of manyToOne unresolved associations is zero then add call for creating current resource
                 if (manyToOneCount == 0) {
                     resolvedManyToOne.forEach(a -> resource.getObjectNode().put(a.getJsonField().getFirstValue(), a.getJsonField().getSecondValue()));
                     calls.add(add(resource.getResource(), resource.getObjectNode()));
@@ -173,6 +180,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             }
         }
 
+        //if resources have not created yet
         resources.stream().
                 filter(r -> r.getState().equals(AssociatedResourceState.Create)).
                 forEach(r -> calls.add(add(r.getResource(), r.getObjectNode())));
@@ -182,10 +190,13 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return calls;
     }
 
+    //resolve association for creating resource
     private boolean resolveAssociationCreate(List<Association> associations, Association association) {
         if(association == null) {
             return false;
         }
+
+        //if second resource of association manyToOne is created then association cant be resolved yet
         if(association.getAssociationType().equals(AssociationType.ManyToOne)) {
             boolean resolved = !association.getSecondResource().getState().equals(AssociatedResourceState.Create);
             if(resolved) {
@@ -194,16 +205,10 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             return resolved;
         }
 
-        if(association.getAssociationType().equals(AssociationType.OneToMany)) {
-            associations.stream().
-                    filter(a -> a.getSecondResource().equals(association.getFirstResource()) &&
-                            a.getSecondResource().getState().equals(AssociatedResourceState.Create)).
-                    forEach(Association::markAsResolved);
-        }
-
         return resolveAssociation(association);
     }
 
+    //resolve associations
     private boolean resolveAssociation(Association association) {
         ObjectNode objectNode = association.getFirstResource().getObjectNode();
         String fieldName = association.getJsonField().getFirstValue();
@@ -215,6 +220,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         switch(associationType) {
             case OneToMany:
             case ManyToMany:
+                //add to json associations
                 if(jsonNode != null && jsonNode instanceof ArrayNode) {
                     ArrayNode arrayNode = (ArrayNode)jsonNode;
                     arrayNode.add(fieldValue);
@@ -226,31 +232,32 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                 return true;
 
             case ManyToOne:
+                //add to json association
                 objectNode.put(fieldName, fieldValue);
+
                 association.markAsResolved();
                 return true;
 
             case OneToOne:
-                //resolve one to one association
-                return true;
+                throw new RestlerException("Unsupported association oneToOne.");
         }
 
         return false;
     }
 
+    //create calls for updating resources
     private List<Call> updateResources(ResourcesAndAssociations resourcesAndAssociations) {
         List<Call> calls = new ArrayList<>();
 
+        //get resources that must be created
         List<AssociatedResource> resources = resourcesAndAssociations.getResources().stream().
                 filter(r -> r.getState().equals(AssociatedResourceState.Update)).
                 collect(Collectors.toList());
-        List<Association> associations = resourcesAndAssociations.getAssociations();
 
         for(AssociatedResource resource : resources) {
-            List<Association> associationsForCurrentResource = associations.stream().
-                    filter(a -> a.getFirstResource().equals(resource)).
-                    collect(Collectors.toList());
+            List<Association> associationsForCurrentResource = resourcesAndAssociations.getAssociationsByResource(resource);
 
+            //resolve associations for updating resource
             associationsForCurrentResource.stream().
                     forEach(this::resolveAssociation);
 
@@ -261,6 +268,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return calls;
     }
 
+    //create call for adding new resource to repository
     private Call add(Object object, ObjectNode node) {
         if(ResourceHelper.getId(object) == null) {
             return null;
@@ -274,6 +282,7 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
                 HttpMethod.POST, body, header, object.getClass());
     }
 
+    //create call for updating resource in repository
     private Call update(ResourceProxy resource, ObjectNode node) {
         Object body = getRequestBody(node);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
