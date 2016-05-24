@@ -82,13 +82,14 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             return resourceProxy.getResourceId().toString();
         }
 
-        return ResourceHelper.getId(arg).toString();
+        return "";
     }
 
     //need for filtering results are returned by associate call
     private Object takeResult(Object prevResult, Object object, Object id, Class<?> type) {
         if(object != null && object instanceof ResourceProxy &&
-                ((ResourceProxy) object).getObject().getClass().equals(type) && ResourceHelper.getId(object).equals(id)) {
+                ((ResourceProxy) object).getObject().getClass().equals(type) &&
+                (id == null || ResourceHelper.getId(object).equals(id))) {
             return object;
         } else {
             return prevResult;
@@ -270,10 +271,6 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     //create call for adding new resource to repository
     private Call add(Object object, ObjectNode node) {
-        if(ResourceHelper.getId(object) == null) {
-            return null;
-        }
-
         Object body = getRequestBody(node);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 

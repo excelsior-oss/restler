@@ -106,8 +106,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def pets = person.getPets();
         when: "Change pet's name and get new value from server"
         pets.get(0).setName("New value")
-        //for saving post associations
-        person.getPosts()
+
         personRepository.save(person)
 
         def person2 = personRepository.findOne(1L);
@@ -146,9 +145,6 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         when: "Change and save person using reference from pet"
         pets[0].getPerson().setName("New person name")
 
-        //for saving post associations
-        person.getPosts()
-
         personRepository.save(person)
 
         def person1 = personRepository.findOne(1L)
@@ -157,8 +153,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
         cleanup:
         person1.setName("person1")
-        //for saving post associations
-        person1.getPosts()
+
         personRepository.save(person1)
     }
 
@@ -244,11 +239,11 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
     def "test delete all resources from repository"() {
         given:
         def oldPets = petRepository.findAll()
-
-        //need for saving association to person
+        //for saving associations to person
         for(Pet pet : oldPets) {
             pet.getPerson()
         }
+
         when:
         petRepository.deleteAll()
         then:
@@ -266,8 +261,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         ids.add(2L)
 
         def petsForDelete = petRepository.findAll(ids)
-
-        //need for saving association to persons
+        //for saving associations to person
         for(Pet pet : petsForDelete) {
             pet.getPerson()
         }
@@ -310,7 +304,6 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
         int i = 0
         for(Pet pet : newPets) {
-            oldPets[i].getPerson() //need for saving association to person
             pet.name = (i++).toString()
         }
 
@@ -374,6 +367,22 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
         cleanup:
         postRepository.delete(posts)
+    }
+
+    def "test saving resource without information about association"() {
+        expect:
+        def pets = petRepository.findAll() //association to persons is null (but association on server is not null)
+        petRepository.save(pets) //must save changes and don't change association on server
+        for(Pet pet : pets) {
+            pet.getPerson() != null
+        }
+
+        def person = personRepository.findOne(0l) //association to pets is null (but association on server is not null)
+        personRepository.save(person) //must save changes and don't change association on server
+
+        def pets1 = person.getPets()
+        pets1 != null
+        pets1.size() == 2
     }
 
     @Ignore

@@ -181,7 +181,9 @@ public class ResourcesAndAssociations {
                         result.add(new Association(parent, resource, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, resource.getResource())), AssociationType.ManyToOne));
                     }
 
-                    result.add(new Association(resource, parent, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, parent.getResource())), AssociationType.OneToMany));
+                    if(ResourceHelper.getId(parent.getResource()) != null) {
+                        result.add(new Association(resource, parent, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, parent.getResource())), AssociationType.OneToMany));
+                    }
 
                     return result;
                 }
