@@ -7,6 +7,8 @@ import org.springframework.data.repository.Repository;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ResourceHelper {
     public static String getRepositoryUri(Repositories repositories, String baseUri, Object resource) {
@@ -33,6 +35,26 @@ public class ResourceHelper {
             }
             return  getRepositoryUri(repositories, baseUri, resource) + "/" + id;
         }
+    }
+
+    public static List<Object> getUri(Repositories repositories, String baseUri, Object resource, Placeholder<Object> idPlaceholder) {
+        List<Object> result = new ArrayList<>();
+
+        if(resource instanceof ResourceProxy) {
+            result.add(((ResourceProxy) resource).getSelfUri());
+        } else {
+            Object id = getId(resource);
+
+            result.add(getRepositoryUri(repositories, baseUri, resource) + "/");
+
+            if(id == null) {
+                result.add(idPlaceholder);
+            } else {
+                result.add(id);
+            }
+        }
+
+        return result;
     }
 
     public static Object getId(Object object) {
