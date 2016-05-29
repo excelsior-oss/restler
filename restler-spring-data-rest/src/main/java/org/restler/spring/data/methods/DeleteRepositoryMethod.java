@@ -23,11 +23,13 @@ import java.util.stream.StreamSupport;
 public class DeleteRepositoryMethod extends DefaultRepositoryMethod {
 
     private static final Method deleteObjectMethod;
+    private static final Method deleteIterableObjectMethod;
     private static final Method deleteSerializableMethod;
 
     static {
         try {
             deleteObjectMethod = CrudRepository.class.getMethod("delete", Object.class);
+            deleteIterableObjectMethod = CrudRepository.class.getMethod("delete", Iterable.class);
             deleteSerializableMethod = CrudRepository.class.getMethod("delete", Serializable.class);
         } catch (NoSuchMethodException e) {
             throw new RestlerException("Can't find CrudRepository.delete method.", e);
@@ -36,7 +38,7 @@ public class DeleteRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public boolean isRepositoryMethod(Method method) {
-        return deleteObjectMethod.equals(method) || deleteSerializableMethod.equals(method);
+        return deleteObjectMethod.equals(method) || deleteIterableObjectMethod.equals(method) || deleteSerializableMethod.equals(method);
     }
 
     @Override
