@@ -71,7 +71,10 @@ public class ResourceProxyMaker {
         String methodName = method.getName();
 
         if(methodName.startsWith("get")) {
-            String hrefName = methodName.substring(3).toLowerCase();
+            String hrefName = "";
+            if(methodName.length() > 3) {
+                hrefName = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
+            }
             return hrefs.get(hrefName);
         }
 
