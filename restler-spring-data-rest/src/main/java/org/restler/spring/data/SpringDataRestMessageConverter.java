@@ -62,6 +62,10 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
             JsonNode embedded = rootNode.get("_embedded");
 
+            if(embedded == null) {
+                return new ArrayList<>();
+            }
+
             Optional<ArrayNode> first = StreamSupport.stream(embedded.spliterator(), false).
                     filter(e -> e instanceof ArrayNode).
                     map(e -> (ArrayNode) e).
