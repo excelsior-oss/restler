@@ -101,12 +101,12 @@ public class ResourcesAndAssociations {
 
             if(!set.contains(child.getSecondValue())) {
                 if (child.getSecondValue() instanceof Collection) {
-                    for (Object item : (Collection) child.getSecondValue()) {
+                    ((Collection) child.getSecondValue()).stream().filter(item -> !set.contains(item)).forEach(item -> {
                         AssociatedResource childResource = fillResourcesAndAssociations(item, set);
                         List<Association> associateResult = associate(currentResource, child.getFirstValue(), childResource);
                         associateResult.forEach(associations::add);
                         associateResult.forEach(this::addAssociationByResource);
-                    }
+                    });
                 } else {
                     AssociatedResource childResource = fillResourcesAndAssociations(child.getSecondValue(), set);
                     List<Association> associateResult = associate(currentResource, child.getFirstValue(), childResource);
@@ -173,14 +173,12 @@ public class ResourcesAndAssociations {
                         (oneToManyParent.mappedBy().equals(nullField.getName()) ||
                                 nullField.getName().equals(parentResource.getClass().getSimpleName().toLowerCase()))) {
 
-                    if(ResourceHelper.getId(parent.getResource()) == null) {
-                        Placeholder<Object> idPlaceholder = new Placeholder<>();
-                        result.add(new Association(resource, parent, new Pair<>(nullField.getName(),
-                                new MultipartBody(ResourceHelper.getUri(repositories, baseUri, parent.getResource(), idPlaceholder))),
-                                AssociationType.ManyToOne, idPlaceholder));
-                    } else {
-                        result.add(new Association(resource, parent, new Pair<>(nullField.getName(), ResourceHelper.getUri(repositories, baseUri, parent.getResource())), AssociationType.ManyToOne));
-                    }
+                    Optional<Object> id = Optional.ofNullable(ResourceHelper.getId(parent.getResource()));
+
+                    Placeholder<Object> idPlaceholder = new Placeholder<>(id.orElse("{missing id}").toString());
+                    result.add(new Association(resource, parent, new Pair<>(nullField.getName(),
+                            ResourceHelper.getUri(repositories, baseUri, parent.getResource(), idPlaceholder)),
+                            AssociationType.ManyToOne, idPlaceholder));
 
                     if(ResourceHelper.getId(resource.getResource()) != null) {
                         result.add(new Association(parent, resource, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, resource.getResource())), AssociationType.OneToMany));
@@ -188,7 +186,6 @@ public class ResourcesAndAssociations {
 
                     return result;
                 }
-
             }
 
             if(oneToManyChild != null) {
@@ -196,14 +193,13 @@ public class ResourcesAndAssociations {
                         childField.getName().equals(resource.getClass().getSimpleName().toLowerCase())) {
 
                     if(manyToOneParent != null) {
-                        if(ResourceHelper.getId(resource.getResource()) == null) {
-                            Placeholder<Object> idPlaceholder = new Placeholder<>();
-                            result.add(new Association(parent, resource, new Pair<>(childField.getName(),
-                                    new MultipartBody(ResourceHelper.getUri(repositories, baseUri, resource.getResource(), idPlaceholder))),
-                                    AssociationType.ManyToOne, idPlaceholder));
-                        } else {
-                            result.add(new Association(parent, resource, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, resource.getResource())), AssociationType.ManyToOne));
-                        }
+
+                        Optional<Object> id = Optional.ofNullable(ResourceHelper.getId(parent.getResource()));
+
+                        Placeholder<Object> idPlaceholder = new Placeholder<>(id.orElse("{missing id}").toString());
+                        result.add(new Association(parent, resource, new Pair<>(childField.getName(),
+                                ResourceHelper.getUri(repositories, baseUri, resource.getResource(), idPlaceholder)),
+                                AssociationType.ManyToOne, idPlaceholder));
                     }
 
                     if(ResourceHelper.getId(parent.getResource()) != null) {
@@ -221,24 +217,21 @@ public class ResourcesAndAssociations {
                         (parentResource.getClass().getSimpleName().toLowerCase() + "s").equals(nullField.getName())) {
 
                     if(manyToManyParent != null) {
-                        if (ResourceHelper.getId(resource.getResource()) == null) {
-                            Placeholder<Object> idPlaceholder = new Placeholder<>();
-                            result.add(new Association(parent, resource, new Pair<>(childField.getName(),
-                                    new MultipartBody(ResourceHelper.getUri(repositories, baseUri, resource.getResource(), idPlaceholder))),
-                                    AssociationType.ManyToMany, idPlaceholder));
-                        } else {
-                            result.add(new Association(parent, resource, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, resource.getResource())), AssociationType.ManyToMany));
-                        }
+
+                        Optional<Object> id = Optional.ofNullable(ResourceHelper.getId(parent.getResource()));
+
+                        Placeholder<Object> idPlaceholder = new Placeholder<>(id.orElse("{missing id}").toString());
+                        result.add(new Association(parent, resource, new Pair<>(childField.getName(),
+                                ResourceHelper.getUri(repositories, baseUri, resource.getResource(), idPlaceholder)),
+                                AssociationType.ManyToMany, idPlaceholder));
                     }
 
-                    if(ResourceHelper.getId(parent.getResource()) == null) {
-                        Placeholder<Object> idPlaceholder = new Placeholder<>();
-                        result.add(new Association(resource, parent, new Pair<>(childField.getName(),
-                                new MultipartBody(ResourceHelper.getUri(repositories, baseUri, parent.getResource(), idPlaceholder))),
-                                AssociationType.ManyToMany, idPlaceholder));
-                    } else {
-                        result.add(new Association(resource, parent, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, parent.getResource())), AssociationType.ManyToMany));
-                    }
+                    Optional<Object> id = Optional.ofNullable(ResourceHelper.getId(parent.getResource()));
+
+                    Placeholder<Object> idPlaceholder = new Placeholder<>(id.orElse("{missing id}").toString());
+                    result.add(new Association(resource, parent, new Pair<>(nullField.getName(),
+                            ResourceHelper.getUri(repositories, baseUri, parent.getResource(), idPlaceholder)),
+                            AssociationType.ManyToMany, idPlaceholder));
 
                     return result;
                 }
@@ -302,39 +295,5 @@ public class ResourcesAndAssociations {
             return false;
         }
         return true;
-    }
-
-    private class MultipartBody implements JsonSerializable {
-        private final List<Object> blocks;
-
-        public MultipartBody(List<Object> blocks) {
-            this.blocks = blocks;
-        }
-
-        public void add(Object block) {
-            blocks.add(block);
-        }
-
-
-        @Override
-        public void serialize(JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeString(this.toString());
-        }
-
-        @Override
-        public void serializeWithType(JsonGenerator gen, SerializerProvider serializers, TypeSerializer typeSer) throws IOException {
-
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder result = new StringBuilder();
-
-            for(Object block : blocks) {
-                result.append(block.toString());
-            }
-
-            return result.toString();
-        }
     }
 }

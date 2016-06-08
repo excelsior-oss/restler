@@ -52,15 +52,15 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
         posts = person.getPosts()
         then:
-        posts[0].getId() == 2L
-        posts[1].getId() == 0L
-        posts[2].getId() == 4L
-        posts[2].getMessage() == "test"
-        posts[2].getAuthors().equals([person])
+        posts[0].getId() == 4L
+        posts[0].getMessage() == "test"
+        posts[0].getAuthors().equals([person])
 
+        posts[1].getId() == 2L
+        posts[2].getId() == 0L
         cleanup:
-        def postForDelete = posts[2]
-        posts.remove(2)
+        def postForDelete = posts[0]
+        posts.remove(0)
         personRepository.save(person)
         postRepository.delete(postForDelete)
     }

@@ -17,6 +17,10 @@ public class Placeholder<T> {
         this.value = value;
     }
 
+    public boolean isValue() {
+        return value != null;
+    }
+
     @Override
     public String toString() {
         if(value == null) {
