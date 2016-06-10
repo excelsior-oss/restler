@@ -2,8 +2,12 @@ package org.restler.spring.data.methods.associations;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializable;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
@@ -11,6 +15,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import org.restler.client.RestlerException;
 import org.restler.spring.data.proxy.ResourceProxy;
+import org.restler.spring.data.util.Placeholder;
 import org.restler.spring.data.util.Repositories;
 import org.restler.spring.data.util.ResourceHelper;
 import org.restler.util.Pair;
@@ -96,12 +101,12 @@ public class ResourcesAndAssociations {
 
             if(!set.contains(child.getSecondValue())) {
                 if (child.getSecondValue() instanceof Collection) {
-                    for (Object item : (Collection) child.getSecondValue()) {
+                    ((Collection) child.getSecondValue()).stream().filter(item -> !set.contains(item)).forEach(item -> {
                         AssociatedResource childResource = fillResourcesAndAssociations(item, set);
                         List<Association> associateResult = associate(currentResource, child.getFirstValue(), childResource);
                         associateResult.forEach(associations::add);
                         associateResult.forEach(this::addAssociationByResource);
-                    }
+                    });
                 } else {
                     AssociatedResource childResource = fillResourcesAndAssociations(child.getSecondValue(), set);
                     List<Association> associateResult = associate(currentResource, child.getFirstValue(), childResource);
@@ -128,6 +133,8 @@ public class ResourcesAndAssociations {
         } catch (IOException e) {
             throw new RestlerException("Can't convert object to json", e);
         }
+
+        associations.forEach(a -> a.getSecondResource().addIdPlaceholder(a.getIdPlaceholder()));
 
         return currentResource;
     }
@@ -166,11 +173,19 @@ public class ResourcesAndAssociations {
                         (oneToManyParent.mappedBy().equals(nullField.getName()) ||
                                 nullField.getName().equals(parentResource.getClass().getSimpleName().toLowerCase()))) {
 
-                    result.add(new Association(parent, resource, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, resource.getResource())), AssociationType.OneToMany));
-                    result.add(new Association(resource, parent, new Pair<>(nullField.getName(), ResourceHelper.getUri(repositories, baseUri, parent.getResource())), AssociationType.ManyToOne));
+                    Optional<Object> id = Optional.ofNullable(ResourceHelper.getId(parent.getResource()));
+
+                    Placeholder<Object> idPlaceholder = new Placeholder<>(id.orElse("{missing id}").toString());
+                    result.add(new Association(resource, parent, new Pair<>(nullField.getName(),
+                            ResourceHelper.getUri(repositories, baseUri, parent.getResource(), idPlaceholder)),
+                            AssociationType.ManyToOne, idPlaceholder));
+
+                    if(ResourceHelper.getId(resource.getResource()) != null) {
+                        result.add(new Association(parent, resource, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, resource.getResource())), AssociationType.OneToMany));
+                    }
+
                     return result;
                 }
-
             }
 
             if(oneToManyChild != null) {
@@ -178,10 +193,18 @@ public class ResourcesAndAssociations {
                         childField.getName().equals(resource.getClass().getSimpleName().toLowerCase())) {
 
                     if(manyToOneParent != null) {
-                        result.add(new Association(parent, resource, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, resource.getResource())), AssociationType.ManyToOne));
+
+                        Optional<Object> id = Optional.ofNullable(ResourceHelper.getId(parent.getResource()));
+
+                        Placeholder<Object> idPlaceholder = new Placeholder<>(id.orElse("{missing id}").toString());
+                        result.add(new Association(parent, resource, new Pair<>(childField.getName(),
+                                ResourceHelper.getUri(repositories, baseUri, resource.getResource(), idPlaceholder)),
+                                AssociationType.ManyToOne, idPlaceholder));
                     }
 
-                    result.add(new Association(resource, parent, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, parent.getResource())), AssociationType.OneToMany));
+                    if(ResourceHelper.getId(parent.getResource()) != null) {
+                        result.add(new Association(resource, parent, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, parent.getResource())), AssociationType.OneToMany));
+                    }
 
                     return result;
                 }
@@ -194,9 +217,21 @@ public class ResourcesAndAssociations {
                         (parentResource.getClass().getSimpleName().toLowerCase() + "s").equals(nullField.getName())) {
 
                     if(manyToManyParent != null) {
-                        result.add(new Association(parent, resource, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, resource.getResource())), AssociationType.ManyToMany));
+
+                        Optional<Object> id = Optional.ofNullable(ResourceHelper.getId(parent.getResource()));
+
+                        Placeholder<Object> idPlaceholder = new Placeholder<>(id.orElse("{missing id}").toString());
+                        result.add(new Association(parent, resource, new Pair<>(childField.getName(),
+                                ResourceHelper.getUri(repositories, baseUri, resource.getResource(), idPlaceholder)),
+                                AssociationType.ManyToMany, idPlaceholder));
                     }
-                    result.add(new Association(resource, parent, new Pair<>(childField.getName(), ResourceHelper.getUri(repositories, baseUri, parent.getResource())), AssociationType.ManyToMany));
+
+                    Optional<Object> id = Optional.ofNullable(ResourceHelper.getId(parent.getResource()));
+
+                    Placeholder<Object> idPlaceholder = new Placeholder<>(id.orElse("{missing id}").toString());
+                    result.add(new Association(resource, parent, new Pair<>(nullField.getName(),
+                            ResourceHelper.getUri(repositories, baseUri, parent.getResource(), idPlaceholder)),
+                            AssociationType.ManyToMany, idPlaceholder));
 
                     return result;
                 }
@@ -250,8 +285,7 @@ public class ResourcesAndAssociations {
         if(value instanceof ResourceProxy) {
             value = ((ResourceProxy)item.getSecondValue()).getObject();
         }
-        return value.getClass().isAnnotationPresent(Entity.class) &&
-                ResourceHelper.getId(value) != null ||
+        return value.getClass().isAnnotationPresent(Entity.class) ||
                 value instanceof Collection;
     }
 
