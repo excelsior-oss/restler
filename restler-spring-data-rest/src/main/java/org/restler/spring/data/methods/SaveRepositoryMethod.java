@@ -2,28 +2,27 @@ package org.restler.spring.data.methods;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMultimap;
 import org.restler.client.Call;
 import org.restler.client.RestlerException;
 import org.restler.http.HttpCall;
 import org.restler.http.HttpMethod;
 import org.restler.spring.data.calls.ChainCall;
+import org.restler.spring.data.methods.associations.*;
 import org.restler.spring.data.proxy.ResourceProxy;
-import org.restler.spring.data.util.CloneMaker;
-import org.restler.util.Pair;
 import org.restler.spring.data.util.Repositories;
-import org.restler.spring.data.util.RepositoryUtils;
+import org.restler.spring.data.util.ResourceHelper;
 import org.restler.util.UriBuilder;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.Repository;
 
-import javax.persistence.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -32,8 +31,11 @@ import java.util.stream.Collectors;
 public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     private static final Method saveMethod;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     static {
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
         try {
             saveMethod = CrudRepository.class.getMethod("save", Object.class);
         } catch (NoSuchMethodException e) {
@@ -42,17 +44,10 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
     }
 
     private final String baseUri;
-    private final String repositoryUri;
     private final Repositories repositories;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    static {
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    }
-
-    public SaveRepositoryMethod(String baseUri, String repositoryUri, Repositories repositories) {
+    public SaveRepositoryMethod(String baseUri, Repositories repositories) {
         this.baseUri = baseUri;
-        this.repositoryUri = repositoryUri;
         this.repositories = repositories;
     }
 
@@ -63,32 +58,19 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
 
     @Override
     public Call getCall(URI uri, Class<?> declaringClass, Object[] args) {
-        ResourceTree resourceTree = makeTree(args[0], new HashSet<>());
-        Object currentObject = resourceTree.getTopResource();
 
-        resourceTree.forEach(resource-> {
-            if(resource != currentObject) {
-                saveResource(resource);
-            }
-        });
+        Object resource = args[0];
 
         List<Call> calls = new ArrayList<>();
 
-        Type returnType;
+        ResourcesAndAssociations resourcesAndAssociations = new ResourcesAndAssociations(repositories, baseUri, resource);
+        createResources(resourcesAndAssociations).forEach(calls::add);
+        updateResources(resourcesAndAssociations).forEach(calls::add);
 
-        if(args[0] instanceof ResourceProxy) {
-            ResourceProxy resourceProxy = (ResourceProxy) args[0];
-            returnType = resourceProxy.getObject().getClass();
-            calls.add(update(resourceProxy, currentObject));
-        } else {
-            Object object = args[0];
-            returnType = object.getClass();
-            calls.add(add(currentObject));
-        }
+        Class<?> returnType = (resource instanceof ResourceProxy) ? ((ResourceProxy) resource).getObject().getClass() : resource.getClass();
 
-        calls.add(makeAssociations(args[0], getChildren(args[0])));
-
-        return new ChainCall(this::filterNullResults, calls, returnType);
+        return new ChainCall((Object prevResult, Object object) ->
+                takeResult(prevResult, object, ResourceHelper.getId(resource), returnType), calls, returnType);
     }
 
     @Override
@@ -100,27 +82,23 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
             return resourceProxy.getResourceId().toString();
         }
 
-        return getId(arg).toString();
+        return ResourceHelper.getId(arg).toString();
     }
 
     //need for filtering results are returned by associate call
-    private Object filterNullResults(Object prevResult, Object object) {
-        if(object != null) {
+    private Object takeResult(Object prevResult, Object object, Object id, Class<?> type) {
+        if(object != null && object instanceof ResourceProxy &&
+                ((ResourceProxy) object).getObject().getClass().equals(type) && ResourceHelper.getId(object).equals(id)) {
             return object;
         } else {
-            return null;
+            return prevResult;
         }
     }
 
-    private Object getRequestBody(Object arg) {
-        if(arg instanceof ResourceProxy) {
-            ResourceProxy resourceProxy = (ResourceProxy)arg;
-            arg = resourceProxy.getObject();
-        }
-
+    private Object getRequestBody(ObjectNode node) {
         String json;
         try {
-            json = objectMapper.writeValueAsString(arg);
+            json = objectMapper.writeValueAsString(node);
         } catch (JsonProcessingException e) {
             throw new RestlerException("Can't create json from object", e);
         }
@@ -128,278 +106,189 @@ public class SaveRepositoryMethod extends DefaultRepositoryMethod {
         return json;
     }
 
-    private List<Pair<Field, Object>> getChildren(Object object) {
-        List<Pair<Field, Object>> result = new ArrayList<>();
+    //create calls for creating resources
+    private List<Call> createResources(ResourcesAndAssociations resourcesAndAssociations) {
+        List<Call> calls = new ArrayList<>();
+        List<Call> associateCalls = new ArrayList<>();
 
-        if(object instanceof ResourceProxy) {
-            object = ((ResourceProxy) object).getObject();
-        }
-
-        Class<?> argClass = object.getClass();
-
-        Field[] fields = argClass.getDeclaredFields();
-
-        for(Field field : fields) {
-            try {
-                field.setAccessible(true);
-                Object fieldValue = field.get(object);
-
-                if(fieldValue != null) {
-                    result.add(new Pair<>(field, fieldValue));
-                }
-
-                field.setAccessible(false);
-            } catch (IllegalAccessException e) {
-                throw new RestlerException("Can't get value from field", e);
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Builds resource tree for some object.
-     * It is recursive method that passes each resource and add it to ResourceTree.
-     * Also the method removes all references between resources, as result
-     * ResourceTree will contain resources without references to other resources.
-     * @param object that used for building resource tree.
-     * @param set it is set of references that had visited already.
-     */
-    private ResourceTree makeTree(Object object, Set<Object> set) {
-
-        set.add(object);
-
-        if(object instanceof ResourceProxy) {
-            object = ((ResourceProxy) object).getObject();
-        }
-
-        object = CloneMaker.shallowClone(object);
-
-        List<Pair<Field, Object>> children = getChildren(object).
-                stream().
-                filter(this::isResourceOrCollection).
+        //get resources that must be created
+        List<AssociatedResource> resources = resourcesAndAssociations.getResources().stream().
+                filter(r -> r.getState().equals(AssociatedResourceState.Create)).
                 collect(Collectors.toList());
 
-        List<ResourceTree> resourceChildren = new ArrayList<>();
+        //get all associations
+        List<Association> associations = resourcesAndAssociations.getAssociations();
 
-        try {
-            for(Pair<Field, Object> child : children) {
-                child.getFirstValue().setAccessible(true);
 
-                if(!set.contains(child.getSecondValue())) {
-                    if (child.getSecondValue() instanceof Collection) {
-                        for (Object item : (Collection) child.getSecondValue()) {
-                            resourceChildren.add(makeTree(item, set));
-                        }
-                    } else {
-                        resourceChildren.add(makeTree(child.getSecondValue(), set));
-                    }
+        //while unresolved associations for creating resources not empty
+        while(!resources.isEmpty() && associations.stream().
+                filter(a->a.getFirstResource().getState().equals(AssociatedResourceState.Create)
+                && !a.isResolved()).count() > 0) {
+            long resourcesCreated = 0;
+
+            for (AssociatedResource resource : resources) {
+                List<Association> associationsForCurrentResource = resourcesAndAssociations.getAssociationsByResource(resource);
+
+                //resolve associations for current resource
+                associationsForCurrentResource.stream().
+                        forEach(a -> resolveAssociationCreate(associations, a));
+
+                //get resolved manyToOne associations
+                List<Association> resolvedManyToOne = associationsForCurrentResource.stream().
+                        filter(a -> a.getAssociationType().equals(AssociationType.ManyToOne) && a.isResolved()).
+                        collect(Collectors.toList());
+
+                //get count of manyToOne unresolved associations
+                long manyToOneCount =
+                        associationsForCurrentResource.stream().
+                                filter(a -> a.getAssociationType().equals(AssociationType.ManyToOne) &&
+                                        a.getSecondResource().getState().equals(AssociatedResourceState.Create) && !a.isResolved()).
+                                count();
+
+                //if count of manyToOne unresolved associations is zero then add call for creating current resource
+                if (manyToOneCount == 0) {
+                    resolvedManyToOne.forEach(a -> resource.getObjectNode().put(a.getJsonField().getFirstValue(), a.getJsonField().getSecondValue()));
+                    calls.add(add(resource.getResource(), resource.getObjectNode()));
+                    resource.changeState(AssociatedResourceState.Done);
+                    resourcesCreated++;
+                }
+            }
+
+            //if cant resolve associations and create resources
+            if(resourcesCreated == 0) {
+                Association firstManyToOneAssociation = associations.stream().
+                        filter(a->!a.isResolved()&&a.getAssociationType().equals(AssociationType.ManyToOne)).
+                        findFirst().orElse(null);
+
+                if(firstManyToOneAssociation != null) {
+                    URI uri = new UriBuilder(ResourceHelper.getUri(repositories, baseUri,
+                            firstManyToOneAssociation.getFirstResource())+"/"+firstManyToOneAssociation.getJsonField().getFirstValue()).build();
+                    ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "text/uri-list");
+
+                    /**
+                     * The call creates request for associating parent and child.
+                     * PUT uses for adding new associations between resources
+                     * {@link http://docs.spring.io/spring-data/rest/docs/current/reference/html/#_put_2}
+                     * */
+                    associateCalls.add(new HttpCall(uri, HttpMethod.PUT,
+                            firstManyToOneAssociation.getJsonField().getSecondValue(), header, void.class));
+
+                    firstManyToOneAssociation.markAsResolved();
+                } else {
+                    throw new RestlerException("Can't resolve associations.");
+                }
+            }
+        }
+
+        //if resources have not created yet
+        resources.stream().
+                filter(r -> r.getState().equals(AssociatedResourceState.Create)).
+                forEach(r -> calls.add(add(r.getResource(), r.getObjectNode())));
+
+        associateCalls.forEach(calls::add);
+
+        return calls;
+    }
+
+    //resolve association for creating resource
+    private boolean resolveAssociationCreate(List<Association> associations, Association association) {
+        if(association == null) {
+            return false;
+        }
+
+        //if second resource of association manyToOne is created then association cant be resolved yet
+        if(association.getAssociationType().equals(AssociationType.ManyToOne)) {
+            boolean resolved = !association.getSecondResource().getState().equals(AssociatedResourceState.Create);
+            if(resolved) {
+                association.markAsResolved();
+            }
+            return resolved;
+        }
+
+        return resolveAssociation(association);
+    }
+
+    //resolve associations
+    private boolean resolveAssociation(Association association) {
+        ObjectNode objectNode = association.getFirstResource().getObjectNode();
+        String fieldName = association.getJsonField().getFirstValue();
+        String fieldValue = association.getJsonField().getSecondValue();
+        AssociationType associationType = association.getAssociationType();
+
+        JsonNode jsonNode = objectNode.get(fieldName);
+
+        switch(associationType) {
+            case OneToMany:
+            case ManyToMany:
+                //add to json associations
+                if(jsonNode != null && jsonNode instanceof ArrayNode) {
+                    ArrayNode arrayNode = (ArrayNode)jsonNode;
+                    arrayNode.add(fieldValue);
+                } else {
+                    objectNode.putArray(fieldName).add(fieldValue);
                 }
 
-                child.getFirstValue().set(object, null);
+                association.markAsResolved();
+                return true;
 
-                child.getFirstValue().setAccessible(false);
-            }
-        } catch (IllegalAccessException e) {
-            throw new RestlerException("Can't set value to field.", e);
+            case ManyToOne:
+                //add to json association
+                objectNode.put(fieldName, fieldValue);
+
+                association.markAsResolved();
+                return true;
+
+            case OneToOne:
+                throw new RestlerException("Unsupported association oneToOne.");
         }
 
-        return new ResourceTree(resourceChildren, object);
+        return false;
     }
 
-    private boolean isResourceOrCollection(Pair<Field, Object> item) {
-        Object value = item.getSecondValue();
-        if(value instanceof ResourceProxy) {
-            value = ((ResourceProxy)item.getSecondValue()).getObject();
-        }
-        return value.getClass().isAnnotationPresent(Entity.class) &&
-                getId(value) != null ||
-                value instanceof Collection;
-    }
-
-    private Object saveResource(Object resource) {
-        if(resource instanceof ResourceProxy) {
-            resource = ((ResourceProxy)resource).getObject();
-        }
-
-        Repository repository = repositories.getByResourceClass(resource.getClass()).orElse(null);
-
-        if(repository == null) {
-            return null;
-        }
-
-        if(repository instanceof CrudRepository) {
-            return ((CrudRepository)repository).save(resource);
-        }
-
-        return null;
-    }
-
-    /**
-     * Make calls that associated parent and children using OneToMany and ManyToOne associations.
-     * It uses OneToMany and ManyToOne annotations for building associations.
-     */
-    private ChainCall makeAssociations(Object parent, List<Pair<Field, Object>> children) {
+    //create calls for updating resources
+    private List<Call> updateResources(ResourcesAndAssociations resourcesAndAssociations) {
         List<Call> calls = new ArrayList<>();
 
-        String fieldName;
+        //get resources that must be created
+        List<AssociatedResource> resources = resourcesAndAssociations.getResources().stream().
+                filter(r -> r.getState().equals(AssociatedResourceState.Update)).
+                collect(Collectors.toList());
 
-        for(Pair<Field, Object> child : children) {
-            if(child.getFirstValue().isAnnotationPresent(OneToMany.class)) {
-                OneToMany annotation = child.getFirstValue().getAnnotation(OneToMany.class);
-                fieldName = annotation.mappedBy();
+        for(AssociatedResource resource : resources) {
+            List<Association> associationsForCurrentResource = resourcesAndAssociations.getAssociationsByResource(resource);
 
-                if(!fieldName.isEmpty()) {
-                    if (child.getSecondValue() instanceof Collection) {
-                        for (Object item : (Collection) child.getSecondValue()) {
-                            calls.add(associate(parent, item, fieldName));
-                        }
-                    } else {
-                        calls.add(associate(parent, child.getSecondValue(), fieldName));
-                    }
-                }
-            } else if(child.getFirstValue().isAnnotationPresent(ManyToOne.class)) {
-                calls.add(associate(child.getSecondValue(), parent, child.getFirstValue().getName()));
-            }
+            //resolve associations for updating resource
+            associationsForCurrentResource.stream().
+                    forEach(this::resolveAssociation);
+
+            calls.add(update((ResourceProxy) resource.getResource(), resource.getObjectNode()));
+            resource.changeState(AssociatedResourceState.Done);
         }
 
-        return new ChainCall(calls, String.class);
+        return calls;
     }
 
-    private String getUri(Object object) {
-        String result;
-        if(object instanceof ResourceProxy) {
-            result = ((ResourceProxy) object).getSelfUri();
-        } else {
-            Repository repository = repositories.getByResourceClass(object.getClass()).orElse(null);
-
-            if(repository == null) {
-                throw new RestlerException("Can't find repository " + object.getClass() + ".");
-            }
-
-            Object id = getId(object);
-            if(id == null) {
-                return null;
-            }
-            result = baseUri + "/" + RepositoryUtils.getRepositoryPath(repository.getClass().getInterfaces()[0]) + "/" + id;
-        }
-
-        return result;
-    }
-
-    private Call associate(Object parent, Object child, String fieldName) {
-        String parentUri;
-        String childUri;
-
-        parentUri = getUri(parent);
-        childUri = getUri(child);
-
-        if(parentUri == null || childUri == null) {
+    //create call for adding new resource to repository
+    private Call add(Object object, ObjectNode node) {
+        if(ResourceHelper.getId(object) == null) {
             return null;
         }
 
-        ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "text/uri-list");
-
-        /**
-         * The call creates request for associating parent and child.
-         * PUT uses for adding new associations between resources
-         * {@link http://docs.spring.io/spring-data/rest/docs/current/reference/html/#_put_2}
-         * */
-        return new HttpCall(new UriBuilder(childUri + "/" + fieldName).build(), HttpMethod.PUT, parentUri, header, String.class);
-    }
-
-    private Call add(Object object) {
-        if(getId(object) == null) {
-            return null;
-        }
-
-        Object body = getRequestBody(object);
+        Object body = getRequestBody(node);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 
         //POST uses for creating new entity
-        return new HttpCall(new UriBuilder(repositoryUri).build(), HttpMethod.POST, body, header, object.getClass());
+        return new HttpCall(new UriBuilder(ResourceHelper.getRepositoryUri(repositories, baseUri, object)).build(),
+                HttpMethod.POST, body, header, object.getClass());
     }
 
-    private Call update(ResourceProxy resource, Object objectWithoutCycle) {
-        Object body = getRequestBody(objectWithoutCycle);
+    //create call for updating resource in repository
+    private Call update(ResourceProxy resource, ObjectNode node) {
+        Object body = getRequestBody(node);
         ImmutableMultimap<String, String> header = ImmutableMultimap.of("Content-Type", "application/json");
 
         //PUT uses for replacing values
-        return new HttpCall(new UriBuilder(resource.getSelfUri()).build(), HttpMethod.PUT, body, header, resource.getObject().getClass());
-    }
-
-    private Object getId(Object object) {
-        Field[] fields = object.getClass().getDeclaredFields();
-
-        for (Field field : fields) {
-            if (field.getDeclaredAnnotation(Id.class) != null || field.getDeclaredAnnotation(EmbeddedId.class) != null) {
-                field.setAccessible(true);
-
-                try {
-                    Object id = field.get(object);
-                    field.setAccessible(false);
-                    return id;
-                } catch (IllegalAccessException e) {
-                    throw new RestlerException("Can't get value from id field.", e);
-                }
-            }
-        }
-
-        throw new RestlerException("Can't get id.");
-    }
-
-    private class ResourceTree implements Iterable<Object> {
-        private final Object resource;
-        private final List<ResourceTree> children;
-
-        ResourceTree(List<ResourceTree> children, Object resource) {
-            this.resource = resource;
-            this.children = children;
-        }
-
-        Object getTopResource() {
-            return resource;
-        }
-
-        @Override
-        public Iterator<Object> iterator() {
-            return new TreeIterator(this);
-        }
-
-        private class TreeIterator implements Iterator<Object> {
-
-            private final Stack<Pair<ResourceTree, Iterator<ResourceTree>>> greyNodes = new Stack<>();
-
-            TreeIterator(ResourceTree firstNode) {
-                Iterator<ResourceTree> childrenIterator = firstNode.children.iterator();
-                greyNodes.push(new Pair<>(firstNode, childrenIterator));
-            }
-
-            @Override
-            public boolean hasNext() {
-                return !greyNodes.empty();
-            }
-
-            @Override
-            public Object next() {
-                Pair<ResourceTree, Iterator<ResourceTree>> pair = goToBottom(greyNodes.peek());
-                Object resource = pair.getFirstValue().resource;
-                greyNodes.pop();
-
-                return resource;
-            }
-
-            private Pair<ResourceTree, Iterator<ResourceTree>> goToBottom(Pair<ResourceTree, Iterator<ResourceTree>> node) {
-                Iterator<ResourceTree> childrenIterator = node.getSecondValue();
-
-                while(childrenIterator.hasNext()) {
-                    ResourceTree newNode = childrenIterator.next();
-                    childrenIterator = newNode.children.iterator();
-                    greyNodes.add(new Pair<>(newNode, childrenIterator));
-                }
-
-                return greyNodes.peek();
-            }
-        }
+        return new HttpCall(new UriBuilder(resource.getSelfUri()).build(), HttpMethod.PUT, body,
+                header, resource.getObject().getClass());
     }
 }

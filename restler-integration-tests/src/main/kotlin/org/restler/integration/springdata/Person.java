@@ -1,9 +1,6 @@
 package org.restler.integration.springdata;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +18,16 @@ public class Person implements Serializable {
     @OneToMany(mappedBy = "person"/*, cascade = CascadeType.ALL*/)
     private List<Address> addresses;
 
-    public Person(Long id, String name) {
+    @ManyToMany
+    @JoinTable(name = "person_post",
+            joinColumns = @JoinColumn(name = "person_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "post_id", referencedColumnName = "id"))
+    private List<Post> posts;
+
+    public Person(Long id, String name, List<Post> posts) {
         this.id = id;
         this.name = name;
+        this.posts = posts;
     }
 
     public Long getId() {
@@ -37,6 +41,10 @@ public class Person implements Serializable {
     public List<Pet> getPets() {return pets;}
 
     public List<Address> getAddresses() {return addresses;}
+
+    public List<Post> getPosts() {
+        return posts;
+    }
 
     // for JPA
     Person() {

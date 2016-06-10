@@ -41,6 +41,30 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         persons[0].getName() == "person1"
     }
 
+    def "test many to many save change"() {
+        given:
+        def person = personRepository.findOne(1L)
+        def posts = person.getPosts()
+
+        when:
+        posts.add(new Post(4L, "test", null))
+        personRepository.save(person)
+
+        posts = person.getPosts()
+        then:
+        posts[0].getId() == 2L
+        posts[1].getId() == 0L
+        posts[2].getId() == 4L
+        posts[2].getMessage() == "test"
+        posts[2].getAuthors().equals([person])
+
+        cleanup:
+        def postForDelete = posts[2]
+        posts.remove(2)
+        personRepository.save(person)
+        postRepository.delete(postForDelete)
+    }
+
     def "test composite objects retrieving that contain resource with repository"() {
         given: "Person that have associated list of pets that have repository"
         def person = personRepository.findOne(0L)
@@ -66,7 +90,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     def "test composite objects retrieving that contain resource without repository"() {
         given: "Person that associated list of addresses without repository"
-        def person = personRepository.findOne(0L)
+        def person = personRepository.findOne(35L)
 
         when: "List of associated addresses are accessed"
         def addresses = person.getAddresses()
@@ -82,6 +106,8 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def pets = person.getPets();
         when: "Change pet's name and get new value from server"
         pets.get(0).setName("New value")
+        //for saving post associations
+        person.getPosts()
         personRepository.save(person)
 
         def person2 = personRepository.findOne(1L);
@@ -119,6 +145,10 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def pets = person.getPets()
         when: "Change and save person using reference from pet"
         pets[0].getPerson().setName("New person name")
+
+        //for saving post associations
+        person.getPosts()
+
         personRepository.save(person)
 
         def person1 = personRepository.findOne(1L)
@@ -127,12 +157,14 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
         cleanup:
         person1.setName("person1")
+        //for saving post associations
+        person1.getPosts()
         personRepository.save(person1)
     }
 
     def "test add new resources to list from composite resource"() {
         given: "Person and list of associated pets"
-        def person = new Person(3L, "person3")
+        def person = new Person(3L, "person3", null)
         def pets = person.getPets()
 
         when: "Add new pets and associate to person"
@@ -164,7 +196,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     def "test delete resource from repository"() {
         given: "Person that exist already"
-        personRepository.save(new Person(5L, "temp"))
+        personRepository.save(new Person(5L, "temp", null))
         def person = personRepository.findOne(5L)
         when: "Delete person from repository"
         personRepository.delete(person)
@@ -175,7 +207,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
 
     def "test delete resource from repository by id"() {
         given: "Person that exist already"
-        personRepository.save(new Person(5L, "temp"))
+        personRepository.save(new Person(5L, "temp", null))
         when: "Delete person from repository"
         personRepository.delete(5L)
         def person1 = personRepository.findOne(5L)
@@ -188,11 +220,12 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def persons = personRepository.findAll()
 
         then:
-        persons.size() == 3
+        persons.size() == 4
 
         persons[0].getId() == 0L
         persons[1].getId() == 1L
         persons[2].getId() == 2L
+        persons[3].getId() == 35L
     }
 
     def "test findAll by ids"() {
@@ -270,16 +303,53 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         petRepository.delete(elements)
     }
 
-    def "test get sorted page"() {
+    def "test save changes several elements to repository"() {
         given:
-        def sort = new Sort(Sort.Direction.DESC, "author")
+        def oldPets = petRepository.findAll();
+        def newPets = petRepository.findAll();
+
+        int i = 0
+        for(Pet pet : newPets) {
+            oldPets[i].getPerson() //need for saving association to person
+            pet.name = (i++).toString()
+        }
+
+        when:
+        petRepository.save(newPets)
+        newPets = petRepository.findAll()
+
+        then:
+        int j = 0
+        for(Pet pet : newPets) {
+            pet.name == (j++).toString()
+        }
+
+        cleanup:
+        petRepository.save(oldPets)
+    }
+
+    def "test get desc order sorted page"() {
+        given:
+        def sort = new Sort(Sort.Direction.DESC, "id")
         when:
         def posts = postRepository.findAll(sort)
         then:
         posts.size() == 3
-        posts[0].getAuthor().getId() == 2L
-        posts[1].getAuthor().getId() == 1L
-        posts[2].getAuthor().getId() == 0L
+        posts[0].getId() == 2L
+        posts[1].getId() == 1L
+        posts[2].getId() == 0L
+    }
+
+    def "test get asc order sorted page"() {
+        given:
+        def sort = new Sort(Sort.Direction.ASC, "id")
+        when:
+        def posts = postRepository.findAll(sort)
+        then:
+        posts.size() == 3
+        posts[0].getId() == 0L
+        posts[1].getId() == 1L
+        posts[2].getId() == 2L
     }
 
     def "test paging"() {
@@ -287,7 +357,7 @@ class SpringDataRestIntegrationTest extends Specification implements Integration
         def posts = new ArrayList<Post>()
         Iterable<Person> persons = personRepository.findAll([0L, 1L, 2L])
         for(Long id = 3; id < 20; ++id) {
-            posts.add(new Post(id, "Hello!", persons[(int)id%3]))
+            posts.add(new Post(id, "Hello!", [persons[(int)id%3]]))
         }
         posts = postRepository.save(posts)
 

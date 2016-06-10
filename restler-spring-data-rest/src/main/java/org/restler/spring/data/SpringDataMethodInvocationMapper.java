@@ -6,7 +6,6 @@ import org.restler.client.MethodInvocationMapper;
 import org.restler.client.RestlerException;
 import org.restler.spring.data.methods.*;
 import org.restler.spring.data.util.Repositories;
-import org.restler.spring.data.util.RepositoryUtils;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.data.repository.query.Param;
@@ -59,17 +58,15 @@ public class SpringDataMethodInvocationMapper implements MethodInvocationMapper 
     }
 
     private Call getDescription(Class<?> declaringClass, Method method, ImmutableMultimap<String, String> requestParams, Map<String, Object> pathVariables, Set<Object> unmappedArgs) {
-        String repositoryUri = RepositoryUtils.getRepositoryPath(declaringClass.getInterfaces()[0]);
-
-        RepositoryMethod repositoryMethod = getRepositoryMethod(method, baseUrl + "/" + repositoryUri);
+        RepositoryMethod repositoryMethod = getRepositoryMethod(method);
 
         return repositoryMethod.getDescription(baseUrl, declaringClass, requestParams, pathVariables, unmappedArgs);
     }
 
-    private RepositoryMethod getRepositoryMethod(Method method, String repositoryUri) {
+    private RepositoryMethod getRepositoryMethod(Method method) {
         RepositoryMethod[] repositoryMethods = {
                 new FindOneRepositoryMethod(),
-                new SaveRepositoryMethod(baseUrl.toString(), repositoryUri, repositories),
+                new SaveRepositoryMethod(baseUrl.toString(), repositories),
                 new SaveSeveralRepositoryMethod(),
                 new DeleteRepositoryMethod(),
                 new QueryRepositoryMethod(method),

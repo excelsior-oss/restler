@@ -2,6 +2,7 @@ package org.restler.integration.springdata;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
 @Entity(name = "posts")
 public class Post implements Serializable {
@@ -11,14 +12,16 @@ public class Post implements Serializable {
     @Column
     private String message;
 
-    @ManyToOne
-    @JoinColumn(name = "author_id")
-    private Person author;
+    @ManyToMany
+    @JoinTable(name = "person_post",
+            joinColumns = @JoinColumn(name = "post_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "person_id", referencedColumnName = "id"))
+    private List<Person> authors;
 
-    public Post(Long id, String message, Person author) {
+    public Post(Long id, String message, List<Person> authors) {
         this.id = id;
         this.message = message;
-        this.author = author;
+        this.authors = authors;
     }
 
     public Long getId() {
@@ -29,8 +32,8 @@ public class Post implements Serializable {
         return message;
     }
 
-    public Person getAuthor() {
-        return author;
+    public List<Person> getAuthors() {
+        return authors;
     }
 
     // for JPA
