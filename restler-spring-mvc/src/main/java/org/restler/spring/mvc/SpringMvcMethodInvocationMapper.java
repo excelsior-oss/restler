@@ -19,8 +19,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static javafx.scene.input.KeyCode.M;
-
 /**
  * Maps a properly annotated Java method invocation to invocation of a service method.
  */
