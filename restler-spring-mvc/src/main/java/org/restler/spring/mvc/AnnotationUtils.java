@@ -2,20 +2,18 @@ package org.restler.spring.mvc;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-public class AnnotationUtils {
+class AnnotationUtils {
 
-    public static boolean isAnnotated(Class<?> clazz, Class<? extends Annotation> annotationClass) {
+    static boolean isAnnotated(Class<?> clazz, Class<? extends Annotation> annotationClass) {
         return findAnnotation(clazz, annotationClass, new HashSet<>()) != null;
     }
 
-    public static boolean isAnnotated(Method method, Class<? extends Annotation> annotationClass) {
+    static boolean isAnnotated(Method method, Class<? extends Annotation> annotationClass) {
         return Arrays.stream(method.getDeclaredAnnotations()).
                 map((Annotation annotation)->findAnnotation(annotation.annotationType(), annotationClass, new HashSet<>())).
-                filter((Annotation annotation)->annotation != null).
+                filter(Objects::nonNull).
                 count() > 0;
     }
 
@@ -31,34 +29,29 @@ public class AnnotationUtils {
         set.add(clazz);
 
         Annotation result = findAnnotation(clazz.getSuperclass(), annotationClass, set);
-
         if(result != null) {
             return result;
         }
 
-        Annotation findResult = Arrays.stream(clazz.getInterfaces()).
-                map((Class<?> interf)->findAnnotation(interf, annotationClass, set)).
-                filter((Annotation annotation)->annotation != null).
-                findFirst().
-                orElse(null);
-
-        if(findResult != null) {
-            return findResult;
+        Optional<Annotation> findResult = Arrays.stream(clazz.getInterfaces()).
+                map((Class<?> iface) -> findAnnotation(iface, annotationClass, set)).
+                filter(Objects::nonNull).
+                findFirst();
+        if (findResult.isPresent()) {
+            return findResult.get();
         }
 
-        Annotation interfaceAnnotation = Arrays.stream(clazz.getDeclaredAnnotations()).
+        Optional<Annotation> interfaceAnnotation = Arrays.stream(clazz.getDeclaredAnnotations()).
                 filter((Annotation annotation)->annotation.annotationType().equals(annotationClass)).
-                findFirst().
-                orElse(null);
-
-        if(interfaceAnnotation != null) {
-            return interfaceAnnotation;
+                findFirst();
+        if (interfaceAnnotation.isPresent()) {
+            return interfaceAnnotation.get();
         }
 
         return Arrays.stream(clazz.getDeclaredAnnotations()).
                 map((Annotation annotation)->findAnnotation(annotation.annotationType(), annotationClass, set)).
-                filter((Annotation annotation)->annotation != null).
-                findFirst().
+                filter(Objects::nonNull).
+                findAny().
                 orElse(null);
     }
 

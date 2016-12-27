@@ -9,10 +9,6 @@
 
     <artifactId>restler-sdr-integration-tests</artifactId>
 
-    <properties>
-        <jackson.version>2.6.0</jackson.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>${project.parent.groupId}</groupId>

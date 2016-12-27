@@ -88,6 +88,11 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
     }
 
     @Override
+    public boolean canWrite(Type type, Class<?> aClass, MediaType mediaType) {
+        return false;
+    }
+
+    @Override
     public List<MediaType> getSupportedMediaTypes() {
         List<MediaType> supportedMediaTypes = new ArrayList<>();
         supportedMediaTypes.add(MediaType.APPLICATION_JSON);
@@ -116,6 +121,10 @@ class SpringDataRestMessageConverter implements GenericHttpMessageConverter<Obje
 
     @Override
     public void write(Object o, MediaType mediaType, HttpOutputMessage httpOutputMessage) throws IOException, HttpMessageNotWritableException {
+    }
+
+    @Override
+    public void write(Object o, Type type, MediaType mediaType, HttpOutputMessage httpOutputMessage) throws IOException, HttpMessageNotWritableException {
     }
 
     private List<Object> mapToProxies(JsonNode objects, Class<?> elementClass) {

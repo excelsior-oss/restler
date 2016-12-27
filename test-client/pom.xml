@@ -7,11 +7,6 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <properties>
-        <spring.version>4.1.6.RELEASE</spring.version>
-        <jackson.version>2.6.0</jackson.version>
-    </properties>
-
     <artifactId>restler-test-client</artifactId>
 
     <build>

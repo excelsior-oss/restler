@@ -10,17 +10,14 @@
     </parent>
 
     <properties>
-        <spring.security.verion>3.2.7.RELEASE</spring.security.verion>
-        <spring.version>4.1.6.RELEASE</spring.version>
-        <jcl.slf4j.version>1.7.12</jcl.slf4j.version>
-        <jackson.version>2.6.0</jackson.version>
+        <spring.security.verion>4.2.0.RELEASE</spring.security.verion>
     </properties>
 
     <artifactId>test-server</artifactId>
     <packaging>jar</packaging>
 
     <build>
-        <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
 
         <plugins>
             <!-- Package jar -->
@@ -70,6 +67,13 @@
                             <goal>compile</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -100,6 +104,34 @@
                                 <include>**/*Test*</include>
                             </includes>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -197,12 +229,12 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-jpa</artifactId>
-            <version>1.8.2.RELEASE</version>
+            <version>1.10.5.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-rest-webmvc</artifactId>
-            <version>2.3.2.RELEASE</version>
+            <version>${spring.data-rest.version}</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -225,6 +257,12 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

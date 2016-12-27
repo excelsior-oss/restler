@@ -22,9 +22,9 @@ open class Controller : ControllerApi {
     var filesDirectory: String;
 
     init {
-        var root = File("").canonicalPath
+        val root = File("").canonicalPath
         filesDirectory = "$root/files";
-        var directory = File(filesDirectory)
+        val directory = File(filesDirectory)
 
         if(!(directory.exists() && directory.isDirectory)) {
             directory.mkdir()
