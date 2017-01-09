@@ -3,7 +3,7 @@
     <parent>
         <artifactId>restler</artifactId>
         <groupId>org.restler</groupId>
-        <version>0.5.1-SNAPSHOT</version>
+        <version>0.5.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>test-server</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
+            <version>0.5.1</version>
             <scope>test</scope>
         </dependency>
 
