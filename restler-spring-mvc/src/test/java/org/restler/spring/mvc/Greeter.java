@@ -14,5 +14,7 @@ public interface Greeter {
     @RequestMapping("{pathVar}")
     String methodWithNotMappedVar(String pathVar);
 
+    @GetMapping(path = "path/{pathVar}")
+    String getMapping(@PathVariable(value = "pathVar") Integer pathVar);
 }
 

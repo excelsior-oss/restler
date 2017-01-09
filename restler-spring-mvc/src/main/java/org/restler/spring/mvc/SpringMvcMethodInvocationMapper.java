@@ -85,13 +85,15 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
             }
         }
 
+        // As of Spring 4.3 to class may be applied only RequestMapping annotation
         RequestMapping controllerMapping = AnnotationUtils.getAnnotation(receiver.getClass(), RequestMapping.class);
-        RequestMapping methodMapping = method.getDeclaredAnnotation(RequestMapping.class);
-        if (methodMapping == null) {
+        MappingInfo controllerMappingInfo = controllerMapping == null ? null : MappingInfo.forAnnotation(controllerMapping);
+        MappingInfo methodMappingInfo = AnnotationUtils.getMappingInfo(method);
+        if (methodMappingInfo == null) {
             throw new RuntimeException("The method " + method + " is not mapped");
         }
 
-        String pathTemplate = pathTemplate(controllerMapping, methodMapping);
+        String pathTemplate = pathTemplate(controllerMappingInfo, methodMappingInfo);
         List<String> unboundPathVariables = unusedPathVariables(pathVariables, pathTemplate);
         if (unboundPathVariables.size() > 0) {
             throw new RestlerException("You should introduce method parameter with @PathVariable annotation for each url template variable. Unbound variables: " + unboundPathVariables);
@@ -119,7 +121,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
 
         URI url = url(baseUrl, pathTemplate, requestParams.build(), pathVariables);
 
-        return new HttpCall(url, getHttpMethod(methodMapping), requestBody, headers, getReturnType(method));
+        return new HttpCall(url, getHttpMethod(methodMappingInfo), requestBody, headers, getReturnType(method));
     }
 
     private <T extends Annotation> T findAnnotation(Annotation[] annotations, Class<T> annotation) {
@@ -148,7 +150,7 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         return resultBody;
     }
 
-    private String pathTemplate(RequestMapping controllerMapping, RequestMapping methodMapping) {
+    private String pathTemplate(MappingInfo controllerMapping, MappingInfo methodMapping) {
         String controllerPath = getMappedUriString(controllerMapping);
         String methodPath = getMappedUriString(methodMapping);
         if (!controllerPath.startsWith("/")) {
@@ -160,9 +162,9 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         return controllerPath + methodPath;
     }
 
-    private HttpMethod getHttpMethod(RequestMapping methodMapping) {
+    private HttpMethod getHttpMethod(MappingInfo methodMapping) {
         RequestMethod declaredMethod;
-        if (methodMapping.method() == null || methodMapping.method().length == 0) {
+        if (methodMapping.method().length == 0) {
             declaredMethod = RequestMethod.GET;
         } else {
             declaredMethod = methodMapping.method()[0];
@@ -192,11 +194,11 @@ public class SpringMvcMethodInvocationMapper implements MethodInvocationMapper {
         return res;
     }
 
-    private String getMappedUriString(RequestMapping mapping) {
+    private String getMappedUriString(MappingInfo mapping) {
         if (mapping == null) {
             return "";
         } else {
-            String uriString = getFirstOrEmpty(mapping.value());
+            String uriString = getFirstOrEmpty(mapping.path());
             return uriString.startsWith("/") ? uriString : "/" + uriString;
         }
     }

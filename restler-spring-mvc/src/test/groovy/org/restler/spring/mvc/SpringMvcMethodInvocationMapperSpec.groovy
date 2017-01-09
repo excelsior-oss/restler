@@ -49,4 +49,16 @@ class SpringMvcMethodInvocationMapperSpec extends Specification {
         invocation.url == new URI(baseUriWithPath + "/greeter/greetings/null")
     }
 
+    def "GetMapping annotation should be supported"() {
+        given:
+        def mapper = new SpringMvcMethodInvocationMapper(uriWithPath, ParameterResolver.valueOfParamResolver())
+        def method = Greeter.class.getDeclaredMethod("getMapping", [Integer.class] as Class[])
+
+        when:
+        def invocation = mapper.map(greeter, method, [1] as Object[])
+
+        then:
+        invocation.url == new URI(baseUriWithPath + "/greeter/path/1")
+    }
+
 }

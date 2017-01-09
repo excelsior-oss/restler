@@ -1,5 +1,7 @@
 package org.restler.spring.mvc;
 
+import org.springframework.web.bind.annotation.*;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -17,7 +19,19 @@ class AnnotationUtils {
                 count() > 0;
     }
 
-    public static <R extends Annotation> R getAnnotation(Class<?> clazz, Class<R> annotationClass) {
+    static MappingInfo getMappingInfo(Method method) {
+        Class<? extends Annotation>[] supportedAnnotations = new Class[]{RequestMapping.class, GetMapping.class, PostMapping.class,
+                PutMapping.class, DeleteMapping.class, PatchMapping.class};
+        for (Class<? extends Annotation> c : supportedAnnotations) {
+            Annotation declaredAnnotation = method.getDeclaredAnnotation(c);
+            if (declaredAnnotation != null) {
+                return MappingInfo.forAnnotation(declaredAnnotation);
+            }
+        }
+        return null;
+    }
+
+    static <R extends Annotation> R getAnnotation(Class<?> clazz, Class<R> annotationClass) {
         return (R)findAnnotation(clazz, annotationClass, new HashSet<>());
     }
 
