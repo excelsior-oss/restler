@@ -3,7 +3,7 @@
     <parent>
         <artifactId>restler</artifactId>
         <groupId>org.restler</groupId>
-        <version>0.5.1</version>
+        <version>0.5.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,7 +14,7 @@
             <plugin>
                 <groupId>org.restler</groupId>
                 <artifactId>jar-executor-plugin</artifactId>
-                <version>0.5.1</version>
+                <version>0.5.2-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <id>start-test-server</id>
@@ -99,7 +99,7 @@
         <dependency>
             <groupId>org.restler</groupId>
             <artifactId>restler-test-api</artifactId>
-            <version>0.5.1</version>
+            <version>0.5.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
